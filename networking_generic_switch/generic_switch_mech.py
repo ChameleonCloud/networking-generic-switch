@@ -468,6 +468,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                      "%(segment_id)s on device %(device)s",
                      {'port_id': port['id'], 'device': switch_info,
                       'segment_id': segmentation_id})
+            LOG.info("PRUTH: bind_port: 280")
             context.set_binding(segments[0][api.ID],
                                 portbindings.VIF_TYPE_OTHER, {})
 
