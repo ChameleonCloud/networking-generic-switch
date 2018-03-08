@@ -12,7 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-
 from neutron.callbacks import resources
 from neutron.db import provisioning_blocks
 from neutron.plugins.ml2 import driver_api
