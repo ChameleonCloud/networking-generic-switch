@@ -76,11 +76,16 @@ class GenericSwitchDriver(driver_api.MechanismDriver):
         provider_type = network['provider:network_type']
         segmentation_id = network['provider:segmentation_id']
 
+        of_controller = self.__get_of_controller(network)
+
         if provider_type == 'vlan' and segmentation_id:
             # Create vlan on all switches from this driver
             for switch_name, switch in self.switches.items():
                 try:
-                    switch.add_network(segmentation_id, network_id)
+                    if of_controller:
+                        switch.add_network(segmentation_id, network_id, of_controller)
+                    else:
+                        switch.add_network(segmentation_id, network_id)
                 except Exception as e:
                     LOG.error("Failed to create network %(net_id)s "
                               "on device: %(switch)s, reason: %(exc)s",
@@ -90,6 +95,20 @@ class GenericSwitchDriver(driver_api.MechanismDriver):
                 LOG.info('Network %(net_id)s has been added on device '
                          '%(device)s', {'net_id': network['id'],
                                         'device': switch_name})
+
+    def __get_of_controller(self, network):
+
+        description = None
+        if 'description' in network.keys():
+            description = network['description'].strip()
+
+            if description.startswith('OFController='):
+                key,controller=description.split('=')
+                return controller.strip()
+        
+        return None
+        
+
 
     def update_network_precommit(self, context):
         """Update resources of a network.
