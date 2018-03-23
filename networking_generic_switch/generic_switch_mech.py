@@ -17,6 +17,7 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import resources
 from neutron_lib.plugins.ml2 import api
 from oslo_log import log as logging
+import socket
 
 from networking_generic_switch import config as gsw_conf
 from networking_generic_switch import devices
@@ -78,11 +79,16 @@ class GenericSwitchDriver(api.MechanismDriver):
         segmentation_id = network['provider:segmentation_id']
         physnet = network['provider:physical_network']
 
+        of_controller = self.__get_of_controller(network)
+
         if provider_type == 'vlan' and segmentation_id:
             # Create vlan on all switches from this driver
             for switch_name, switch in self._get_devices_by_physnet(physnet):
                 try:
-                    switch.add_network(segmentation_id, network_id)
+                    if of_controller and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
+                        switch.add_network(segmentation_id, network_id, of_controller)
+                    else:
+                        switch.add_network(segmentation_id, network_id)
                 except Exception as e:
                     LOG.error("Failed to create network %(net_id)s "
                               "on device: %(switch)s, reason: %(exc)s",
@@ -93,6 +99,31 @@ class GenericSwitchDriver(api.MechanismDriver):
                     LOG.info('Network %(net_id)s has been added on device '
                              '%(device)s', {'net_id': network['id'],
                                             'device': switch_name})
+
+    def __get_of_controller(self, network):
+        if 'description' in network.keys():
+            description = network['description'].strip()
+
+            if description.startswith('OFController='):
+                key, controller = description.split('=')
+                cont_ip, cont_port = controller.strip().split(':')
+
+                # Validate controller IP address and port
+                try:
+                    socket.inet_aton(cont_ip)
+                except:
+                    raise Exception("The provided controller IP address is invalid: %s", str(cont_ip))
+                try:
+                    cont_port = int(cont_port)
+                    if cont_port < 0 or cont_port > 65535:
+                        raise ValueError
+                except:
+                    raise Exception("The provided controller port is invalid: %s", str(cont_port))
+
+                return cont_ip, cont_port
+
+        return None
+
 
     def update_network_precommit(self, context):
         """Update resources of a network.
