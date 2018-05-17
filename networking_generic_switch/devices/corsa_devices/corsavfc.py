@@ -110,17 +110,31 @@ def bridge_create(headers,
                   br_resources = None, 
                   br_traffic_class = None, 
                   br_netns = None, 
-                  br_descr = None): 
+                  br_descr = None,
+                  br_namespace = None): 
     url = url_switch + ep_bridges
-    data = {
-             'bridge':br_id,
-             'subtype':br_subtype,
-             'resources': br_resources,
-             'dpid': br_dpid,
-             'traffic-class': br_traffic_class,
-             'netns': br_netns,
-             'bridge-descr': br_descr
-           }
+    if br_namespace:
+        data = {
+            'bridge':br_id,
+            'subtype':br_subtype,
+            'resources': br_resources,
+            'dpid': br_dpid,
+            'traffic-class': br_traffic_class,
+            'netns': br_netns,
+            'bridge-descr': br_descr,
+            'netns': br_namespace
+        }
+    else:
+        data = {
+            'bridge':br_id,
+            'subtype':br_subtype,
+            'resources': br_resources,
+            'dpid': br_dpid,
+            'traffic-class': br_traffic_class,
+            'netns': br_netns,
+            'bridge-descr': br_descr
+        }
+
 
     try:
         output = requests.post(url ,data=data, headers=headers, verify=False)
