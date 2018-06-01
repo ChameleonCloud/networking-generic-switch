@@ -112,7 +112,7 @@ class CorsaSwitch(devices.GenericSwitchDevice):
         cont_port = self.config['defaultControllerPort']
         c_controller_namespace = 'default'
         if of_controller:
-            cont_ip,cont_port = of_controller.split(':')
+            cont_ip, cont_port = of_controller
             if 'controllerNamespace' in self.config:
                 c_controller_namespace = self.config['controllerNamespace']
   

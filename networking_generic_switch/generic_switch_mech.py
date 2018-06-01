@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import socket
+
 from neutron.callbacks import resources
 from neutron.db import provisioning_blocks
 from neutron.plugins.ml2 import driver_api
@@ -82,7 +84,7 @@ class GenericSwitchDriver(driver_api.MechanismDriver):
             # Create vlan on all switches from this driver
             for switch_name, switch in self.switches.items():
                 try:
-                    if of_controller:
+                    if of_controller and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
                         switch.add_network(segmentation_id, network_id, of_controller)
                     else:
                         switch.add_network(segmentation_id, network_id)
@@ -97,17 +99,28 @@ class GenericSwitchDriver(driver_api.MechanismDriver):
                                         'device': switch_name})
 
     def __get_of_controller(self, network):
-
-        description = None
         if 'description' in network.keys():
             description = network['description'].strip()
 
             if description.startswith('OFController='):
-                key,controller=description.split('=')
-                return controller.strip()
+                key, controller = description.split('=')
+                cont_ip, cont_port = controller.strip().split(':')
+
+                # Validate controller IP address and port
+                try:
+                    socket.inet_aton(cont_ip)
+                except:
+                    raise Exception("The provided controller IP address is invalid: %s", str(cont_ip))
+                try:
+                    cont_port = int(cont_port)
+                    if cont_port < 0 or cont_port > 65535:
+                        raise ValueError
+                except:
+                    raise Exception("The provided controller port is invalid: %s", str(cont_port))
+
+                return cont_ip, cont_port
         
         return None
-        
 
 
     def update_network_precommit(self, context):
