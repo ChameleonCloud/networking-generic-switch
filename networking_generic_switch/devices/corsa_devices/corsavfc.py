@@ -463,7 +463,7 @@ def get_free_bridge(headers,
     bridges = get_bridges(headers,url_switch)
 
     links=bridges.json()["links"]
-    for i in range(33,63):
+    for i in range(1,64):
         bridge = 'br'+str(i)
         if bridge in links.keys():
             continue
