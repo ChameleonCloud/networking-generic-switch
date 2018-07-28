@@ -127,3 +127,10 @@ class DellPowerConnect(netmiko_devices.NetmikoSwitch):
         'switchport general allowed vlan remove {segmentation_id}',
         'exit',
     )
+
+    ERROR_MSG_PATTERNS = (
+        re.compile(r'\% Incomplete command'),
+        re.compile(r'VLAN was not created by user'),
+        re.compile(r'Configuration Database locked by another application \- '
+                   r'try later'),
+    )
