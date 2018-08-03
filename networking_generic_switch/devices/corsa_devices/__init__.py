@@ -89,7 +89,7 @@ class CorsaSwitch(devices.GenericSwitchDevice):
                                                       args=kwargs)
         return cmd_set
 
-    def add_network(self, segmentation_id, network_id):
+    def add_network(self, segmentation_id, network_id, of_controller=None):
         token = self.config['token']
         headers = {'Authorization': token}
                 
@@ -106,10 +106,17 @@ class CorsaSwitch(devices.GenericSwitchDevice):
         c_vlan = segmentation_id
         c_uplink_ports = self.config['uplink_ports']
 
-
         c_br_type = self.config['VFCType']
+        
         cont_ip = self.config['defaultControllerIP']
         cont_port = self.config['defaultControllerPort']
+        c_controller_namespace = 'default'
+        if of_controller:
+            cont_ip, cont_port = of_controller
+            if 'controllerNamespace' in self.config:
+                c_controller_namespace = self.config['controllerNamespace']
+  
+        LOG.info("controller:  cont_ip =  " + str(cont_ip) + ", cont_port = " + str(cont_port) + ", c_controller_namespace = " + str(c_controller_namespace))
         LOG.info("segmentation_id    " + str(segmentation_id)) 
         LOG.info("provisioning vlan  " + str(self.config['provisioningVLAN']))
         try:
@@ -130,8 +137,9 @@ class CorsaSwitch(devices.GenericSwitchDevice):
                 cont_id = 'CONT' + str(c_br) 
                 
                 #Create the bridge
-                corsavfc.bridge_create(headers, url_switch, c_br, br_subtype = c_br_type, br_resources = c_br_res, br_descr=c_br_descr)
+                corsavfc.bridge_create(headers, url_switch, c_br, br_subtype = c_br_type, br_resources = c_br_res, br_descr=c_br_descr, br_namespace=c_controller_namespace)
                 #Add the controller
+                LOG.info("Attaching of_controller " + str(cont_ip) + ":" + str(cont_port) + " to bridge " + str(c_br))
                 corsavfc.bridge_add_controller(headers, url_switch, br_id = c_br, cont_id = cont_id, cont_ip = cont_ip, cont_port = cont_port)
                 
                 LOG.info("About to get_ofport: c_br: " + str(c_br) + ", c_uplink_ports: " + str(c_uplink_ports))

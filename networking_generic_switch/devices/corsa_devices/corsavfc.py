@@ -109,18 +109,18 @@ def bridge_create(headers,
                   br_subtype = None, 
                   br_resources = None, 
                   br_traffic_class = None, 
-                  br_netns = None, 
-                  br_descr = None): 
+                  br_descr = None,
+                  br_namespace = None): 
     url = url_switch + ep_bridges
     data = {
-             'bridge':br_id,
-             'subtype':br_subtype,
-             'resources': br_resources,
-             'dpid': br_dpid,
-             'traffic-class': br_traffic_class,
-             'netns': br_netns,
-             'bridge-descr': br_descr
-           }
+        'bridge':br_id,
+        'subtype':br_subtype,
+        'resources': br_resources,
+        'dpid': br_dpid,
+        'traffic-class': br_traffic_class,
+        'bridge-descr': br_descr,
+        'netns': br_namespace
+    }
 
     try:
         output = requests.post(url ,data=data, headers=headers, verify=False)
@@ -463,7 +463,7 @@ def get_free_bridge(headers,
     bridges = get_bridges(headers,url_switch)
 
     links=bridges.json()["links"]
-    for i in range(33,63):
+    for i in range(1,64):
         bridge = 'br'+str(i)
         if bridge in links.keys():
             continue
