@@ -296,6 +296,7 @@ def bridge_attach_tunnel_ctag_vlan(headers,
                 raise Exception(" Attach ctag vlan port to bridge Failed: " + "url: " + str(url) + ", " + str(output.status_code) + " Unknown Error")
 
     except Exception as e:
+        reclaim_ofport(headers, url_switch, ofport)
         raise e
     return output
 
@@ -337,6 +338,7 @@ def bridge_attach_tunnel_passthrough(headers,
             if output.status_code == 400:
                 raise Exception(" Attach passthrough port to bridge Failed: " + "url: " + str(url) + ", " + str(output.status_code) + " Bad Request")
             elif output.status_code == 403:
+                reclaim_port(headers,url_switch,port)
                 raise Exception(" Attach passthrough port to bridge Failed: " + "url: " + str(url) + ", " + str(output.status_code) + " Forbidden")
             elif output.status_code == 404:
                 raise Exception(" Attach passthrough port to bridge Failed: " + "url: " + str(url) + ", " + str(output.status_code) + " Not Found")
@@ -348,7 +350,22 @@ def bridge_attach_tunnel_passthrough(headers,
         raise e
     return output
 
-
+#public facing function that tries to clean up and retry once on failure
+#def bridge_attach_tunnel_passthrough(headers,
+#                                     url_switch,
+#                                     br_id,
+#                                     port,
+#                                     ofport = None,
+#                                     tc = None,
+#                                     descr = None,
+#                                     shaped_rate = None):
+#   
+#    try:
+#        __bridge_attach_tunnel_passthrough(headers, url_switch, br_id, port, ofport, tc, descr, shaped_rate)
+#    except Exception as e:
+#        reclaim_port(headers,url_switch,port)
+#        __bridge_attach_tunnel_passthrough(headers, url_switch, br_id, port, ofport, tc, descr, shaped_rate)
+     
 
 #
 # ATTACH TUNNEL - VLAN RANGE
@@ -395,8 +412,8 @@ def bridge_attach_tunnel_ctag_vlan_range(headers,
 def bridge_detach_tunnel(headers,
                          url_switch,
                          br_id,
-                         port):
-    url = url_switch + ep_bridges + '/' +  str(br_id) + '/tunnels' + '/' + str(port)
+                         ofport):
+    url = url_switch + ep_bridges + '/' +  str(br_id) + '/tunnels' + '/' + str(ofport)
 
     try:
         output = requests.delete(url, headers=headers, verify=False)
@@ -450,6 +467,22 @@ def get_bridge(headers,
     return r
 
 
+#
+# GET INFO
+#
+#   200
+#   403 Forbidden
+def get_info(headers,
+             url_switch,
+             info_url):
+
+    try:
+        r = requests.get(info_url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
 
 #
 #
@@ -492,3 +525,95 @@ def get_bridge_by_segmentation_id(headers,
             if bridge_descr == "VLAN-"+str(segementation_id):
                 return bridge
     return None
+<<<<<<< HEAD
+=======
+
+
+#
+# reclaim ofport
+#
+#
+def reclaim_ofport(headers,
+                 url_switch,
+                 ofport):
+
+    bridges = get_bridges(headers,url_switch)
+
+    links=bridges.json()["links"]
+    LOG.info("PRUTH: bridges: " + str(links))
+    for bridge,value in links.items():
+        #bridge = 'br'+str(i)                                                                                                                                                                                                                                    
+        #bridgeInfo = get_bridge(headers,url_switch,bridges[bridge])                                                                                                                                                                                             
+        #link=links[str(bridge)]                                                                                                                                                                                                                                 
+        LOG.info("PRUTH: bridge: " + str(bridge) + ", value: " + str(value )  )
+        url=value['href']
+        LOG.info("PRUTH: bridge url: " + str(bridge) + ", href: " + str(url)  )
+        bridge_data = get_bridge(headers,url_switch,url)
+        bridge_tunnels_url = str(bridge_data.json()['links']['tunnels']['href'])
+        LOG.info("PRUTH: bridge tunnels url: " + str(bridge_tunnels_url))
+        bridge_tunnels = get_info(headers,url_switch,bridge_tunnels_url)
+        LOG.info("PRUTH: bridge tunnels: " + str(bridge_tunnels.json()))
+        for tunnel,value in bridge_tunnels.json()['links'].items():
+            LOG.info("PRUTH: bridge tunnel: " + str(tunnel) + ", value: " + str(value))
+            tunnel_url=value['href']
+            LOG.info("PRUTH: bridge tunnel_url: " + str(tunnel_url))
+            tunnel_info = get_info(headers,url_switch,tunnel_url)
+            LOG.info("PRUTH: bridge tunnel_info: " + str(tunnel_info.json()))
+            current_port = tunnel_info.json()['port']
+            current_ofport = tunnel_info.json()['ofport']
+            LOG.info("PRUTH: current_port: " + str(current_port) + ", ofport: " +  str(ofport)  +    ", current_ofport: " + str(current_ofport))
+            if str(current_ofport) == str(ofport):
+                LOG.info("PRUTH: FOUND PORT. KILL IT. ")
+                bridge_detach_tunnel(headers, url_switch, str(bridge), str(current_ofport))
+
+    return None
+
+
+
+#
+#
+#
+# reclaim physical port. 
+# If we try to bind a port to a VFC and get a "forbidden" return code this could mean 
+# that the port is already bound.  In this case we can try to reclaim to port by 
+# checking all VFCs for the port and then unbinding it if the port is found.
+#
+def reclaim_port(headers,
+                 url_switch,
+                 port):
+
+    bridges = get_bridges(headers,url_switch)
+
+    links=bridges.json()["links"]
+    LOG.info("PRUTH: bridges: " + str(links))
+    for bridge,value in links.items():
+        #bridge = 'br'+str(i)
+        #bridgeInfo = get_bridge(headers,url_switch,bridges[bridge])
+        #link=links[str(bridge)]
+        LOG.info("PRUTH: bridge: " + str(bridge) + ", value: " + str(value )  )
+        url=value['href']
+        LOG.info("PRUTH: bridge url: " + str(bridge) + ", href: " + str(url)  )
+        bridge_data = get_bridge(headers,url_switch,url)
+        bridge_tunnels_url = str(bridge_data.json()['links']['tunnels']['href'])
+        LOG.info("PRUTH: bridge tunnels url: " + str(bridge_tunnels_url))
+        bridge_tunnels = get_info(headers,url_switch,bridge_tunnels_url)
+        LOG.info("PRUTH: bridge tunnels: " + str(bridge_tunnels.json()))
+        for tunnel,value in bridge_tunnels.json()['links'].items():
+            LOG.info("PRUTH: bridge tunnel: " + str(tunnel) + ", value: " + str(value))
+            tunnel_url=value['href']
+            LOG.info("PRUTH: bridge tunnel_url: " + str(tunnel_url))
+            tunnel_info = get_info(headers,url_switch,tunnel_url)
+            LOG.info("PRUTH: bridge tunnel_info: " + str(tunnel_info.json()))
+            current_port = tunnel_info.json()['port']
+            current_ofport = tunnel_info.json()['ofport']
+            LOG.info("PRUTH: current_port: " + str(current_port) + ", port: " +  str(port) + ", current_ofport: " + str(current_ofport)) 
+            if current_port == port:
+                LOG.info("PRUTH: FOUND PORT. KILL IT. ")
+                bridge_detach_tunnel(headers, url_switch, str(bridge), str(current_ofport))
+
+    return None
+
+
+
+
+>>>>>>> 7d7d2d9... still in dev. works for adding/removing nodes to either switch
