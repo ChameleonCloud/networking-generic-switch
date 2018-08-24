@@ -39,13 +39,18 @@ class GenericSwitchDriver(api.MechanismDriver):
         been initialized. No abstract methods defined below will be
         called prior to this method being called.
         """
+        LOG.info("PRUTH: GenericSwitchDriver")
+        self.vfcHost=None
 
         gsw_devices = gsw_conf.get_devices()
         self.switches = {}
         for switch_info, device_cfg in gsw_devices.items():
             switch = devices.device_manager(device_cfg)
+            if hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
+                device_cfg['name']=switch_info
             self.switches[switch_info] = switch
-
+            if 'VFCHost' in device_cfg and device_cfg['VFCHost'] == 'True':
+                self.vfcHost = switch
         LOG.info('Devices %s have been loaded', self.switches.keys())
         if not self.switches:
             LOG.error('No devices have been loaded')
@@ -83,11 +88,13 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         of_controller = self.__get_of_controller(network)
 
+        LOG.info("PRUTH: create_network: " + str(network) + ", network_id: " + str(network_id))
+
         if provider_type == 'vlan' and segmentation_id:
             # Create vlan on all switches from this driver
             for switch_name, switch in self._get_devices_by_physnet(physnet):
                 try:
-                    if of_controller and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
+                    if of_controller and hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
                         switch.add_network(segmentation_id, network_id, of_controller)
                     else:
                         switch.add_network(segmentation_id, network_id)
@@ -465,6 +472,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         port = context.current
         binding_profile = port['binding:profile']
         local_link_information = binding_profile.get('local_link_information')
+        LOG.info("PRUTH: Bindport, port: " + str(port) + ", binding_profile: " + str(binding_profile))
         if self._is_port_supported(port) and local_link_information:
             switch_info = local_link_information[0].get('switch_info')
             switch_id = local_link_information[0].get('switch_id')
@@ -494,7 +502,11 @@ class GenericSwitchDriver(api.MechanismDriver):
                       {'port_id': port_id, 'switch_info': switch_info,
                        'segmentation_id': segmentation_id})
             # Move port to network
-            switch.plug_port_to_network(port_id, segmentation_id)
+            if hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
+                switch.plug_port_to_network(port_id, segmentation_id, vfc_host=self.vfcHost)
+            else:
+                switch.plug_port_to_network(port_id, segmentation_id)
+
             LOG.info("Successfully bound port %(port_id)s in segment "
                      "%(segment_id)s on device %(device)s",
                      {'port_id': port['id'], 'device': switch_info,
@@ -559,7 +571,11 @@ class GenericSwitchDriver(api.MechanismDriver):
                   {'port': port_id, 'switch_info': switch_info,
                    'segmentation_id': segmentation_id})
         try:
-            switch.delete_port(port_id, segmentation_id)
+            if hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
+                switch.delete_port(port_id, segmentation_id, vfc_host=self.vfcHost)
+            else:
+                switch.delete_port(port_id, segmentation_id)
+
         except Exception as e:
             LOG.error("Failed to unplug port %(port_id)s "
                       "on device: %(switch)s from network %(net_id)s "
