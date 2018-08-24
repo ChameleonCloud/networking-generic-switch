@@ -115,10 +115,18 @@ class CorsaSwitch(devices.GenericSwitchDevice):
             cont_ip, cont_port = of_controller
             if 'controllerNamespace' in self.config:
                 c_controller_namespace = self.config['controllerNamespace']
-  
+
+        isVFCHost = True
+        if not 'VFCHost' in self.config and self.config['VFCHost'] == 'True':
+            LOG.info("PRUTH: Skipping VFC Creation: isVFCHost " + str(isVFCHost))
+            isVFCHost = False
+            return
+
+   
         LOG.info("controller:  cont_ip =  " + str(cont_ip) + ", cont_port = " + str(cont_port) + ", c_controller_namespace = " + str(c_controller_namespace))
         LOG.info("segmentation_id    " + str(segmentation_id)) 
         LOG.info("provisioning vlan  " + str(self.config['provisioningVLAN']))
+        LOG.info("PRUTH: isVFCHost " + str(isVFCHost))
         try:
             if self.config.has_key('provisioningVLAN'):
                 if str(segmentation_id) == self.config['provisioningVLAN']:
@@ -146,7 +154,8 @@ class CorsaSwitch(devices.GenericSwitchDevice):
                 for uplink in c_uplink_ports.split(','):
                      #Attach the uplink tunnel
                      LOG.info("About to get_ofport: c_br: " + str(c_br) + ", uplink: " + str(uplink)) 
-                     ofport=self.get_ofport(c_br,'P '+str(uplink))
+                     #The logical port number of an uplink is assumed to be the VLAN id
+                     ofport=c_vlan
                      LOG.info("ofport: " + str(ofport))
                      corsavfc.bridge_attach_tunnel_ctag_vlan(headers, url_switch, br_id = c_br, ofport = ofport, port = int(uplink), vlan_id = c_vlan)
 
@@ -169,6 +178,14 @@ class CorsaSwitch(devices.GenericSwitchDevice):
         sw_ip_addr = self.config['switchIP']
         url_switch = protocol + sw_ip_addr
 
+        isVFCHost = True
+        if not 'VFCHost' in self.config and self.config['VFCHost'] == 'True':
+            LOG.info("PRUTH: Skipping VFC Deletion: isVFCHost " + str(isVFCHost))
+            isVFCHost = False
+            return
+
+
+
         bridge = None
         try:    
           with ngs_lock.PoolLock(self.locker, **self.lock_kwargs):
@@ -183,15 +200,16 @@ class CorsaSwitch(devices.GenericSwitchDevice):
     # Example: bridge=br3,port=P 32 -> ofport 332
     #          bridge=br33,port=P 2 -> ofport 3302 
     def get_ofport(self, bridge, port):
+        #return port from mapping
+
         ofport = bridge[2:]
         if int(port[2:]) < 10:
             ofport += '0'
         ofport += port[2:]
-            
+
         return ofport
 
-
-    def plug_port_to_network(self, port, segmentation_id):
+    def plug_port_to_network(self, port, segmentation_id, vfc_host):
         #OpenStack requires port ids to not be numbers
         #Corsa uses numbers
         #We are lying to OpenStack by adding a 'p ' to the beging of each port number.
@@ -207,34 +225,142 @@ class CorsaSwitch(devices.GenericSwitchDevice):
         sw_ip_addr = self.config['switchIP']
         url_switch = protocol + sw_ip_addr
 
+
+        LOG.info("PRUTH: switch: " + str(self) + ",  switch: " + self.config['name'] ) 
+        LOG.info("PRUTH: self.config: " + str(self.config))
+        LOG.info("PRUTH: Binding port " + str(port) + " to network " + str(segmentation_id))
+        ofport=None
+        node_vlan=None
+        dst_switch_name=None
+        if port in self.config:
+            LOG.info("PRUTH: Binding port " + str(port) + " maps to " + str(self.config[port]))
+            ofport=str(int(self.config[port])+10000)
+            node_vlan=self.config[port]
+        else:
+            LOG.info("PRUTH: Binding port " + str(port) +" missing")
+            LOG.info("PRUTH: Binding port " + str(self.config))
+
+        if 'name' in self.config:
+            dst_switch_name=self.config['name']
+
+        if not vfc_host == self:
+            #Step 1: config local switch
+            #For now, VLANs are staticlly configured so this is a no-op
+
+            #Step 2: config VFCHost with ctag tunnel
+            #params:  segmentaion_id, node_vlan, destination_switch_name
+            vfc_host.__bind_ctag_tunnel(segmentation_id, node_vlan, dst_switch_name)
+            
+        else: 
+            #Step 2: config VFCHost (i.e. local host) with passthrough tunnel
+            self.__bind_passthrough_tunnel(port, segmentation_id, ofport)
+
+    
+    def __bind_passthrough_tunnel(self, port, segmentation_id, ofport):
+        port_num=port[2:]
+        token = self.config['token']
+        headers = {'Authorization': token}
+
+        logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+
+        protocol = 'https://'
+        sw_ip_addr = self.config['switchIP']
+        url_switch = protocol + sw_ip_addr
+
         try:
-          with ngs_lock.PoolLock(self.locker, **self.lock_kwargs):
-            # Make sure the tunnel_mode is 'passthrough'    
-            corsavfc.port_modify_tunnel_mode(headers, url_switch, port_num, 'passthrough') 
+            with ngs_lock.PoolLock(self.locker, **self.lock_kwargs):
+                # Make sure the tunnel_mode is 'passthrough'                                                                                                                                                                                                       
+                corsavfc.port_modify_tunnel_mode(headers, url_switch, port_num, 'passthrough')
 
-            # get the bridge from segmentation_id
-            br_id = corsavfc.get_bridge_by_segmentation_id(headers, url_switch, segmentation_id)
+                # get the bridge from segmentation_id                                                                                                                                                                                                              
+                br_id = corsavfc.get_bridge_by_segmentation_id(headers, url_switch, segmentation_id)
 
-            try:
-                # unbind the port (probably not necessary)
-                # openflow port was mapped to the physical port with the same port number in plug_port_to_network
-                ofport = self.get_ofport(br_id,port)
-                corsavfc. bridge_detach_tunnel(headers, url_switch, br_id, ofport)
-                LOG.info("needed to delete_port: probably a leaked port from a node that did not completely boot the previous time. ")
-            except Exception as e:
-                LOG.info("Tried to delete_port but it was not there: this is expected." + traceback.format_exc())
-                pass
-
-            # bind the port
-            # physical port is mapped to the openflow port with the same port number
-            ofport = self.get_ofport(br_id,port)
-            corsavfc.bridge_attach_tunnel_passthrough(headers, url_switch, br_id, port_num, ofport, tc = None, descr = None, shaped_rate = None)
+                corsavfc.bridge_attach_tunnel_passthrough(headers, url_switch, br_id, port_num, ofport, tc = None, descr = None, shaped_rate = None)
 
         except Exception as e:
             LOG.error("Failed to plug to network: " + str(traceback.format_exc()))
             raise e
- 
-    def delete_port(self, port, segmentation_id):
+
+
+
+    def __bind_ctag_tunnel(self, segmentation_id, node_vlan, dst_switch_name):
+        LOG.info("adding to vfc_host: __bind_ctag_tunnel")      
+        LOG.info("PRUTH: switch: " + self.config['name'] + ", VFCHost: " + str(segmentation_id) + ", " + str(node_vlan) + ", " + str(dst_switch_name))
+
+        #port_num=port[2:]
+        token = self.config['token']
+        headers = {'Authorization': token}
+
+        logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+
+        protocol = 'https://'
+        sw_ip_addr = self.config['switchIP']
+        url_switch = protocol + sw_ip_addr
+        
+        dst_port=None
+        if dst_switch_name in self.config:
+            dst_port=self.config[dst_switch_name]
+
+
+        try:
+            with ngs_lock.PoolLock(self.locker, **self.lock_kwargs):
+                LOG.info("About to dst_port: " + str(dst_port) )
+                br_id = corsavfc.get_bridge_by_segmentation_id(headers, url_switch, segmentation_id)
+                ofport=str(int(str(node_vlan))+10000)
+                LOG.info("ofport: " + str(ofport))
+                LOG.info("br_id: " + str(br_id))
+                corsavfc.bridge_attach_tunnel_ctag_vlan(headers, url_switch, br_id = br_id, ofport = ofport, port = int(dst_port), vlan_id = node_vlan)
+
+        except Exception as e:
+            raise e
+
+    def delete_port(self, port, segmentation_id, vfc_host, ofport=None):
+
+
+        if ofport == None and port in self.config:
+            LOG.info("PRUTH: delete port " + str(port) + " maps to " + str(self.config[port]))
+            ofport=str(int(self.config[port])+10000)
+
+        if not vfc_host == self:
+            vfc_host.delete_port(port, segmentation_id, vfc_host, ofport=ofport)
+        else:
+            self.__delete_ofport(ofport, segmentation_id)
+
+    def __delete_ofport(self, ofport, segmentation_id):
+        #OpenStack requires port ids to not be numbers                                                                                                        
+        #Corsa uses numbers                                                                                                                                   
+        #We are lying to OpenStack by adding a 'p ' to the beging of each port number.                                                                        
+        #We need to strip the 'p ' off of the port number.                                                                                                    
+        #port_num=port[2:]
+
+        token = self.config['token']
+        headers = {'Authorization': token}
+
+        logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+
+        protocol = 'https://'
+        sw_ip_addr = self.config['switchIP']
+        url_switch = protocol + sw_ip_addr
+
+        LOG.info("PRUTH: delete port: switch: " + self.config['name'] + ", ofport: " + str(ofport) + ", segmentation_id: " + str(segmentation_id))
+
+        try:
+          with ngs_lock.PoolLock(self.locker, **self.lock_kwargs):
+            # get the bridge from segmentation_id                                                                                                             
+            br_id = corsavfc.get_bridge_by_segmentation_id(headers, url_switch, segmentation_id)
+
+            # unbind the port                                                                                                                                 
+            # openflow port was mapped to the physical port with the same port number in plug_port_to_network                                                 
+            #ofport = self.get_ofport(br_id,port)                                                                                                             
+            corsavfc.bridge_detach_tunnel(headers, url_switch, br_id, ofport)
+
+        except Exception as e:
+            LOG.error("Failed delete_port: " + traceback.format_exc())
+            raise e
+
+
+
+    def __delete_port(self, port, segmentation_id):
         #OpenStack requires port ids to not be numbers       
         #Corsa uses numbers 
         #We are lying to OpenStack by adding a 'p ' to the beging of each port number.
@@ -250,6 +376,13 @@ class CorsaSwitch(devices.GenericSwitchDevice):
         sw_ip_addr = self.config['switchIP']
         url_switch = protocol + sw_ip_addr
 
+        LOG.info("PRUTH: delete port: switch: " + self.config['name'] + ", port: " + str(port) + ", segmentation_id: " + str(segmentation_id))
+
+        ofport=None
+        if port in self.config:
+            LOG.info("PRUTH: delete port " + str(port) + " maps to " + str(self.config[port]))
+            ofport=str(int(self.config[port])+10000)
+
         try:
           with ngs_lock.PoolLock(self.locker, **self.lock_kwargs):
             # get the bridge from segmentation_id
@@ -257,8 +390,8 @@ class CorsaSwitch(devices.GenericSwitchDevice):
 
             # unbind the port 
             # openflow port was mapped to the physical port with the same port number in plug_port_to_network
-            ofport = self.get_ofport(br_id,port)
-            corsavfc. bridge_detach_tunnel(headers, url_switch, br_id, ofport)
+            #ofport = self.get_ofport(br_id,port)
+            corsavfc.bridge_detach_tunnel(headers, url_switch, br_id, ofport)
  
         except Exception as e:
             LOG.error("Failed delete_port: " + traceback.format_exc())
