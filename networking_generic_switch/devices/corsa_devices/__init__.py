@@ -117,7 +117,7 @@ class CorsaSwitch(devices.GenericSwitchDevice):
                 c_controller_namespace = self.config['controllerNamespace']
 
         isVFCHost = True
-        if not 'VFCHost' in self.config and self.config['VFCHost'] == 'True':
+        if not 'VFCHost' in self.config or not self.config['VFCHost'] == 'True':
             LOG.info("PRUTH: Skipping VFC Creation: isVFCHost " + str(isVFCHost))
             isVFCHost = False
             return
@@ -179,7 +179,7 @@ class CorsaSwitch(devices.GenericSwitchDevice):
         url_switch = protocol + sw_ip_addr
 
         isVFCHost = True
-        if not 'VFCHost' in self.config and self.config['VFCHost'] == 'True':
+        if not 'VFCHost' in self.config or not self.config['VFCHost'] == 'True':
             LOG.info("PRUTH: Skipping VFC Deletion: isVFCHost " + str(isVFCHost))
             isVFCHost = False
             return
