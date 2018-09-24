@@ -45,7 +45,7 @@ class GenericSwitchDriver(driver_api.MechanismDriver):
         self.switches = {}
         for switch_info, device_cfg in gsw_devices.items():
             switch = devices.device_manager(device_cfg)
-            if isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
+            if hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
                 device_cfg['name']=switch_info
             self.switches[switch_info] = switch
             if 'VFCHost' in device_cfg and device_cfg['VFCHost'] == 'True':
@@ -92,7 +92,7 @@ class GenericSwitchDriver(driver_api.MechanismDriver):
             # Create vlan on all switches from this driver
             for switch_name, switch in self.switches.items():
                 try:
-                    if of_controller and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):                        
+                    if of_controller and hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
                         switch.add_network(segmentation_id, network_id, of_controller)
                     else:
                         switch.add_network(segmentation_id, network_id)
@@ -483,7 +483,7 @@ class GenericSwitchDriver(driver_api.MechanismDriver):
                           switch_info=switch_info,
                           segmentation_id=segmentation_id))
             # Move port to network
-            if isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
+            if hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
                 switch.plug_port_to_network(port_id, segmentation_id, vfc_host=self.vfcHost)
             else:
                 switch.plug_port_to_network(port_id, segmentation_id)
@@ -551,7 +551,7 @@ class GenericSwitchDriver(driver_api.MechanismDriver):
                       switch_info=switch_info,
                       segmentation_id=segmentation_id))
         try:
-            if isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
+            if hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
                 switch.delete_port(port_id, segmentation_id, vfc_host=self.vfcHost)
             else:
                 switch.delete_port(port_id, segmentation_id)

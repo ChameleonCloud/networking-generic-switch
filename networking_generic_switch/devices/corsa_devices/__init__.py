@@ -100,7 +100,7 @@ class CorsaSwitch(devices.GenericSwitchDevice):
         url_switch = protocol + sw_ip_addr
                 
         #./create-vfc.py br1 5 openflow VFC-1 192.168.201.164 6653 100-105
-        c_br_res =  self.config['dafaultVFCRes']
+        c_br_res =  self.config['defaultVFCRes']
         c_br_type = self.config['VFCType']
         c_br_descr = "VLAN-" + str(segmentation_id)
         c_vlan = segmentation_id
