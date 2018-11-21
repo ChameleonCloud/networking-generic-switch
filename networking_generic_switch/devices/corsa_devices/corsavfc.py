@@ -94,6 +94,21 @@ def port_modify_admin_state(headers, url_switch , port_number, admin_state):
     return r
 
 
+def bridge_modify_descr(headers, url_switch , bridge, br_descr):
+    url = url_switch + ep_bridges + '/' + str(bridge)
+    data = [
+              { "op": "replace", "path": "/bridge-descr", "value": br_descr },
+           ]
+    try:
+        r = requests.patch(url, data=json.dumps(data), headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+
+
+
 #
 # BRIDGE CREATE
 #
@@ -513,7 +528,7 @@ def get_free_bridge(headers,
 #
 def get_bridge_by_segmentation_id(headers,
                                   url_switch,
-                                  segementation_id):
+                                  segmentation_id):
     bridges = get_bridges(headers,url_switch)
 
     links=bridges.json()["links"]
@@ -522,9 +537,56 @@ def get_bridge_by_segmentation_id(headers,
         link = get_bridge(headers,url_switch,url).json()
         if "bridge-descr" in link.keys():
             bridge_descr=str(link["bridge-descr"])
-            if bridge_descr == "VLAN-"+str(segementation_id):
+            ###if bridge_descr == "VLAN-"+str(segmentation_id):
+            if bridge_descr.find(str(segmentation_id)) > -1 :
+                return bridge 
+    return None
+
+
+#
+# 
+#
+# get_bridge_by_vfc_name
+#
+# By convention we are putting the vfc_name in the "bridge-description" field
+#
+def get_bridge_by_vfc_name(headers,
+                           url_switch,
+                           vfc_name):
+    bridges = get_bridges(headers,url_switch)
+
+    links=bridges.json()["links"]
+    for bridge,value in links.items():
+        url=value['href']
+        link = get_bridge(headers,url_switch,url).json()
+        if "bridge-descr" in link.keys():
+            bridge_descr=str(link["bridge-descr"])
+            ###if bridge_descr == "VLAN-"+str(segmentation_id):
+            if bridge_descr.find(vfc_name) > -1 :
                 return bridge
     return None
+
+
+#
+# 
+#
+# get_bridge_descr
+#
+# 
+#
+
+def get_bridge_descr(headers,
+                     url_switch,
+                     br_id):
+    bridge_url = url_switch + ep_bridges + '/' +  str(br_id) 
+    
+    bridge = get_bridge(headers, url_switch, bridge_url)
+    bridge_descr = bridge.json()["bridge-descr"]
+    return bridge_descr
+
+    
+
+
 
 
 #

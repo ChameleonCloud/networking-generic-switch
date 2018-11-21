@@ -89,7 +89,7 @@ class CorsaSwitch(devices.GenericSwitchDevice):
                                                       args=kwargs)
         return cmd_set
 
-    def add_network(self, segmentation_id, network_id, of_controller=None):
+    def add_network(self, segmentation_id, network_id, of_controller=None, vfc_name=None):
         token = self.config['token']
         headers = {'Authorization': token}
                 
@@ -102,7 +102,7 @@ class CorsaSwitch(devices.GenericSwitchDevice):
         #./create-vfc.py br1 5 openflow VFC-1 192.168.201.164 6653 100-105
         c_br_res =  self.config['defaultVFCRes']
         c_br_type = self.config['VFCType']
-        c_br_descr = "VLAN-" + str(segmentation_id)
+
         c_vlan = segmentation_id
         c_uplink_ports = self.config['uplink_ports']
 
@@ -111,11 +111,18 @@ class CorsaSwitch(devices.GenericSwitchDevice):
         cont_ip = self.config['defaultControllerIP']
         cont_port = self.config['defaultControllerPort']
         c_controller_namespace = 'default'
+        c_vfc_name = self.config['defaultVFCName']
+
         if of_controller:
             cont_ip, cont_port = of_controller
             if 'controllerNamespace' in self.config:
                 c_controller_namespace = self.config['controllerNamespace']
 
+        if vfc_name:
+            c_vfc_name = str(vfc_name) 
+
+        c_br_descr = c_vfc_name + "-VLAN-" + str(segmentation_id)
+         
         isVFCHost = True
         if not 'VFCHost' in self.config or not self.config['VFCHost'] == 'True':
             LOG.info("PRUTH: Skipping VFC Creation: isVFCHost " + str(isVFCHost))
@@ -127,6 +134,8 @@ class CorsaSwitch(devices.GenericSwitchDevice):
         LOG.info("segmentation_id    " + str(segmentation_id)) 
         LOG.info("provisioning vlan  " + str(self.config['provisioningVLAN']))
         LOG.info("PRUTH: isVFCHost " + str(isVFCHost))
+        LOG.info("PRUTH: --- vfc_name " + str(c_vfc_name))
+
         try:
             if self.config.has_key('provisioningVLAN'):
                 if str(segmentation_id) == self.config['provisioningVLAN']:
@@ -167,6 +176,76 @@ class CorsaSwitch(devices.GenericSwitchDevice):
                 LOG.error(" Failed to cleanup bridge after failed add_network: " + str(segmentation_id) + ", bridge: " + str(bridge) + ", Error: " + str(e2))
             raise e
 
+
+
+
+
+    def add_network_to_existing_vfc(self, segmentation_id, network_id, bridge, vfc_name):
+        token = self.config['token']
+        headers = {'Authorization': token}
+
+        logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+
+        protocol = 'https://'
+        sw_ip_addr = self.config['switchIP']
+        url_switch = protocol + sw_ip_addr
+
+        c_vlan = segmentation_id
+        c_uplink_ports = self.config['uplink_ports']
+
+        c_vfc_name = vfc_name
+        c_br = bridge
+
+        c_br_descr = corsavfc.get_bridge_descr(headers, url_switch, c_br)
+        c_br_descr = c_br_descr + "-" + str(segmentation_id)
+        corsavfc.bridge_modify_descr(headers, url_switch , c_br, c_br_descr)
+
+
+        LOG.info("PRUTH: --- add_network_to_existing_vfc: " + str(c_br))
+
+        try:
+            with ngs_lock.PoolLock(self.locker, **self.lock_kwargs):
+
+                LOG.info("About to get_ofport: c_br: " + str(c_br) + ", c_uplink_ports: " + str(c_uplink_ports))
+                for uplink in c_uplink_ports.split(','):
+                     #Attach the uplink tunnel
+                     LOG.info("About to get_ofport: c_br: " + str(c_br) + ", uplink: " + str(uplink))
+                     #The logical port number of an uplink is assumed to be the VLAN id
+                     ofport=c_vlan
+                     LOG.info("ofport: " + str(ofport))
+                     corsavfc.bridge_attach_tunnel_ctag_vlan(headers, url_switch, br_id = c_br, ofport = ofport, port = int(uplink), vlan_id = c_vlan)
+
+        except Exception as e:
+            LOG.error("Failed add network. attempting to cleanup bridge: " + str(e) + ", " + traceback.format_exc())
+            try:
+                output = corsavfc.bridge_delete(headers, url_switch, str(c_br))
+            except Exception as e2:
+                LOG.error(" Failed to cleanup bridge after failed add_network: " + str(segmentation_id) + ", bridge: " + str(bridge) + ", Error: " + str(e2))
+            raise e
+
+
+    def find_named_vfc(self, vfc_name):
+        token = self.config['token']
+        headers = {'Authorization': token}
+
+        logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+
+        protocol = 'https://'
+        sw_ip_addr = self.config['switchIP']
+        url_switch = protocol + sw_ip_addr
+
+        bridge = None
+        try:
+          with ngs_lock.PoolLock(self.locker, **self.lock_kwargs):
+            bridge = corsavfc.get_bridge_by_vfc_name(headers, url_switch, str(vfc_name))
+        except Exception as e:
+            LOG.error("failed delete bridge: " + traceback.format_exc())
+            raise e
+
+        return bridge
+    
+
+
    
     def del_network(self, segmentation_id):
         token = self.config['token']
@@ -190,8 +269,17 @@ class CorsaSwitch(devices.GenericSwitchDevice):
         try:    
           with ngs_lock.PoolLock(self.locker, **self.lock_kwargs):
             bridge = corsavfc.get_bridge_by_segmentation_id(headers, url_switch, str(segmentation_id))
-            
-            output = corsavfc.bridge_delete(headers, url_switch, str(bridge))
+            br_descr = corsavfc.get_bridge_descr(headers, url_switch, bridge)
+            # br_descr format: <VFC_NAME>-VLAN-<TAG1>-<TAG2>
+            VLAN_tags = br_descr.split('-')[2:] 
+            if len(VLAN_tags) > 1:
+                br_descr = br_descr.replace("-" + str(segmentation_id), "")
+                ofport = segmentation_id
+                corsavfc.bridge_modify_descr(headers, url_switch , bridge, br_descr)
+                corsavfc.bridge_detach_tunnel(headers, url_switch, bridge, ofport)
+
+            else: 
+                output = corsavfc.bridge_delete(headers, url_switch, str(bridge))
         except Exception as e:
             LOG.error("failed delete bridge: " + traceback.format_exc())
             raise e
