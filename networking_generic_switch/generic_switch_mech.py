@@ -20,10 +20,12 @@ from neutron_lib.callbacks import resources
 from neutron_lib.plugins.ml2 import api
 from oslo_log import log as logging
 import socket
+import re
 
 from networking_generic_switch import config as gsw_conf
 from networking_generic_switch import devices
 from networking_generic_switch.devices import utils as device_utils
+
 
 LOG = logging.getLogger(__name__)
 
@@ -82,11 +84,13 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         network = context.current
         network_id = network['id']
+        project_id = network['project_id'].strip()
         provider_type = network['provider:network_type']
         segmentation_id = network['provider:segmentation_id']
         physnet = network['provider:physical_network']
 
         of_controller = self.__get_of_controller(network)
+        vfc_name = self.__get_vfc_name(network, project_id)
 
         LOG.info("PRUTH: create_network: " + str(network) + ", network_id: " + str(network_id))
 
@@ -94,10 +98,34 @@ class GenericSwitchDriver(api.MechanismDriver):
             # Create vlan on all switches from this driver
             for switch_name, switch in self._get_devices_by_physnet(physnet):
                 try:
-                    if of_controller and hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
-                        switch.add_network(segmentation_id, network_id, of_controller)
+                    # Corsa - named VFC - custom of_controller
+                    if of_controller and vfc_name and  hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
+
+                        named_vfc_bridge = switch.find_named_vfc(vfc_name)
+
+                        if named_vfc_bridge :
+                            #LOG.info("PRUTH: --- corsa-namedvfc-customofcontroller - add_network_to_existing_vfc = " + str(named_vfc_bridge) )
+                            switch.add_network_to_existing_vfc(segmentation_id, network_id, named_vfc_bridge, vfc_name)
+                        else:
+                            #LOG.info("PRUTH: --- corsa-namedvfc-customofcontroller - add_network = " + str(named_vfc_bridge) )
+                            switch.add_network(segmentation_id, network_id, project_id, of_controller, vfc_name)
+
+                    # Corsa - unnamed VFC - custom of_controller
+                    elif of_controller and hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
+                        #LOG.info("PRUTH: --- corsa-unnamedvfc-customofcontroller - add_network " )
+                        switch.add_network(segmentation_id, network_id, project_id, of_controller)
+
+                    # Corsa - unnamed VFC - no of_controller
+                    elif hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
+                        #LOG.info("PRUTH: --- corsa-unnamedvfc-noofcontroller - add_network " )
+                        switch.add_network(segmentation_id, network_id, project_id)
+
+                    # Dell - unnamed VFC - no of_controller
                     else:
+                        #LOG.info("PRUTH: --- dell-unnamedvfc-noofcontroller - add_network " )
                         switch.add_network(segmentation_id, network_id)
+
+
                 except Exception as e:
                     LOG.error("Failed to create network %(net_id)s "
                               "on device: %(switch)s, reason: %(exc)s",
@@ -113,10 +141,15 @@ class GenericSwitchDriver(api.MechanismDriver):
     def __get_of_controller(self, network):
         if 'description' in network.keys():
             description = network['description'].strip()
+            LOG.info("PRUTH: --- Description = " + description )
+
 
             if description.startswith('OFController='):
-                key, controller = description.split('=')
+                VFCparameters = description.split(',')
+                key, controller = VFCparameters[0].split('=')
                 cont_ip, cont_port = controller.strip().split(':')
+
+
 
                 # Validate controller IP address and port
                 try:
@@ -133,6 +166,38 @@ class GenericSwitchDriver(api.MechanismDriver):
                 return cont_ip, cont_port
 
         return None
+
+    def __get_vfc_name(self, network, project_id=None):
+        if 'description' in network.keys():
+            description = network['description'].strip()
+
+
+            if description.startswith('OFController='):
+                VFCparameters = description.split(',')
+
+                if ( len(VFCparameters) > 1 ) and (VFCparameters[1].startswith('VSwitchName=')):
+                    key, v_switch_name = VFCparameters[1].split('=')
+                    if project_id:
+                        vfc_name = project_id + "-" + v_switch_name
+                    else:
+                        vfc_name = "NONE-" + v_switch_name
+                    LOG.info("PRUTH: --- vfc_name: " + vfc_name )
+
+
+                    # FIXME: Validate VFC name
+                    try:
+                        #if not bool(re.match('^[a-zA-Z0-9]+$', vfc_name)) and (len(vfc_name) < 25):
+                        if (not v_switch_name.isalnum()) or len(v_switch_name) > 25:
+                            raise ValueError
+                    except:
+                        raise Exception("Invalid VSwitch Name: %s", vfc_name)
+
+                    return vfc_name
+
+        return None
+
+
+
 
 
     def update_network_precommit(self, context):
@@ -202,13 +267,18 @@ class GenericSwitchDriver(api.MechanismDriver):
         provider_type = network['provider:network_type']
         segmentation_id = network['provider:segmentation_id']
         physnet = network['provider:physical_network']
+        project_id = network['project_id'].strip()
 
         if provider_type == 'vlan' and segmentation_id:
             # Delete vlan on all switches from this driver
             exc_info = None
             for switch_name, switch in self._get_devices_by_physnet(physnet):
                 try:
-                    switch.del_network(segmentation_id, network['id'])
+                    if (hasattr(devices,'corsa_devices') and 
+                            isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
+                        switch.del_network(segmentation_id, project_id)
+                    else:
+                        switch.del_network(segmentation_id, network['id'])
                 except Exception as e:
                     LOG.error("Failed to delete network %(net_id)s "
                               "on device: %(switch)s, reason: %(exc)s",
