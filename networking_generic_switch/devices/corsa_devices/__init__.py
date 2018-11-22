@@ -89,7 +89,7 @@ class CorsaSwitch(devices.GenericSwitchDevice):
                                                       args=kwargs)
         return cmd_set
 
-    def add_network(self, segmentation_id, network_id, of_controller=None, vfc_name=None):
+    def add_network(self, segmentation_id, network_id, project_id, of_controller=None, vfc_name=None):
         token = self.config['token']
         headers = {'Authorization': token}
                 
@@ -120,6 +120,9 @@ class CorsaSwitch(devices.GenericSwitchDevice):
 
         if vfc_name:
             c_vfc_name = str(vfc_name) 
+        else:
+            c_vfc_name = project_id + "-" + c_vfc_name
+        
 
         c_br_descr = c_vfc_name + "-VLAN-" + str(segmentation_id)
          
@@ -247,7 +250,7 @@ class CorsaSwitch(devices.GenericSwitchDevice):
 
 
    
-    def del_network(self, segmentation_id):
+    def del_network(self, segmentation_id, project_id):
         token = self.config['token']
         headers = {'Authorization': token}
             
@@ -270,8 +273,8 @@ class CorsaSwitch(devices.GenericSwitchDevice):
           with ngs_lock.PoolLock(self.locker, **self.lock_kwargs):
             bridge = corsavfc.get_bridge_by_segmentation_id(headers, url_switch, str(segmentation_id))
             br_descr = corsavfc.get_bridge_descr(headers, url_switch, bridge)
-            # br_descr format: <VFC_NAME>-VLAN-<TAG1>-<TAG2>
-            VLAN_tags = br_descr.split('-')[2:] 
+            # br_descr format: <PROJECT_ID>-<VFC_NAME>-VLAN-<TAG1>-<TAG2>
+            VLAN_tags = br_descr.split('-')[3:] 
             if len(VLAN_tags) > 1:
                 br_descr = br_descr.replace("-" + str(segmentation_id), "")
                 ofport = segmentation_id

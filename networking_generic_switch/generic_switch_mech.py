@@ -83,11 +83,12 @@ class GenericSwitchDriver(driver_api.MechanismDriver):
 
         network = context.current
         network_id = network['id']
+        project_id = network['project_id'].strip()
         provider_type = network['provider:network_type']
         segmentation_id = network['provider:segmentation_id']
 
         of_controller = self.__get_of_controller(network)
-        vfc_name = self.__get_vfc_name(network)
+        vfc_name = self.__get_vfc_name(network, project_id)
 
         LOG.info("PRUTH: create_network: " + str(network) + ", network_id: " + str(network_id))
 
@@ -106,15 +107,15 @@ class GenericSwitchDriver(driver_api.MechanismDriver):
 
 
                         else:
-                            switch.add_network(segmentation_id, network_id, of_controller, vfc_name)
+                            switch.add_network(segmentation_id, network_id, project_id, of_controller, vfc_name)
                     
                     # Unnamed VFC with a user of_controller
                     elif of_controller and hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
-                        switch.add_network(segmentation_id, network_id, of_controller)
+                        switch.add_network(segmentation_id, network_id, project_id, of_controller)
 
                     # Unnamed VFC with no custom of_controller
                     else:
-                        switch.add_network(segmentation_id, network_id)
+                        switch.add_network(segmentation_id, network_id, project_id)
 
                 except Exception as e:
                     LOG.error("Failed to create network %(net_id)s "
@@ -156,15 +157,20 @@ class GenericSwitchDriver(driver_api.MechanismDriver):
         
         return None
 
-    def __get_vfc_name(self, network):
+    def __get_vfc_name(self, network, project_id=None):
         if 'description' in network.keys():
             description = network['description'].strip()
+
 
             if description.startswith('OFController='):
                 VFCparameters = description.split(',')
 
                 if ( len(VFCparameters) > 1 ) and (VFCparameters[1].startswith('VSwitchName=')):
-                    key, vfc_name = VFCparameters[1].split('=')
+                    key, v_switch_name = VFCparameters[1].split('=')
+                    if project_id:
+                        vfc_name = project_id + "-" + v_switch_name 
+                    else:
+                        vfc_name = "NONE-" + v_switch_name 
                     LOG.info("PRUTH: --- vfc_name: " + vfc_name )
 
 
@@ -249,12 +255,13 @@ class GenericSwitchDriver(driver_api.MechanismDriver):
         network = context.current
         provider_type = network['provider:network_type']
         segmentation_id = network['provider:segmentation_id']
+        project_id = network['project_id'].strip()
 
         if provider_type == 'vlan' and segmentation_id:
             # Delete vlan on all switches from this driver
             for switch_name, switch in self.switches.items():
                 try:
-                    switch.del_network(segmentation_id)
+                    switch.del_network(segmentation_id, project_id)
                 except Exception as e:
                     LOG.error("Failed to delete network %(net_id)s "
                               "on device: %(switch)s, reason: %(exc)s",

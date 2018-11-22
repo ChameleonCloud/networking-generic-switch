@@ -561,7 +561,6 @@ def get_bridge_by_vfc_name(headers,
         link = get_bridge(headers,url_switch,url).json()
         if "bridge-descr" in link.keys():
             bridge_descr=str(link["bridge-descr"])
-            ###if bridge_descr == "VLAN-"+str(segmentation_id):
             if bridge_descr.find(vfc_name) > -1 :
                 return bridge
     return None
