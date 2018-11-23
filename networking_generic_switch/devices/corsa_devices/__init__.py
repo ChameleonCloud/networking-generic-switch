@@ -89,7 +89,7 @@ class CorsaSwitch(devices.GenericSwitchDevice):
                                                       args=kwargs)
         return cmd_set
 
-    def add_network(self, segmentation_id, network_id, project_id, of_controller=None, vfc_name=None):
+    def add_network(self, segmentation_id, network_id, project_id=None, of_controller=None, vfc_name=None):
         token = self.config['token']
         headers = {'Authorization': token}
                 
@@ -180,9 +180,6 @@ class CorsaSwitch(devices.GenericSwitchDevice):
             raise e
 
 
-
-
-
     def add_network_to_existing_vfc(self, segmentation_id, network_id, bridge, vfc_name):
         token = self.config['token']
         headers = {'Authorization': token}
@@ -199,15 +196,15 @@ class CorsaSwitch(devices.GenericSwitchDevice):
         c_vfc_name = vfc_name
         c_br = bridge
 
-        c_br_descr = corsavfc.get_bridge_descr(headers, url_switch, c_br)
-        c_br_descr = c_br_descr + "-" + str(segmentation_id)
-        corsavfc.bridge_modify_descr(headers, url_switch , c_br, c_br_descr)
-
 
         LOG.info("PRUTH: --- add_network_to_existing_vfc: " + str(c_br))
 
         try:
             with ngs_lock.PoolLock(self.locker, **self.lock_kwargs):
+
+                c_br_descr = corsavfc.get_bridge_descr(headers, url_switch, c_br)
+                c_br_descr = c_br_descr + "-" + str(segmentation_id)
+                corsavfc.bridge_modify_descr(headers, url_switch , c_br, c_br_descr)
 
                 LOG.info("About to get_ofport: c_br: " + str(c_br) + ", c_uplink_ports: " + str(c_uplink_ports))
                 for uplink in c_uplink_ports.split(','):
@@ -300,6 +297,7 @@ class CorsaSwitch(devices.GenericSwitchDevice):
 
         return ofport
 
+
     def plug_port_to_network(self, port, segmentation_id, vfc_host):
         #OpenStack requires port ids to not be numbers
         #Corsa uses numbers
@@ -309,8 +307,6 @@ class CorsaSwitch(devices.GenericSwitchDevice):
         
         token = self.config['token']
         headers = {'Authorization': token}
-
-        logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
         protocol = 'https://'
         sw_ip_addr = self.config['switchIP']

@@ -96,26 +96,33 @@ class GenericSwitchDriver(driver_api.MechanismDriver):
             # Create vlan on all switches from this driver
             for switch_name, switch in self.switches.items():
                 try:
-                    # Named VFC with a user of_controller
+                    # Corsa - named VFC - custom of_controller
                     if of_controller and vfc_name and  hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
+
                         named_vfc_bridge = switch.find_named_vfc(vfc_name) 
+
                         if named_vfc_bridge :
-                            LOG.info("PRUTH: --- named_vfc found: " + str(named_vfc_bridge) )
+                            #LOG.info("PRUTH: --- corsa-namedvfc-customofcontroller - add_network_to_existing_vfc = " + str(named_vfc_bridge) )
                             switch.add_network_to_existing_vfc(segmentation_id, network_id, named_vfc_bridge, vfc_name)
-                            # FIXME: Add controller add option
-                            #switch.add_network_to_existing_vfc(segmentation_id, network_id, named_vfc_bridge, of_controller, vfc_name)
-
-
                         else:
+                            #LOG.info("PRUTH: --- corsa-namedvfc-customofcontroller - add_network = " + str(named_vfc_bridge) )
                             switch.add_network(segmentation_id, network_id, project_id, of_controller, vfc_name)
                     
-                    # Unnamed VFC with a user of_controller
+                    # Corsa - unnamed VFC - custom of_controller
                     elif of_controller and hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
+                        #LOG.info("PRUTH: --- corsa-unnamedvfc-customofcontroller - add_network " )
                         switch.add_network(segmentation_id, network_id, project_id, of_controller)
 
-                    # Unnamed VFC with no custom of_controller
-                    else:
+                    # Corsa - unnamed VFC - no of_controller
+                    elif hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
+                        #LOG.info("PRUTH: --- corsa-unnamedvfc-noofcontroller - add_network " )
                         switch.add_network(segmentation_id, network_id, project_id)
+
+                    # Dell - unnamed VFC - no of_controller
+                    else:
+                        #LOG.info("PRUTH: --- dell-unnamedvfc-noofcontroller - add_network " )
+                        switch.add_network(segmentation_id, network_id)
+
 
                 except Exception as e:
                     LOG.error("Failed to create network %(net_id)s "
@@ -261,7 +268,10 @@ class GenericSwitchDriver(driver_api.MechanismDriver):
             # Delete vlan on all switches from this driver
             for switch_name, switch in self.switches.items():
                 try:
-                    switch.del_network(segmentation_id, project_id)
+                    if hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
+                        switch.del_network(segmentation_id, project_id)
+                    else:
+                        switch.del_network(segmentation_id)
                 except Exception as e:
                     LOG.error("Failed to delete network %(net_id)s "
                               "on device: %(switch)s, reason: %(exc)s",
