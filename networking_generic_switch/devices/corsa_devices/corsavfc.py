@@ -3,6 +3,7 @@
 from oslo_log import log as logging
 import requests
 import json
+import re
 
 LOG = logging.getLogger(__name__)
 
@@ -536,9 +537,11 @@ def get_bridge_by_segmentation_id(headers,
         url=value['href']
         link = get_bridge(headers,url_switch,url).json()
         if "bridge-descr" in link.keys():
-            bridge_descr=str(link["bridge-descr"])
-            ###if bridge_descr == "VLAN-"+str(segmentation_id):
-            if bridge_descr.find(str(segmentation_id)) > -1 :
+            bridge_descr = str(link["bridge-descr"])
+            # Chameleon specific br_descr format: <PROJECT_ID>-<VFC_NAME>-VLAN-<TAG1>-<TAG2>
+            # Extract VLAN tags 
+            vlan_tags = re.match( r'(.*?)-(.*?)-VLAN-(.*)', bridge_descr, re.I ) 
+            if vlan_tags.group(3) and ( vlan_tags.group(3).find(str(segmentation_id)) > -1 ) :
                 return bridge 
     return None
 
