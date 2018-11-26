@@ -181,10 +181,10 @@ class GenericSwitchDriver(driver_api.MechanismDriver):
                     LOG.info("PRUTH: --- vfc_name: " + vfc_name )
 
 
-                     # FIXME: Validate VFC name
+                    # FIXME: Validate VFC name
                     try:
                         #if not bool(re.match('^[a-zA-Z0-9]+$', vfc_name)) and (len(vfc_name) < 25):
-                        if (not vfc_name.isalnum()) or (len(vfc_name) > 25):
+                        if (not v_switch_name.isalnum()) or len(v_switch_name) > 25:
                             raise ValueError   
                     except: 
                         raise Exception("Invalid VSwitch Name: %s", vfc_name)
