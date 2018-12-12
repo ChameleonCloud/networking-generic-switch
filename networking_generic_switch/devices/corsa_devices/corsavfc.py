@@ -452,6 +452,555 @@ def bridge_detach_tunnel(headers,
 
 
 #
+# GET DATAPATH
+#
+#   200 OK
+#   303 See Other
+def get_datapath(headers,
+                 url_switch):
+    url = url_switch + ep_datapath
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET DATAPATH LAG-HASH
+#
+#   200 OK
+def get_datapath_laghash(headers,
+                         url_switch):
+    url = url_switch + ep_datapath + '/lag-hash'
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET DATAPATH STATUS
+#
+#   200 OK
+#   303 See other
+def get_datapath_status(headers,
+                        url_switch):
+    url = url_switch + ep_datapath + '/status'
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET EQUIPMENT
+#
+#   200 OK
+#
+def get_equipment(headers,
+                  url_switch):
+    url = url_switch + ep_equipment
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET EQUIPMENT SLOTS
+#
+#   200 OK
+#
+def get_equipment_slots(headers,
+                        url_switch):
+    url = url_switch + ep_equipment + '/slots'
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET EQUIPMENT SLOT 
+#
+#   200 OK
+#
+def get_equipment_slot(headers,
+                       url_switch,
+                       slot):
+    url = url_switch + ep_equipment + '/slots/' + str(slot)
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET EQUIPMENT SLOT MODULE 
+#
+#   200 OK
+#   404 Not Found
+def get_equipment_slot_module(headers,
+                              url_switch,
+                              slot):
+    url = url_switch + ep_equipment + '/slots/' + str(slot) + '/module'
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET EQUIPMENT FANTRAYS
+#
+#   200 OK
+#
+def get_equipment_fantrays(headers,
+                           url_switch):
+    url = url_switch + ep_equipment + '/fantrays'
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET EQUIPMENT FANTRAY
+#
+#   200 OK
+#   404 Not Found
+def get_equipment_fantray(headers,
+                          url_switch,
+                          fantray):
+    url = url_switch + ep_equipment + '/fantrays/' + str(fantray)
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET EQUIPMENT FANS
+#
+#   200 OK
+#   404 Not Found
+def get_equipment_fans(headers,
+                       url_switch,
+                       fantray):
+    url = url_switch + ep_equipment + '/fantrays/' + str(fantray) + '/fans'
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+
+#
+# GET EQUIPMENT FAN
+#
+#   200 OK
+#   404 Not Found
+def get_equipment_fan(headers,
+                      url_switch,
+                      fantray,
+                      fan):
+    url = url_switch + ep_equipment + '/fantrays/' + str(fantray) + '/fans/' + str(fan)
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET EQUIPMENT LED
+#
+#   200 OK
+#
+def get_equipment_led(headers,
+                      url_switch):
+    url = url_switch + ep_equipment + '/led'
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET EQUIPMENT BOARDTEMP
+#
+#   200 OK
+#
+def get_equipment_boardtemp(headers,
+                            url_switch):
+    url = url_switch + ep_equipment + '/boardtemp'
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET EQUIPMENT CPU
+#
+#   200 OK
+#
+def get_equipment_cpu(headers,
+                      url_switch):
+    url = url_switch + ep_equipment + '/cpu'
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET EQUIPMENT PSUS
+#
+#   200 OK
+#
+def get_equipment_psus(headers,
+                       url_switch):
+    url = url_switch + ep_equipment + '/psus'
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET EQUIPMENT PSU
+#
+#   200 OK
+#
+def get_equipment_psu(headers,
+                      url_switch,
+                      psu):
+    url = url_switch + ep_equipment + '/psus/' + str(psu)
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET EQUIPMENT EEPROMS
+#
+#   200 OK
+#
+def get_equipment_eeproms(headers,
+                          url_switch):
+    url = url_switch + ep_equipment + '/eeproms'
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET EQUIPMENT EEPROM
+#
+#   200 OK
+#
+def get_equipment_eeprom(headers,
+                         url_switch,
+                         eeprom):
+    url = url_switch + ep_equipment + '/eeproms/' + str(eeprom)
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET EQUIPMENT AIRFLOW
+#
+#   200 OK
+#
+def get_equipment_airflow(headers,
+                          url_switch):
+    url = url_switch + ep_equipment + '/airflow'
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET NETNS
+#
+#   200 OK
+#
+def get_netns_info(headers,
+                   url_switch):
+    url = url_switch + ep_netns 
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET NETNS SPECIFIC
+#
+#   200 OK
+#
+def get_netns(headers,
+              url_switch,
+              netns):
+    url = url_switch + ep_netns + '/' + str(netns)
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET NETNS TUNNELS
+#
+#   200 OK
+#
+def get_netns_tunnels(headers,
+                      url_switch,
+                      netns):
+    url = url_switch + ep_netns + '/' + str(netns) + '/tunnels'
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET NETNS TUNNEL
+#
+#   200 OK
+#
+def get_netns_tunnel(headers,
+                     url_switch,
+                     netns,
+                     tunnel):
+    url = url_switch + ep_netns + '/' + str(netns) + '/tunnels/' + str(tunnel)
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET PORTS
+#
+#   200 OK
+#   403 Forbidden
+def get_ports(headers,
+              url_switch):
+    url = url_switch + ep_ports
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET PORT
+#
+#   200 OK
+#   403 Forbidden
+def get_port(headers,
+             url_switch,
+             port):
+    url = url_switch + ep_ports + '/' + str(port)
+
+    try: 
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET PORT TRAFFIC CLASSES
+#
+#   200 OK
+#   403 Forbidden
+def get_port_traffic_class(headers,
+                           url_switch,
+                           port):
+    url = url_switch + ep_ports + '/' + str(port) + '/traffic-classes'
+
+    try: 
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET QUEUE PROFILES
+#
+#   200 OK
+#   
+def get_queue_profiles(headers,
+                       url_switch):
+    url = url_switch + ep_qp
+
+    try: 
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+
+#
+# GET STATS
+#
+#   200 OK
+#   
+def get_stats(headers,
+              url_switch):
+    url = url_switch + ep_stats
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET STATS PORTS
+#
+#   200 OK
+#   
+def get_stats_ports(headers,
+                    url_switch,
+                    port=None):
+    if port:
+        url = url_switch + ep_stats + '/ports?port=' + str(port)
+    else:
+        url = url_switch + ep_stats + '/ports'
+
+    try: 
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET STATS TUNNELS
+#
+#   200 OK
+#   
+def get_stats_tunnels(headers,
+                      url_switch,
+                      bridge=None,
+                      ofport=None):
+    if bridge and ofport: 
+        url = url_switch + ep_stats + '/tunnels' + '?bridge=br' + str(bridge) + '&ofport=' + str(ofport)
+    elif bridge and not ofport:
+        url = url_switch + ep_stats + '/tunnels' + '?bridge=br' + str(bridge)
+    else:
+        url = url_switch + ep_stats + '/tunnels'
+
+    try: 
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET SYSTEM
+#
+#   200 OK
+#   
+def get_system(headers,
+               url_switch):
+    url = url_switch + ep_system
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET TUNNELS
+#
+#   200 OK
+#   
+def get_tunnels(headers,
+                url_switch,
+                qlist=None):
+    if qlist:
+        url = url_switch + ep_tunnels + '?list=true'
+    else:
+        url = url_switch + ep_tunnels 
+
+    try: 
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+
+
+
+
+
+
+
+#
 # GET BRIDGES
 #
 #   200
