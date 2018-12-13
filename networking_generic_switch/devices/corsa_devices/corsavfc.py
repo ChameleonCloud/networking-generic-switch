@@ -140,7 +140,6 @@ def bridge_create(headers,
 
     try:
         output = requests.post(url ,data=data, headers=headers, verify=False)
-        print output.json()
 
         if output.status_code == 201:
             LOG.info(" Create Bridge: " + "url: " + str(url) + ", " + str(output.status_code) + " Success")
@@ -297,7 +296,6 @@ def bridge_attach_tunnel_ctag_vlan(headers,
 
     try:
         output = requests.post(url ,data=data, headers=headers, verify=False)
-        print output.json()
 
         if output.status_code == 201:
                 LOG.info(" Attach ctag vlan port to bridge: " + "url: " + str(url) + ", " + str(output.status_code) + " Success")
@@ -346,7 +344,6 @@ def bridge_attach_tunnel_passthrough(headers,
 
     try:
         output = requests.post(url ,data=data, headers=headers, verify=False)
-        print output.json()
 
         if output.status_code == 201:
             LOG.info(" Attach passthrough port to bridge: " + "url: " + str(url) + ", " + str(output.status_code) + " Success")
@@ -412,7 +409,6 @@ def bridge_attach_tunnel_ctag_vlan_range(headers,
 
     try:
         r = requests.post(url ,data=data, headers=headers, verify=False)
-        print r.json()
     except Exception as e:
         raise e
     return r
@@ -1030,6 +1026,50 @@ def get_bridge(headers,
     except Exception as e:
         raise e
     return r
+
+#
+# GET BRIDGE WITH BR NUMBER
+#
+#   200     
+#   403 Forbidden
+def get_bridge_by_number(headers,
+                         url_switch,
+                         bridge_number):
+
+    url = url_switch + ep_bridges + '/' + 'br' + str(bridge_number)
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+#
+# GET CONTROLLER
+#
+#   200     
+#   403 Forbidden
+#   404 Not Found
+def get_bridge_controller(headers,
+                          url_switch,
+                          bridge_number=None,
+                          bridge_url=None):
+
+    if bridge_number and not bridge_url:
+        url = url_switch + ep_bridges + '/br' + str(bridge_number) + '/controllers'
+    elif bridge_url and not bridge_number:
+        url = bridge_url + '/controllers'
+    else:
+        return 404       
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
 
 
 #
