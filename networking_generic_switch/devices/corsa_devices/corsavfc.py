@@ -1070,6 +1070,33 @@ def get_bridge_controller(headers,
     return r
 
 
+#
+# GET TUNNELS ATTACHED TO BRIDGE 
+#
+#   200     
+#   403 Forbidden
+#   404 Not Found
+def get_bridge_tunnel(headers,
+                      url_switch,
+                      bridge_number=None,
+                      bridge_url=None):
+
+    if bridge_number and not bridge_url:
+        url = url_switch + ep_bridges + '/br' + str(bridge_number) + '/tunnels'
+    elif bridge_url and not bridge_number:
+        url = bridge_url + '/tunnels'
+    else:
+        return 404
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+
+
+
 
 
 #
