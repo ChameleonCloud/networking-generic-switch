@@ -113,7 +113,7 @@ class GenericSwitchDriver(driver_api.MechanismDriver):
                                 named_vfc_bridge = switch.find_named_vfc(vfc_name)
                                 if named_vfc_bridge:
                                     #LOG.info("PRUTH: --- corsa-namedvfc - VFC exists - add_network_to_existing_vfc = " + str(named_vfc_bridge) )
-                                    switch.add_network_to_existing_vfc(segmentation_id, network_id, named_vfc_bridge, vfc_name) 
+                                    switch.add_network_to_existing_vfc(segmentation_id, network_id, named_vfc_bridge, vfc_name, of_controller) 
                                 else:
                                     #LOG.info("PRUTH: --- corsa-namedvfc - VFC does not exist - add_network = " + str(named_vfc_bridge) )
                                     switch.add_network(segmentation_id, network_id, project_id, of_controller, vfc_name)

@@ -180,7 +180,7 @@ class CorsaSwitch(devices.GenericSwitchDevice):
             raise e
 
 
-    def add_network_to_existing_vfc(self, segmentation_id, network_id, bridge, vfc_name):
+    def add_network_to_existing_vfc(self, segmentation_id, network_id, bridge, vfc_name, of_controller=None):
         token = self.config['token']
         headers = {'Authorization': token}
 
@@ -205,6 +205,17 @@ class CorsaSwitch(devices.GenericSwitchDevice):
                 c_br_descr = corsavfc.get_bridge_descr(headers, url_switch, c_br)
                 c_br_descr = c_br_descr + "-" + str(segmentation_id)
                 corsavfc.bridge_modify_descr(headers, url_switch , c_br, c_br_descr)
+
+                #if of_controller:
+                #    cont_ip, cont_port = of_controller
+                #    vfc_controller_ip = self.get_ofcontroller_ip_address(c_br)
+                #    LOG.info("PRUTH: --- Controller Specified: " + str(cont_ip))
+                #    LOG.info("PRUTH: --- Controller Current  : " + str(vfc_controller_ip))
+
+                #    if vfc_controller_ip != cont_ip:
+                #        cont_id = 'CONT' + str(c_br) 
+                #        corsavfc.bridge_detach_controller(headers, url_switch, br_id = c_br, cont_id = cont_id)
+                #        corsavfc.bridge_add_controller(headers, url_switch, br_id = c_br, cont_id = cont_id, cont_ip = cont_ip, cont_port = cont_port)
 
                 LOG.info("About to get_ofport: c_br: " + str(c_br) + ", c_uplink_ports: " + str(c_uplink_ports))
                 for uplink in c_uplink_ports.split(','):
@@ -238,7 +249,13 @@ class CorsaSwitch(devices.GenericSwitchDevice):
         c_uplink_ports = self.config['uplink_ports']
 
         c_br = self.config['sharedNonByocVFC']
-        
+
+        isVFCHost = True
+        if not 'VFCHost' in self.config or not self.config['VFCHost'] == 'True':
+            LOG.info("PRUTH: Skipping VFC Creation: isVFCHost " + str(isVFCHost))
+            isVFCHost = False
+            return
+ 
 
         LOG.info("PRUTH: --- add_network_to_sharedNonByoc_vfc: " + str(c_br))
 
