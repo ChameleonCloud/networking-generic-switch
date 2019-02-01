@@ -1157,6 +1157,8 @@ def get_bridge_by_segmentation_id(headers,
             # Chameleon specific br_descr format: <PROJECT_ID>-<VFC_NAME>-VLAN-<TAG1>-<TAG2>
             # Extract VLAN tags 
             vlan_tags = re.match( r'(.*?)-(.*?)-VLAN-(.*)', bridge_descr, re.I ) 
+            LOG.info("--- PRUTH: get_bridge_by_segmentation_id - bridge-descr   : " + bridge_descr )
+            LOG.info("--- PRUTH: get_bridge_by_segmentation_id - segmentation_id: " + str(segmentation_id))
             if vlan_tags.group(3) and ( vlan_tags.group(3).find(str(segmentation_id)) > -1 ) :
                 return bridge 
     return None

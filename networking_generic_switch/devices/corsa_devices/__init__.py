@@ -375,10 +375,10 @@ class CorsaSwitch(devices.GenericSwitchDevice):
 
 
     def get_sharedNonByocPort(self, port, segmentation_id):
-        sharedNonByocVLAN = self.config['sharedNonByocVLAN']
+        #sharedNonByocVLAN = self.config['sharedNonByocVLAN']
         port_num=port[2:]
-        segmentation_id_first_digit = segmentation_id[0]
-        segmentation_id_last3_digit = segmentation_id[-3:]
+        segmentation_id_first_digit = str(segmentation_id)[0]
+        segmentation_id_last3_digit = str(segmentation_id)[-3:]
         ofport = port_num + segmentation_id_last3_digit
         return int(ofport)
 
@@ -407,13 +407,13 @@ class CorsaSwitch(devices.GenericSwitchDevice):
         node_vlan=None
         dst_switch_name=None
 
-
         br_id = corsavfc.get_bridge_by_segmentation_id(headers, url_switch, segmentation_id)
+        LOG.info("PRUTH: br_id : " + str(br_id) + " for network " + str(segmentation_id))
 
         if port in self.config:
             LOG.info("PRUTH: Binding port " + str(port) + " maps to " + str(self.config[port]))
             if br_id == sharedNonByocVFC:
-                ofport = get_sharedNonByocPort(port, segmentation_id)   
+                ofport = self.get_sharedNonByocPort(port, segmentation_id)   
             else:
                 ofport=str(int(self.config[port])+10000)
             node_vlan=self.config[port]
@@ -497,10 +497,23 @@ class CorsaSwitch(devices.GenericSwitchDevice):
 
     def delete_port(self, port, segmentation_id, vfc_host, ofport=None):
 
+        token = self.config['token']
+        headers = {'Authorization': token}
+
+        protocol = 'https://'
+        sw_ip_addr = self.config['switchIP']
+        url_switch = protocol + sw_ip_addr
+        sharedNonByocVFC = self.config['sharedNonByocVFC']
+
+        br_id = corsavfc.get_bridge_by_segmentation_id(headers, url_switch, segmentation_id)
 
         if ofport == None and port in self.config:
+           
             LOG.info("PRUTH: delete port " + str(port) + " maps to " + str(self.config[port]))
-            ofport=str(int(self.config[port])+10000)
+            if br_id == sharedNonByocVFC:
+                ofport = self.get_sharedNonByocPort(port, segmentation_id)
+            else:   
+                ofport=str(int(self.config[port])+10000)
 
         if not vfc_host == self:
             vfc_host.delete_port(port, segmentation_id, vfc_host, ofport=ofport)
