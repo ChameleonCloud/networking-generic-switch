@@ -408,11 +408,14 @@ class CorsaSwitch(devices.GenericSwitchDevice):
         #We need to strip the 'p ' off of the port number.
         port_num=port[2:]
         
-        token = self.config['token']
+        # 
+        # REST calls should be sent to the vfc_host for both corsa switch instances 
+        # 
+        token = vfc_host.config['token']
         headers = {'Authorization': token}
 
         protocol = 'https://'
-        sw_ip_addr = self.config['switchIP']
+        sw_ip_addr = vfc_host.config['switchIP']
         url_switch = protocol + sw_ip_addr
         sharedNonByocVFC = self.config['sharedNonByocVFC']
 
