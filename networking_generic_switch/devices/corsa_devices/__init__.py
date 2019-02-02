@@ -419,24 +419,28 @@ class CorsaSwitch(devices.GenericSwitchDevice):
         url_switch = protocol + sw_ip_addr
         sharedNonByocVFC = self.config['sharedNonByocVFC']
 
-        LOG.info("PRUTH: switch: " + str(self) + ",  switch: " + self.config['name'] ) 
-        LOG.info("PRUTH: self.config: " + str(self.config))
-        LOG.info("PRUTH: Binding port " + str(port) + " to network " + str(segmentation_id))
+        LOG.info("PRUTH: plug_port_to_network - switch: " + str(self) + ",  switch: " + self.config['name'] ) 
+        LOG.info("PRUTH: plug_port_to_network - self.config: " + str(self.config))
+        LOG.info("PRUTH: plug_port_to_network - Binding port " + str(port) + " to network " + str(segmentation_id))
 
         ofport=None
         node_vlan=None
         dst_switch_name=None
 
         br_id = corsavfc.get_bridge_by_segmentation_id(headers, url_switch, segmentation_id)
-        LOG.info("PRUTH: br_id : " + str(br_id) + " for network " + str(segmentation_id))
+        LOG.info("PRUTH: plug_port_to_network - br_id : " + str(br_id) + " for network " + str(segmentation_id))
 
         if port in self.config:
-            LOG.info("PRUTH: Binding port " + str(port) + " maps to " + str(self.config[port]))
+            LOG.info("PRUTH: plug_port_to_network - Binding port " + str(port) + " maps to " + str(self.config[port]))
             if br_id == sharedNonByocVFC:
                 ofport = self.get_sharedNonByocPort(port, segmentation_id)   
+                LOG.info("PRUTH: plug_port_to_network - sharedNonByocVFC: " + str(br_id) + " ofport: " + str(ofport))
             else:
                 ofport=str(int(self.config[port])+10000)
+                LOG.info("PRUTH: plug_port_to_network - ByocVFC: " + str(br_id) + " ofport: " + str(ofport))
+
             node_vlan=self.config[port]
+
         else:
             LOG.info("PRUTH: Binding port " + str(port) +" missing")
             LOG.info("PRUTH: Binding port " + str(self.config))
@@ -450,7 +454,7 @@ class CorsaSwitch(devices.GenericSwitchDevice):
 
             #Step 2: config VFCHost with ctag tunnel
             #params:  segmentaion_id, node_vlan, destination_switch_name
-            vfc_host.__bind_ctag_tunnel(segmentation_id, node_vlan, dst_switch_name)
+            vfc_host.__bind_ctag_tunnel(segmentation_id, node_vlan, dst_switch_name, ofport)
             
         else: 
             #Step 2: config VFCHost (i.e. local host) with passthrough tunnel
@@ -484,9 +488,9 @@ class CorsaSwitch(devices.GenericSwitchDevice):
 
 
 
-    def __bind_ctag_tunnel(self, segmentation_id, node_vlan, dst_switch_name):
-        LOG.info("adding to vfc_host: __bind_ctag_tunnel")      
-        LOG.info("PRUTH: switch: " + self.config['name'] + ", VFCHost: " + str(segmentation_id) + ", " + str(node_vlan) + ", " + str(dst_switch_name))
+    def __bind_ctag_tunnel(self, segmentation_id, node_vlan, dst_switch_name, ofport=None):
+        LOG.info("PRUTH: __bind_ctag_tunnel - adding to vfc_host: __bind_ctag_tunnel")      
+        LOG.info("PRUTH: __bind_ctag_tunnel - switch: " + self.config['name'] + ", VFCHost: " + str(segmentation_id) + ", " + str(node_vlan) + ", " + str(dst_switch_name))
 
         #port_num=port[2:]
         token = self.config['token']
@@ -505,11 +509,12 @@ class CorsaSwitch(devices.GenericSwitchDevice):
 
         try:
             with ngs_lock.PoolLock(self.locker, **self.lock_kwargs):
-                LOG.info("About to dst_port: " + str(dst_port) )
+                LOG.info("PRUTH: __bind_ctag_tunnel - About to dst_port: " + str(dst_port) )
                 br_id = corsavfc.get_bridge_by_segmentation_id(headers, url_switch, segmentation_id)
-                ofport=str(int(str(node_vlan))+10000)
-                LOG.info("ofport: " + str(ofport))
-                LOG.info("br_id: " + str(br_id))
+                if not ofport:
+                    ofport=str(int(str(node_vlan))+10000)
+                LOG.info("PRUTH: __bind_ctag_tunnel - ofport: " + str(ofport))
+                LOG.info("PRUTH: __bind_ctag_tunnel - br_id : " + str(br_id))
                 corsavfc.bridge_attach_tunnel_ctag_vlan(headers, url_switch, br_id = br_id, ofport = ofport, port = int(dst_port), vlan_id = node_vlan)
 
         except Exception as e:
