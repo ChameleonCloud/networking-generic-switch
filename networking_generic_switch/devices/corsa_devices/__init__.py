@@ -522,28 +522,35 @@ class CorsaSwitch(devices.GenericSwitchDevice):
 
     def delete_port(self, port, segmentation_id, vfc_host, ofport=None):
 
-        token = self.config['token']
+        # 
+        # REST calls should be sent to the vfc_host for both corsa switch instances 
+        # 
+        token = vfc_host.config['token']
         headers = {'Authorization': token}
 
         protocol = 'https://'
-        sw_ip_addr = self.config['switchIP']
+        sw_ip_addr = vfc_host.config['switchIP']
         url_switch = protocol + sw_ip_addr
         sharedNonByocVFC = self.config['sharedNonByocVFC']
 
         br_id = corsavfc.get_bridge_by_segmentation_id(headers, url_switch, segmentation_id)
+        LOG.info("PRUTH: delete_port - br_id on VFCHost: " + str(br_id) + " for network " + str(segmentation_id))
 
         if ofport == None and port in self.config:
-           
-            LOG.info("PRUTH: delete port " + str(port) + " maps to " + str(self.config[port]))
+            LOG.info("PRUTH: delete_port - port: " + str(port) + " maps to " + str(self.config[port]))
             if br_id == sharedNonByocVFC:
                 ofport = self.get_sharedNonByocPort(port, segmentation_id)
+                LOG.info("PRUTH: delete_port - sharedNonByocVFC: " + str(br_id) + " ofport: " + str(ofport))
             else:   
                 ofport=str(int(self.config[port])+10000)
+                LOG.info("PRUTH: delete_port - ByocVFC: " + str(br_id) + " ofport: " + str(ofport))
 
         if not vfc_host == self:
             vfc_host.delete_port(port, segmentation_id, vfc_host, ofport=ofport)
         else:
             self.__delete_ofport(ofport, segmentation_id)
+
+
 
     def __delete_ofport(self, ofport, segmentation_id):
         #OpenStack requires port ids to not be numbers                                                                                                        
