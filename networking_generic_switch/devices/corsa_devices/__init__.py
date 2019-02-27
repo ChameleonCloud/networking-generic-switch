@@ -234,7 +234,13 @@ class CorsaSwitch(devices.GenericSwitchDevice):
                 LOG.error(" Failed to cleanup bridge after failed add_network: " + str(segmentation_id) + ", bridge: " + str(bridge) + ", Error: " + str(e2))
             raise e
 
-
+    #
+    # Special case: 
+    # Networks are created on the designated VFC (sharedNonByocVFC)
+    # Port numbers are created by using the last 3 digits of VLAN tags (segmenration id)
+    # Current vlan-port mapping cannot handle VLAN pools that span thousand range
+    # VLAN range can be 3000-3999
+    #
     def add_network_to_sharedNonByoc_vfc(self, segmentation_id, network_id):
         token = self.config['token']
         headers = {'Authorization': token}
@@ -267,12 +273,12 @@ class CorsaSwitch(devices.GenericSwitchDevice):
 
                 LOG.info("About to get_ofport: c_br: " + str(c_br) + ", c_uplink_ports: " + str(c_uplink_ports))
                 for uplink in c_uplink_ports.split(','):
-                     #Attach the uplink tunnel
+                     # Attach the uplink tunnel
                      LOG.info("About to get_ofport: c_br: " + str(c_br) + ", uplink: " + str(uplink))
-                     #The logical port number of an uplink is assumed to be the VLAN id
-                     ofport=c_vlan
+                     # Logical port number of an uplink port is last 3 digits of VLAN tag
+                     ofport=str(c_vlan)[-3:]
                      LOG.info("ofport: " + str(ofport))
-                     corsavfc.bridge_attach_tunnel_ctag_vlan(headers, url_switch, br_id = c_br, ofport = ofport, port = int(uplink), vlan_id = c_vlan)
+                     corsavfc.bridge_attach_tunnel_ctag_vlan(headers, url_switch, br_id = c_br, ofport = int(ofport), port = int(uplink), vlan_id = c_vlan)
 
         except Exception as e:
             LOG.error("Failed add network. attempting to cleanup bridge: " + str(e) + ", " + traceback.format_exc())
@@ -362,9 +368,9 @@ class CorsaSwitch(devices.GenericSwitchDevice):
             
             if bridge == sharedNonByocVFC:
                 br_descr = br_descr.replace("-" + str(segmentation_id), "")
-                ofport = segmentation_id
+                ofport = str(segmentation_id)[-3:]
                 corsavfc.bridge_modify_descr(headers, url_switch , bridge, br_descr)
-                corsavfc.bridge_detach_tunnel(headers, url_switch, bridge, ofport)
+                corsavfc.bridge_detach_tunnel(headers, url_switch, bridge, int(ofport))
             else:
                 if (len(VLAN_tags) > 1):
                     br_descr = br_descr.replace("-" + str(segmentation_id), "")
