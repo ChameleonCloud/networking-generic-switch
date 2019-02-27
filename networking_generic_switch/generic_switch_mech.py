@@ -54,6 +54,13 @@ class GenericSwitchDriver(api.MechanismDriver):
             self.switches[switch_info] = switch
             if 'VFCHost' in device_cfg and device_cfg['VFCHost'] == 'True':
                 self.vfcHost = switch
+            if 'sharedNonByocVFC' in device_cfg:
+                self.sharedNonByocVFC = device_cfg['sharedNonByocVFC']
+            if 'sharedNonByocVLAN' in device_cfg:
+                self.sharedNonByocVLAN = device_cfg['sharedNonByocVLAN']
+            if 'sharedNonByocProvider' in device_cfg:
+                self.sharedNonByocProvider = device_cfg['sharedNonByocProvider']
+
         LOG.info('Devices %s have been loaded', self.switches.keys())
         if not self.switches:
             LOG.error('No devices have been loaded')
@@ -99,33 +106,32 @@ class GenericSwitchDriver(api.MechanismDriver):
             # Create vlan on all switches from this driver
             for switch_name, switch in self._get_devices_by_physnet(physnet):
                 try:
-                    # Corsa - named VFC - custom of_controller
-                    if of_controller and vfc_name and  hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
-
-                        named_vfc_bridge = switch.find_named_vfc(vfc_name)
-
-                        if named_vfc_bridge :
-                            #LOG.info("PRUTH: --- corsa-namedvfc-customofcontroller - add_network_to_existing_vfc = " + str(named_vfc_bridge) )
-                            switch.add_network_to_existing_vfc(segmentation_id, network_id, named_vfc_bridge, vfc_name)
+                    is_byoc_network = False
+                    if hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
+                        if of_controller or vfc_name:
+                            is_byoc_network = True
+                        if is_byoc_network:
+                            if vfc_name:
+                                named_vfc_bridge = switch.find_named_vfc(vfc_name)
+                                if named_vfc_bridge:
+                                    #LOG.info("PRUTH: --- corsa-namedvfc - VFC exists - add_network_to_existing_vfc = " + str(named_vfc_bridge) )
+                                    switch.add_network_to_existing_vfc(segmentation_id, network_id, named_vfc_bridge, vfc_name, of_controller)
+                                else:
+                                    #LOG.info("PRUTH: --- corsa-namedvfc - VFC does not exist - add_network = " + str(named_vfc_bridge) )
+                                    switch.add_network(segmentation_id, network_id, project_id, of_controller, vfc_name)
+                            else:
+                                #LOG.info("PRUTH: --- corsa-unnamedvfc - custom ofcontroller - add_network " )
+                                switch.add_network(segmentation_id, network_id, project_id, of_controller)
                         else:
-                            #LOG.info("PRUTH: --- corsa-namedvfc-customofcontroller - add_network = " + str(named_vfc_bridge) )
-                            switch.add_network(segmentation_id, network_id, project_id, of_controller, vfc_name)
-
-                    # Corsa - unnamed VFC - custom of_controller
-                    elif of_controller and hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
-                        #LOG.info("PRUTH: --- corsa-unnamedvfc-customofcontroller - add_network " )
-                        switch.add_network(segmentation_id, network_id, project_id, of_controller)
-
-                    # Corsa - unnamed VFC - no of_controller
-                    elif hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
-                        #LOG.info("PRUTH: --- corsa-unnamedvfc-noofcontroller - add_network " )
-                        switch.add_network(segmentation_id, network_id, project_id)
-
-                    # Dell - unnamed VFC - no of_controller
+                            if physnet == self.sharedNonByocProvider:
+                                #LOG.info("PRUTH: --- corsa-unnamedvfc - sharedBYOC - add_network " )
+                                switch.add_network_to_sharedNonByoc_vfc(segmentation_id, network_id)
+                            else:
+                                #LOG.info("PRUTH: --- corsa-unnamedvfc - BYOC - add_network " )
+                                switch.add_network(segmentation_id, network_id, project_id)
                     else:
-                        #LOG.info("PRUTH: --- dell-unnamedvfc-noofcontroller - add_network " )
+                        LOG.info("PRUTH: --- dell-unnamedvfc - noofcontroller - add_network " )
                         switch.add_network(segmentation_id, network_id)
-
 
                 except Exception as e:
                     LOG.error("Failed to create network %(net_id)s "
@@ -144,13 +150,10 @@ class GenericSwitchDriver(api.MechanismDriver):
             description = network['description'].strip()
             LOG.info("PRUTH: --- Description = " + description )
 
-
             if description.startswith('OFController='):
                 VFCparameters = description.split(',')
                 key, controller = VFCparameters[0].split('=')
                 cont_ip, cont_port = controller.strip().split(':')
-
-
 
                 # Validate controller IP address and port
                 try:
@@ -172,19 +175,17 @@ class GenericSwitchDriver(api.MechanismDriver):
         if 'description' in network.keys():
             description = network['description'].strip()
 
-
             if description.startswith('OFController='):
                 VFCparameters = description.split(',')
 
                 if ( len(VFCparameters) > 1 ) and (VFCparameters[1].startswith('VSwitchName=')):
                     key, v_switch_name = VFCparameters[1].split('=')
+
                     if project_id:
                         vfc_name = project_id + "-" + v_switch_name
                     else:
                         vfc_name = "NONE-" + v_switch_name
                     LOG.info("PRUTH: --- vfc_name: " + vfc_name )
-
-
                     # FIXME: Validate VFC name
                     try:
                         #if not bool(re.match('^[a-zA-Z0-9]+$', vfc_name)) and (len(vfc_name) < 25):
@@ -192,13 +193,25 @@ class GenericSwitchDriver(api.MechanismDriver):
                             raise ValueError
                     except:
                         raise Exception("Invalid VSwitch Name: %s", vfc_name)
-
                     return vfc_name
 
+            elif description.startswith('VSwitchName='):
+                key, v_switch_name = description.split('=')
+
+                if project_id:
+                    vfc_name = project_id + "-" + v_switch_name
+                else:
+                    vfc_name = "NONE-" + v_switch_name
+                LOG.info("PRUTH: --- vfc_name: " + vfc_name )
+                # FIXME: Validate VFC name
+                try:
+                    if (not v_switch_name.isalnum()) or len(v_switch_name) > 25:
+                        raise ValueError
+                except:
+                        raise Exception("Invalid VSwitch Name: %s", vfc_name)
+                return vfc_name
+
         return None
-
-
-
 
 
     def update_network_precommit(self, context):
