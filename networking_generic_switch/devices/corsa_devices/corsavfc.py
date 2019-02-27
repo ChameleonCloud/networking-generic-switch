@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 
 from oslo_log import log as logging
 import requests
@@ -11,19 +11,8 @@ LOG = logging.getLogger(__name__)
 # ENDPOINTS
 #
 endpoint = '/api/v1'
-ep_datapath = endpoint + '/datapath'    # Datapath
 ep_bridges = endpoint + '/bridges'      # Bridge
-ep_stats = endpoint + '/stats'          # Stats
-ep_users = endpoint + '/users'          # Users
-ep_system = endpoint + '/system'        # System
-ep_equipment = endpoint + '/equipment'  # Equipment
-ep_tunnels = endpoint + '/tunnels'      # Tunnels
-ep_qp = endpoint + '/queue-profiles'    # Queue-profiles        
 ep_ports = endpoint + '/ports'          # Ports
-ep_containers = endpoint + '/containers'# Containers
-ep_netns = endpoint + '/netns'
-
-
 
 #
 # PORT MODIFY
@@ -32,7 +21,7 @@ ep_netns = endpoint + '/netns'
 #   400 Bad Request
 #   403 Forbidden
 #   404 Not Found
-#   409 Conflict 
+#   409 Conflict
 
 
 def port_modify_tunnel_mode(headers, url_switch , port_number, tunnel_mode):
@@ -45,8 +34,8 @@ def port_modify_tunnel_mode(headers, url_switch , port_number, tunnel_mode):
     except Exception as e:
         raise e
     return r
- 
-  
+
+
 def port_modify_mtu(headers, url_switch , port_number, mtu):
     url = url_switch + ep_ports + '/' + str(port_number)
     data = [
@@ -118,15 +107,15 @@ def bridge_modify_descr(headers, url_switch , bridge, br_descr):
 #   403 Forbidden
 #   409 Conflict
 
-def bridge_create(headers, 
-                  url_switch, 
-                  br_id, 
-                  br_dpid = None, 
-                  br_subtype = None, 
-                  br_resources = None, 
-                  br_traffic_class = None, 
+def bridge_create(headers,
+                  url_switch,
+                  br_id,
+                  br_dpid = None,
+                  br_subtype = None,
+                  br_resources = None,
+                  br_traffic_class = None,
                   br_descr = None,
-                  br_namespace = None): 
+                  br_namespace = None):
     url = url_switch + ep_bridges
     data = {
         'bridge':br_id,
@@ -140,7 +129,6 @@ def bridge_create(headers,
 
     try:
         output = requests.post(url ,data=data, headers=headers, verify=False)
-        print output.json()
 
         if output.status_code == 201:
             LOG.info(" Create Bridge: " + "url: " + str(url) + ", " + str(output.status_code) + " Success")
@@ -170,7 +158,7 @@ def bridge_create(headers,
 def bridge_delete(headers,
                   url_switch,
                   br_id):
-    url = url_switch + ep_bridges + '/' +  br_id 
+    url = url_switch + ep_bridges + '/' +  br_id
 
     try:
         output = requests.delete(url, headers=headers, verify=False)
@@ -201,10 +189,10 @@ def bridge_delete(headers,
 
 def bridge_add_controller(headers,
                          url_switch,
-                         br_id, 
+                         br_id,
                          cont_id,
                          cont_ip,
-                         cont_port, 
+                         cont_port,
                          cont_tls = False):
     url = url_switch + ep_bridges + '/' + br_id + '/controllers'
     data = {
@@ -278,7 +266,7 @@ def bridge_detach_controller(headers,
 
 def bridge_attach_tunnel_ctag_vlan(headers,
                                    url_switch,
-                                   br_id, 
+                                   br_id,
                                    ofport,
                                    port,
                                    vlan_id,
@@ -297,7 +285,6 @@ def bridge_attach_tunnel_ctag_vlan(headers,
 
     try:
         output = requests.post(url ,data=data, headers=headers, verify=False)
-        print output.json()
 
         if output.status_code == 201:
                 LOG.info(" Attach ctag vlan port to bridge: " + "url: " + str(url) + ", " + str(output.status_code) + " Success")
@@ -322,8 +309,8 @@ def bridge_attach_tunnel_ctag_vlan(headers,
 #
 #   201 Created
 #   400 Bad Request
-#   403 Forbidden  
-#   404 Not Found 
+#   403 Forbidden
+#   404 Not Found
 
 def bridge_attach_tunnel_passthrough(headers,
                                      url_switch,
@@ -346,7 +333,6 @@ def bridge_attach_tunnel_passthrough(headers,
 
     try:
         output = requests.post(url ,data=data, headers=headers, verify=False)
-        print output.json()
 
         if output.status_code == 201:
             LOG.info(" Attach passthrough port to bridge: " + "url: " + str(url) + ", " + str(output.status_code) + " Success")
@@ -375,13 +361,13 @@ def bridge_attach_tunnel_passthrough(headers,
 #                                     tc = None,
 #                                     descr = None,
 #                                     shaped_rate = None):
-#   
+#
 #    try:
 #        __bridge_attach_tunnel_passthrough(headers, url_switch, br_id, port, ofport, tc, descr, shaped_rate)
 #    except Exception as e:
 #        reclaim_port(headers,url_switch,port)
 #        __bridge_attach_tunnel_passthrough(headers, url_switch, br_id, port, ofport, tc, descr, shaped_rate)
-     
+
 
 #
 # ATTACH TUNNEL - VLAN RANGE
@@ -393,7 +379,7 @@ def bridge_attach_tunnel_passthrough(headers,
 
 def bridge_attach_tunnel_ctag_vlan_range(headers,
                                          url_switch,
-                                         br_id, 
+                                         br_id,
                                          ofport,
                                          port,
                                          vlan_range,
@@ -412,7 +398,6 @@ def bridge_attach_tunnel_ctag_vlan_range(headers,
 
     try:
         r = requests.post(url ,data=data, headers=headers, verify=False)
-        print r.json()
     except Exception as e:
         raise e
     return r
@@ -450,7 +435,6 @@ def bridge_detach_tunnel(headers,
         raise e
     return output
 
-
 #
 # GET BRIDGES
 #
@@ -466,22 +450,44 @@ def get_bridges(headers,
         raise e
     return r
 
-
 #
 # GET BRIDGE
 #
-#   200     
+#   200
 #   403 Forbidden
 def get_bridge(headers,
                 url_switch,
                 bridge_url):
-    
+
     try:
         r = requests.get(bridge_url, headers=headers, verify=False)
     except Exception as e:
         raise e
     return r
 
+#
+# GET CONTROLLER
+#
+#   200
+#   403 Forbidden
+#   404 Not Found
+def get_bridge_controller(headers,
+                          url_switch,
+                          bridge_number=None,
+                          bridge_url=None):
+
+    if bridge_number and not bridge_url:
+        url = url_switch + ep_bridges + '/br' + str(bridge_number) + '/controllers'
+    elif bridge_url and not bridge_number:
+        url = bridge_url + '/controllers'
+    else:
+        return 404
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
 
 #
 # GET INFO
@@ -498,10 +504,8 @@ def get_info(headers,
         raise e
     return r
 
-
-
 #
-# 
+#
 #
 # get_free_bridge_name
 #
@@ -521,7 +525,7 @@ def get_free_bridge(headers,
     return None
 
 #
-# 
+#
 #
 # get_bridge_by_segmentation_id
 #
@@ -539,15 +543,16 @@ def get_bridge_by_segmentation_id(headers,
         if "bridge-descr" in link.keys():
             bridge_descr = str(link["bridge-descr"])
             # Chameleon specific br_descr format: <PROJECT_ID>-<VFC_NAME>-VLAN-<TAG1>-<TAG2>
-            # Extract VLAN tags 
-            vlan_tags = re.match( r'(.*?)-(.*?)-VLAN-(.*)', bridge_descr, re.I ) 
+            # Extract VLAN tags
+            vlan_tags = re.match( r'(.*?)-(.*?)-VLAN-(.*)', bridge_descr, re.I )
+            LOG.info("--- PRUTH: get_bridge_by_segmentation_id - bridge-descr   : " + bridge_descr )
+            LOG.info("--- PRUTH: get_bridge_by_segmentation_id - segmentation_id: " + str(segmentation_id))
             if vlan_tags.group(3) and ( vlan_tags.group(3).find(str(segmentation_id)) > -1 ) :
-                return bridge 
+                return bridge
     return None
 
-
 #
-# 
+#
 #
 # get_bridge_by_vfc_name
 #
@@ -568,28 +573,17 @@ def get_bridge_by_vfc_name(headers,
                 return bridge
     return None
 
-
-#
-# 
 #
 # get_bridge_descr
 #
-# 
-#
-
 def get_bridge_descr(headers,
                      url_switch,
                      br_id):
-    bridge_url = url_switch + ep_bridges + '/' +  str(br_id) 
-    
+    bridge_url = url_switch + ep_bridges + '/' +  str(br_id)
+
     bridge = get_bridge(headers, url_switch, bridge_url)
     bridge_descr = bridge.json()["bridge-descr"]
     return bridge_descr
-
-    
-
-
-
 
 #
 # reclaim ofport
@@ -604,9 +598,9 @@ def reclaim_ofport(headers,
     links=bridges.json()["links"]
     LOG.info("PRUTH: bridges: " + str(links))
     for bridge,value in links.items():
-        #bridge = 'br'+str(i)                                                                                                                                                                                                                                    
-        #bridgeInfo = get_bridge(headers,url_switch,bridges[bridge])                                                                                                                                                                                             
-        #link=links[str(bridge)]                                                                                                                                                                                                                                 
+        #bridge = 'br'+str(i)
+        #bridgeInfo = get_bridge(headers,url_switch,bridges[bridge])
+        #link=links[str(bridge)]
         LOG.info("PRUTH: bridge: " + str(bridge) + ", value: " + str(value )  )
         url=value['href']
         LOG.info("PRUTH: bridge url: " + str(bridge) + ", href: " + str(url)  )
@@ -630,14 +624,10 @@ def reclaim_ofport(headers,
 
     return None
 
-
-
 #
-#
-#
-# reclaim physical port. 
-# If we try to bind a port to a VFC and get a "forbidden" return code this could mean 
-# that the port is already bound.  In this case we can try to reclaim to port by 
+# reclaim physical port.
+# If we try to bind a port to a VFC and get a "forbidden" return code this could mean
+# that the port is already bound.  In this case we can try to reclaim to port by
 # checking all VFCs for the port and then unbinding it if the port is found.
 #
 def reclaim_port(headers,
@@ -668,13 +658,9 @@ def reclaim_port(headers,
             LOG.info("PRUTH: bridge tunnel_info: " + str(tunnel_info.json()))
             current_port = tunnel_info.json()['port']
             current_ofport = tunnel_info.json()['ofport']
-            LOG.info("PRUTH: current_port: " + str(current_port) + ", port: " +  str(port) + ", current_ofport: " + str(current_ofport)) 
+            LOG.info("PRUTH: current_port: " + str(current_port) + ", port: " +  str(port) + ", current_ofport: " + str(current_ofport))
             if current_port == port:
                 LOG.info("PRUTH: FOUND PORT. KILL IT. ")
                 bridge_detach_tunnel(headers, url_switch, str(bridge), str(current_ofport))
 
     return None
-
-
-
-
