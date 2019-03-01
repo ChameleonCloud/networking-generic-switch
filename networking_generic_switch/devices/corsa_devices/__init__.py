@@ -440,6 +440,11 @@ class CorsaSwitch(devices.GenericSwitchDevice):
             LOG.info("PRUTH: plug_port_to_network - Binding port " + str(port) + " maps to " + str(self.config[port]))
             if br_id == sharedNonByocVFC:
                 ofport = self.get_sharedNonByocPort(port, segmentation_id)   
+                if not vfc_host == self:
+                    p = str(ofport)[:-3]
+                    v = str(ofport)[-3:]
+                    p_num = int(p) + 32
+                    ofport = int(str(p_num) + v)
                 LOG.info("PRUTH: plug_port_to_network - sharedNonByocVFC: " + str(br_id) + " ofport: " + str(ofport))
             else:
                 ofport=str(int(self.config[port])+10000)
@@ -546,6 +551,11 @@ class CorsaSwitch(devices.GenericSwitchDevice):
             LOG.info("PRUTH: delete_port - port: " + str(port) + " maps to " + str(self.config[port]))
             if br_id == sharedNonByocVFC:
                 ofport = self.get_sharedNonByocPort(port, segmentation_id)
+                if not vfc_host == self:
+                    p = str(ofport)[:-3]
+                    v = str(ofport)[-3:]
+                    p_num = int(p) + 32
+                    ofport = int(str(p_num) + v)
                 LOG.info("PRUTH: delete_port - sharedNonByocVFC: " + str(br_id) + " ofport: " + str(ofport))
             else:   
                 ofport=str(int(self.config[port])+10000)
