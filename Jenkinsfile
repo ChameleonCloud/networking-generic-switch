@@ -7,9 +7,6 @@ pipeline {
 
   stages {
     stage('package') {
-      environment {
-        PBR_VERSION = "${env.BRANCH_NAME}"
-      }
       steps {
         dir('dist') {
           deleteDir()
