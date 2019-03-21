@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import re
+
 from networking_generic_switch.devices import netmiko_devices
 from networking_generic_switch import exceptions as exc
 
@@ -46,58 +48,39 @@ class DellNos(netmiko_devices.NetmikoSwitch):
     )
 
     QUERY_PORT = (
+        'end', # Need to briefly leave configuration mode.
         'show interfaces switchport {port} | grep ^U',
+        'conf', # Re-enter configuration mode.
     )
 
-    DELETE_AND_PLUG_PORT = (
-        'interface vlan {wrong_segmentation_id}',
-        'no untagged {port}',
-        'interface vlan {segmentation_id}',
-        'untagged {port}',
-        'exit',
-    )
+    QUERY_PORT_REGEX = re.compile(r'^U\s+(\d+)', re.MULTILINE)
 
     ERROR_MSG_PATTERNS = (
         re.compile(r'Port is untagged in another Vlan'),
     )
 
+    @netmiko_devices.check_output('plug port')
     def plug_port_to_network(self, port, segmentation_id):
-        # get current vlan
-        raw_output = self.send_commands_to_device(
-            self._format_commands(self.QUERY_PORT, port=port)
-        )
-        PATTERN = "U\s*(\d+)"
-        current_vlan = re.search(PATTERN, raw_output).group(1)
+        show_port_output = self.send_commands_to_device(
+            self._format_commands(self.QUERY_PORT, port=port))
+        matches = re.findall(self.QUERY_PORT_REGEX, show_port_output)
+        current_vlan = matches[0] if matches else None
 
-        if ( current_vlan == str(segmentation_id) ): # Already set as needed
-            LOG.debug(
-                'Port %s is used in VLAN %s, intended VLAN is %s, no action taken.',
-                port,
-                str(current_vlan),
-                str(segmentation_id)
-            )
-            return
-
-        if ( current_vlan == '1' ):             # Port is clean
-            LOG.debug(
-                'Port %s is clean!',
-                port,
-            )
-            self.send_commands_to_device(
-                self._format_commands(self.PLUG_PORT_TO_NETWORK,
-                                      port=port,
-                                      segmentation_id=segmentation_id))
-        else:                                   # Port has existing & incorrect VLAN
-            LOG.warning(
-                'Port %s is used in VLAN %s, attempting to clean it',
-                port,
-                current_vlan
-            )
-            self.send_commands_to_device(
-                self._format_commands(self.DELETE_AND_PLUG_PORT,
-                                      port=port,
-                                      wrong_segmentation_id=current_vlan,
-                                      segmentation_id=segmentation_id))
+        # NOTE(diurnalist): ports are implicitly assigned to VLAN 1
+        # when all VLAN tags are removed from them.
+        if (current_vlan and current_vlan not in ['1', str(segmentation_id)]):
+            LOG.warning(('Port {port} is used in VLAN {vlan}, '
+                         'attempting to clean it.'.format(port=port,
+                                                          vlan=current_vlan)))
+            cmds = self._format_commands(self.DELETE_PORT,
+                                         port=port,
+                                         segmentation_id=current_vlan)
+            cmds += self._format_commands(self.PLUG_PORT_TO_NETWORK,
+                                          port=port,
+                                          segmentation_id=segmentation_id)
+            self.send_commands_to_device(cmds)
+        else:
+            super(DellNos, self).plug_port_to_network(port, segmentation_id)
 
 
 class DellPowerConnect(netmiko_devices.NetmikoSwitch):
