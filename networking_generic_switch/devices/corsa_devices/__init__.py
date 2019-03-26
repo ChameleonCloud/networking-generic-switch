@@ -267,9 +267,6 @@ class CorsaSwitch(devices.GenericSwitchDevice):
 
         try:
             with ngs_lock.PoolLock(self.locker, **self.lock_kwargs):
-                ###c_br_descr = corsavfc.get_bridge_descr(headers, url_switch, c_br)
-                ###c_br_descr = c_br_descr + "-" + str(segmentation_id)
-                ###corsavfc.bridge_modify_descr(headers, url_switch , c_br, c_br_descr)
 
                 LOG.info("About to get_ofport: c_br: " + str(c_br) + ", c_uplink_ports: " + str(c_uplink_ports))
                 for uplink in c_uplink_ports.split(','):
@@ -282,10 +279,6 @@ class CorsaSwitch(devices.GenericSwitchDevice):
 
         except Exception as e:
             LOG.error("Failed add network. attempting to cleanup bridge: " + str(e) + ", " + traceback.format_exc())
-            ###try:
-            ###    output = corsavfc.bridge_delete(headers, url_switch, str(c_br))
-            ###except Exception as e2:
-            ###    LOG.error(" Failed to cleanup bridge after failed add_network: " + str(segmentation_id) + ", bridge: " + str(bridge) + ", Error: " + str(e2))
             raise e
 
 
