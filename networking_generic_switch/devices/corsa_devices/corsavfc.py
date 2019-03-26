@@ -597,7 +597,6 @@ def get_tunnel_by_bridge_and_ofport(headers,
         tunnel_ofport = value['tunnel']
         if int(tunnel_ofport) == int(ofport):
             return tunnel_ofport
-            LOG.info("--- PRUTH: get_tunnel_by_bridge_and_ofport - tunnel_ofport: " + str(tunnel_ofport))
     return None
 #
 #

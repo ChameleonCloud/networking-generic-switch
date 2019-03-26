@@ -442,28 +442,13 @@ class CorsaSwitch(devices.GenericSwitchDevice):
                 else:
                     uplink_ofport = int(str(segmentation_id)[-3:])
                     sharedNonByocVfc_tunnel = corsavfc.get_tunnel_by_bridge_and_ofport(headers, url_switch, sharedNonByocVFC, uplink_ofport)
-                    if str(uplink_port) == str(sharedNonByocVfc_tunnel): 
+                    if str(uplink_ofport) == str(sharedNonByocVfc_tunnel): 
                         br_id = sharedNonByocVFC
                     else:
                         LOG.info("PRUTH: plug_port_to_network - Network missing in sharedNonByocVFC")
  
-                    #br_id = sharedNonByocVFC
-
-                LOG.info("PRUTH: plug_port_to_network - BYOC br_id : " + str(br_id) + " for network " + str(segmentation_id))
+                LOG.info("PRUTH: plug_port_to_network - br_id : " + str(br_id) + " for network " + str(segmentation_id))
       
-                #if not br_id == None: 
-                #    LOG.info("PRUTH: plug_port_to_network - BYOC br_id : " + str(br_id) + " for network " + str(segmentation_id))
-                #else:     
-                #    uplink_ofport = int(str(segmentation_id)[-3:])
-                #    sharedNonByocVfc_tunnel = corsavfc.get_tunnel_by_bridge_and_ofport(headers, url_switch,
-                #                                                               sharedNonByocVFC, uplink_ofport)
-                #    LOG.info("PRUTH: plug_port_to_network - found sharedNonByocVfc_tunnel: " + str(sharedNonByocVfc_tunnel) + " for uplink_port: " + str(uplink_port) )
-
-                #    if not sharedNonByocVfc_tunnel == None:
-                #        br_id == sharedNonByocVFC
-                #        LOG.info("PRUTH: plug_port_to_network - NonBYOC  br_id : " + str(br_id) + " for network " + str(segmentation_id))
-
-
                 if port in self.config:
                     LOG.info("PRUTH: plug_port_to_network - Binding port " + str(port) + " maps to " + str(self.config[port]))
                     if br_id == sharedNonByocVFC:
