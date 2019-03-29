@@ -136,3 +136,17 @@ class DellPowerConnect(netmiko_devices.NetmikoSwitch):
         re.compile(r'Configuration Database locked by another application \- '
                    r'try later'),
     )
+    
+
+class DellFNIOA(netmiko_devices.NetmikoSwitch):
+    """Netmiko device driver for Dell FN I/O Aggregator switches."""
+
+    PLUG_PORT_TO_NETWORK = (
+        'interface {port}',
+        'vlan untagged {segmentation_id}'
+    )
+
+    DELETE_PORT = (
+        'interface {port}',
+        'no vlan untagged'
+    )
