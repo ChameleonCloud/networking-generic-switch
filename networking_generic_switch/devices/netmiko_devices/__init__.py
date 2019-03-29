@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from ast import literal_eval
 import atexit
 import contextlib
 import functools
@@ -105,6 +106,18 @@ class NetmikoSwitch(devices.GenericSwitchDevice):
             self.config['session_log_record_writes'] = True
             self.config['session_log_file_mode'] = 'append'
 
+        try:
+            # NOTE(diurnalist): remove the key from the config object; this
+            # object is later passed directly to Netmiko as kwargs
+            persist_changes = literal_eval(
+                self.config.pop('persist_changes', 'True'))
+        except ValueError:
+            LOG.warning("Value %s for persist_changes not supported,"
+                        " only valid boolean literals supported.",
+                        self.config.get('persist_changes'))
+            persist_changes = True
+        self.persist_changes = persist_changes
+
         self.locker = None
         if CONF.ngs_coordination.backend_url:
             self.locker = coordination.get_coordinator(
@@ -184,9 +197,11 @@ class NetmikoSwitch(devices.GenericSwitchDevice):
             with ngs_lock.PoolLock(self.locker, **self.lock_kwargs):
                 with self._get_connection() as net_connect:
                     output = self.send_config_set(net_connect, cmd_set)
-                    # NOTE (vsaienko) always save configuration
-                    # when configuration is applied successfully.
-                    self.save_configuration(net_connect)
+                    # NOTE (diurnalist) default to persisting changes, which
+                    # effectively ensures the changes survive a reboot of
+                    # the switch.
+                    if self.persist_changes:
+                        self.save_configuration(net_connect)
         except exc.GenericSwitchException:
             # Reraise without modification exceptions originating from this
             # module.
