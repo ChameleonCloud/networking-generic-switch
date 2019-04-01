@@ -490,6 +490,30 @@ def get_bridge_controller(headers,
     return r
 
 #
+# GET TUNNELS ATTACHED TO BRIDGE 
+#
+#   200     
+#   403 Forbidden
+#   404 Not Found
+def get_bridge_tunnels(headers,
+                       url_switch,
+                       bridge_number=None,
+                       bridge_url=None):
+
+    if bridge_number and not bridge_url:
+        url = url_switch + ep_bridges + '/br' + str(bridge_number) + '/tunnels'
+    elif bridge_url and not bridge_number:
+        url = bridge_url + '/tunnels'
+    else:
+        return 404
+
+    try:
+        r = requests.get(url, headers=headers, verify=False)
+    except Exception as e:
+        raise e
+    return r
+
+#
 # GET INFO
 #
 #   200
@@ -554,6 +578,29 @@ def get_bridge_by_segmentation_id(headers,
 #
 #
 #
+# get_tunnel_by_bridge_and_ofport
+#
+# find tunnel for a given ofport on a bridge
+#
+def get_tunnel_by_bridge_and_ofport(headers,
+                                    url_switch,
+                                    bridge,
+                                    ofport):
+    if str(bridge)[:2] == 'br':
+        bridge_number = str(bridge)[2:]
+    else: 
+        bridge_number = str(bridge)
+    tunnels = get_bridge_tunnels(headers,url_switch,bridge_number)
+    links = tunnels.json()["links"]
+    for tunnel,value in links.items():
+        tunnel_url = value['href']
+        tunnel_ofport = value['tunnel']
+        if int(tunnel_ofport) == int(ofport):
+            return tunnel_ofport
+    return None
+#
+#
+#
 # get_bridge_by_vfc_name
 #
 # By convention we are putting the vfc_name in the "bridge-description" field
@@ -572,6 +619,8 @@ def get_bridge_by_vfc_name(headers,
             if bridge_descr.find(vfc_name) > -1 :
                 return bridge
     return None
+
+
 
 #
 # get_bridge_descr
@@ -596,7 +645,7 @@ def reclaim_ofport(headers,
     bridges = get_bridges(headers,url_switch)
 
     links=bridges.json()["links"]
-    LOG.info("PRUTH: bridges: " + str(links))
+    LOG.info("PRUTH: reclaim_ofport - bridges: " + str(links))
     for bridge,value in links.items():
         #bridge = 'br'+str(i)
         #bridgeInfo = get_bridge(headers,url_switch,bridges[bridge])
