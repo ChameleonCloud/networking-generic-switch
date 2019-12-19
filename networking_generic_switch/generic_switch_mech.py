@@ -43,6 +43,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         self.vfcHost = None
         gsw_devices = gsw_conf.get_devices()
         self.switches = {}
+
         self.haswellNodeRange=(301,399)
 
         for switch_info, device_cfg in gsw_devices.items():
