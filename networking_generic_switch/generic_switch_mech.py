@@ -40,10 +40,11 @@ class GenericSwitchDriver(api.MechanismDriver):
         called prior to this method being called.
         """
         LOG.info("PRUTH: GenericSwitchDriver")
-        self.vfcHost=None
-
+        self.vfcHost = None
         gsw_devices = gsw_conf.get_devices()
         self.switches = {}
+        self.haswellNodeRange=(301,399)
+
         for switch_info, device_cfg in gsw_devices.items():
             switch = devices.device_manager(device_cfg)
             if hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
@@ -57,8 +58,11 @@ class GenericSwitchDriver(api.MechanismDriver):
                 self.sharedNonByocVLAN = device_cfg['sharedNonByocVLAN']
             if 'sharedNonByocProvider' in device_cfg:
                 self.sharedNonByocProvider = device_cfg['sharedNonByocProvider']
+            LOG.info('--- PRUTH: Devices - switch %s ', str(switch) )
 
-        LOG.info('Devices %s have been loaded', self.switches.keys())
+        LOG.info('--- PRUTH: Devices - self.vfcHost %s ', str(self.vfcHost) )
+        LOG.info('Devices %s have been loaded - keys   ', self.switches.keys())
+        LOG.info('Devices %s have been loaded - values ', self.switches.values())
         if not self.switches:
             LOG.error('No devices have been loaded')
         self.warned_del_network = False
@@ -145,7 +149,7 @@ class GenericSwitchDriver(api.MechanismDriver):
     def __get_of_controller(self, network):
         if 'description' in network.keys():
             description = network['description'].strip()
-            LOG.info("PRUTH: --- Description = " + description )
+            LOG.info("--- PRUTH: __get_of_controller - Description = " + description )
 
             if description.startswith('OFController='):
                 VFCparameters = description.split(',')
@@ -564,17 +568,35 @@ class GenericSwitchDriver(api.MechanismDriver):
         binding_profile = port['binding:profile']
         local_link_information = binding_profile.get('local_link_information')
         LOG.info("PRUTH: Bindport, port: " + str(port) + ", binding_profile: " + str(binding_profile))
+
         if self._is_port_supported(port) and local_link_information:
             switch_info = local_link_information[0].get('switch_info')
             switch_id = local_link_information[0].get('switch_id')
+            sdn_node_id = str(switch_id)[-3:]
+            haswell_sdn = False
+
             switch = device_utils.get_switch_device(
                 self.switches, switch_info=switch_info,
                 ngs_mac_address=switch_id)
+
+            LOG.info("--- PRUTH: Bindport - switch %s : " + str(switch))
             if not switch:
                 return
             network = context.network.current
             physnet = network['provider:physical_network']
             switch_physnets = switch._get_physical_networks()
+
+            ### Determine if the network is BYOC 
+            network_id = network['id']
+            project_id = network['project_id'].strip()
+            of_controller = self.__get_of_controller(network)
+            vfc_name = self.__get_vfc_name(network, project_id)
+            if of_controller or vfc_name:
+                is_byoc_network = True 
+            else:
+                is_byoc_network = False
+            LOG.info("--- PRUTH: Bindport: is_byoc_network : " + str(is_byoc_network) )
+
             if switch_physnets and physnet not in switch_physnets:
                 LOG.error("Cannot bind port %(port)s as device %(device)s is "
                           "not on physical network %(physnet)",
@@ -593,11 +615,30 @@ class GenericSwitchDriver(api.MechanismDriver):
                           port=port_id,
                           switch_info=switch_info,
                           segmentation_id=segmentation_id))
+
+            LOG.info("--- PRUTH: Bindport - haswellNodeRange %s : " + str(self.haswellNodeRange[0]))
+            LOG.info("--- PRUTH: Bindport - haswellNodeRange %s : " + str(self.haswellNodeRange[1]))
+            ### Determine if the node is a haswell node 
+            if is_byoc_network and int(sdn_node_id) in range(int(self.haswellNodeRange[0]),int(self.haswellNodeRange[1])):
+                haswell_sdn = True
+            
+            LOG.info("--- PRUTH: Bindport - sdn_node_id : " + str(sdn_node_id))
+            LOG.info("--- PRUTH: Bindport - haswell_sdn : " + str(haswell_sdn))
+            LOG.info("--- PRUTH: Bindport - segmentation_id : " + str(segmentation_id))
+
             # Move port to network
+
             if hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
-                switch.plug_port_to_network(port_id, segmentation_id, vfc_host=self.vfcHost)
+                switch.plug_port_to_network(port_id, segmentation_id, sdn_node_id, vfc_host=self.vfcHost)
             else:
-                switch.plug_port_to_network(port_id, segmentation_id)
+                if haswell_sdn:
+                    LOG.info("--- PRUTH: Bindport - haswell_sdn : " + str(haswell_sdn))
+                    LOG.info("--- PRUTH: Bindport - selfvfcHost %s : " + str(self.vfcHost))
+                    switch.plug_port_to_network(port_id, sdn_node_id)
+                    self.vfcHost.plug_port_to_network_haswellsdn(port_id, segmentation_id, sdn_node_id, vfc_host=self.vfcHost)
+                else:
+                    switch.plug_port_to_network(port_id, segmentation_id)
+
 
             LOG.info("Successfully bound port %(port_id)s in segment "
                      "%(segment_id)s on device %(device)s",
@@ -650,9 +691,13 @@ class GenericSwitchDriver(api.MechanismDriver):
             return
         switch_info = local_link_information[0].get('switch_info')
         switch_id = local_link_information[0].get('switch_id')
+        sdn_node_id = str(switch_id)[-3:]
+        haswell_sdn = False
+
         switch = device_utils.get_switch_device(
             self.switches, switch_info=switch_info,
             ngs_mac_address=switch_id)
+
         if not switch:
             return
         port_id = local_link_information[0].get('port_id')
@@ -663,11 +708,40 @@ class GenericSwitchDriver(api.MechanismDriver):
                       port=port_id,
                       switch_info=switch_info,
                       segmentation_id=segmentation_id))
+
+        ### Determine if the network is BYOC 
+        network_id = network['id']
+        project_id = network['project_id'].strip()
+        of_controller = self.__get_of_controller(network)
+        vfc_name = self.__get_vfc_name(network, project_id)
+        if of_controller or vfc_name:
+            is_byoc_network = True
+        else:
+            is_byoc_network = False
+        LOG.info("--- PRUTH: _unplug_port_from_network: is_byoc_network : " + str(is_byoc_network) )
+
+        LOG.info("--- PRUTH: _unplug_port_from_network - haswellNodeRange : " + str(self.haswellNodeRange[0]))
+        LOG.info("--- PRUTH: _unplug_port_from_network - haswellNodeRange : " + str(self.haswellNodeRange[1]))
+        ### Determine if the node is a haswell node 
+        if is_byoc_network and int(sdn_node_id) in range(int(self.haswellNodeRange[0]),int(self.haswellNodeRange[1])):
+            haswell_sdn = True
+
+        LOG.info("--- PRUTH: _unplug_port_from_network - sdn_node_id : " + str(sdn_node_id))
+        LOG.info("--- PRUTH: _unplug_port_from_network - haswell_sdn : " + str(haswell_sdn))
+        LOG.info("--- PRUTH: _unplug_port_from_network - segmentation_id : " + str(segmentation_id))
+
+
         try:
             if hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
-                switch.delete_port(port_id, segmentation_id, vfc_host=self.vfcHost)
+                switch.delete_port(port_id, segmentation_id, sdn_node_id, vfc_host=self.vfcHost)
             else:
-                switch.delete_port(port_id, segmentation_id)
+                if haswell_sdn:
+                    LOG.info("--- PRUTH: Bindport - haswell_sdn : " + str(haswell_sdn))
+                    LOG.info("--- PRUTH: Bindport - selfvfcHost %s : " + str(self.vfcHost))
+                    switch.delete_port(port_id, sdn_node_id)
+                    self.vfcHost.delete_port(port_id, segmentation_id, sdn_node_id, vfc_host=self.vfcHost)
+                else:
+                    switch.delete_port(port_id, segmentation_id)
 
         except Exception as e:
             LOG.error("Failed to unplug port %(port_id)s "
