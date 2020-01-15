@@ -44,7 +44,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         gsw_devices = gsw_conf.get_devices()
         self.switches = {}
 
-        self.haswellNodeRange=(301,399)
+        self.haswellNodeRange=(201,299)
 
         for switch_info, device_cfg in gsw_devices.items():
             switch = devices.device_manager(device_cfg)
