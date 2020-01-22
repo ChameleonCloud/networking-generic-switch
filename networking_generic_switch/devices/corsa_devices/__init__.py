@@ -623,7 +623,7 @@ class CorsaSwitch(devices.GenericSwitchDevice):
                 ofport=str(int(sdn_node_id)+10000)
                 LOG.info("PRUTH: delete_port - ByocVFC: " + str(br_id) + " ofport: " + str(ofport))
         if not vfc_host == self:
-            vfc_host.delete_port(port, segmentation_id, vfc_host, ofport=ofport)
+            vfc_host.delete_port(port, segmentation_id, sdn_node_id, vfc_host, ofport=ofport)
         else:
             self.__delete_ofport(ofport, segmentation_id)
 
