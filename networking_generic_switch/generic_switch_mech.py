@@ -108,10 +108,7 @@ class GenericSwitchDriver(api.MechanismDriver):
             for switch_name, switch in self._get_devices_by_physnet(physnet):
                 try:
                     is_byoc_network = False
-                    if (hasattr(devices, 'corsa_devices') and
-                            isinstance(
-                                switch,
-                                devices.corsa_devices.corsa2100.CorsaDP2100)):
+                    if self.switch_is_corsadp2100(switch):
                         if of_controller or vfc_name:
                             is_byoc_network = True
                         if is_byoc_network:
