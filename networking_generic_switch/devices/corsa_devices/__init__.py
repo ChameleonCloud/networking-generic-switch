@@ -400,7 +400,7 @@ class CorsaSwitch(devices.GenericSwitchDevice):
 
 
 
-    def plug_port_to_network(self, port, segmentation_id, vfc_host):
+    def plug_port_to_network(self, port, segmentation_id, sdn_node_id, vfc_host):
         #OpenStack requires port ids to not be numbers
         #Corsa uses numbers
         #We are lying to OpenStack by adding a 'p ' to the beging of each port number.
@@ -442,25 +442,22 @@ class CorsaSwitch(devices.GenericSwitchDevice):
 
                 LOG.info("PRUTH: plug_port_to_network - br_id : " + str(br_id) + " for network " + str(segmentation_id))
 
-                if port in self.config:
-                    LOG.info("PRUTH: plug_port_to_network - Binding port " + str(port) + " maps to " + str(self.config[port]))
-                    if br_id == sharedNonByocVFC:
-                        ofport = self.get_sharedNonByocPort(port, segmentation_id)
-                        if not vfc_host == self:
-                            p = str(ofport)[:-3]
-                            v = str(ofport)[-3:]
-                            p_num = int(p) + 32
-                            ofport = int(str(p_num) + v)
-                        LOG.info("PRUTH: plug_port_to_network - sharedNonByocVFC: " + str(br_id) + " ofport: " + str(ofport))
-                    else:
-                        ofport=str(int(self.config[port])+10000)
-                        LOG.info("PRUTH: plug_port_to_network - ByocVFC: " + str(br_id) + " ofport: " + str(ofport))
-
-                    node_vlan=self.config[port]
-
+                LOG.info("PRUTH: plug_port_to_network - Binding port " + str(port) + " maps to " + str(sdn_node_id))
+                if br_id == sharedNonByocVFC:
+                    ofport = self.get_sharedNonByocPort(port, segmentation_id)
+                    if not vfc_host == self:
+                        p = str(ofport)[:-3]
+                        v = str(ofport)[-3:]
+                        p_num = int(p) + 32
+                        ofport = int(str(p_num) + v)
+                    LOG.info("PRUTH: plug_port_to_network - sharedNonByocVFC: " + str(br_id) + " ofport: " + str(ofport))
                 else:
-                    LOG.info("PRUTH: plug_port_to_network - Binding port " + str(port) +" missing")
-                    LOG.info("PRUTH: plug_port_to_network - Binding port " + str(self.config))
+                    ###ofport=str(int(self.config[port])+10000)
+                    ofport=str(int(sdn_node_id)+10000)
+                    LOG.info("PRUTH: plug_port_to_network - ByocVFC: " + str(br_id) + " ofport: " + str(ofport))
+
+                node_vlan=sdn_node_id
+
 
                 if 'name' in self.config:
                     dst_switch_name=self.config['name']
@@ -481,6 +478,53 @@ class CorsaSwitch(devices.GenericSwitchDevice):
         except Exception as e:
             LOG.error("failed plug_port_to_network : " + traceback.format_exc())
             raise e
+
+
+    def plug_port_to_network_haswellsdn(self, port, segmentation_id, sdn_node_id, vfc_host):
+
+        port_num=port[2:]
+
+        token = vfc_host.config['token']
+        headers = {'Authorization': token}
+
+        protocol = 'https://'
+        sw_ip_addr = vfc_host.config['switchIP']
+        url_switch = protocol + sw_ip_addr
+        sharedNonByocVFC = self.config['sharedNonByocVFC']
+
+        LOG.info("PRUTH: plug_port_to_network_haswellsdn - switch  : " + str(self) + ",  switch: " + self.config['name'] )
+        LOG.info("PRUTH: plug_port_to_network_haswellsdn - vfchost : " + str(vfc_host))
+        LOG.info("PRUTH: plug_port_to_network_haswellsdn - self.config: " + str(self.config))
+        LOG.info("PRUTH: plug_port_to_network_haswellsdn - Binding port " + str(port) + " to network " + str(segmentation_id))
+
+
+        ofport=None
+        node_vlan=None
+        dst_switch_name=None
+
+        try:
+            with ngs_lock.PoolLock(self.locker, **self.lock_kwargs):
+                # search segmentation id in BYOC VFCs
+                byocVFC = corsavfc.get_bridge_by_segmentation_id(headers, url_switch, str(segmentation_id))
+                if not byocVFC == None:
+                    br_id = byocVFC
+
+                LOG.info("PRUTH: plug_port_to_network_haswellsdn - br_id : " + str(br_id) + " for network " + str(segmentation_id))
+                LOG.info("PRUTH: plug_port_to_network_haswellsdn - byocVFC : " + str(byocVFC) )
+
+                node_vlan=sdn_node_id
+
+                if 'name' in self.config:
+                    dst_switch_name="haswellsdn"
+                    LOG.info("PRUTH: plug_port_to_network_haswellsdn - dst_switch_name " + str(dst_switch_name))
+
+                vfc_host.__bind_ctag_tunnel(segmentation_id, node_vlan, dst_switch_name, ofport)
+
+
+        except Exception as e:
+            LOG.error("failed plug_port_to_network : " + traceback.format_exc())
+            raise e
+
 
     def __bind_passthrough_tunnel(self, port, segmentation_id, ofport):
         port_num=port[2:]
@@ -540,10 +584,11 @@ class CorsaSwitch(devices.GenericSwitchDevice):
             ofport=str(int(str(node_vlan))+10000)
         LOG.info("PRUTH: __bind_ctag_tunnel - ofport: " + str(ofport))
         LOG.info("PRUTH: __bind_ctag_tunnel - br_id : " + str(br_id))
+        LOG.info("PRUTH: __bind_ctag_tunnel - dst_port : " + str(dst_port))
         corsavfc.bridge_attach_tunnel_ctag_vlan(headers, url_switch, br_id = br_id, ofport = ofport, port = int(dst_port), vlan_id = node_vlan)
 
 
-    def delete_port(self, port, segmentation_id, vfc_host, ofport=None):
+    def delete_port(self, port, segmentation_id, sdn_node_id, vfc_host, ofport=None):
 
         #
         # REST calls should be sent to the vfc_host for both corsa switch instances
@@ -564,8 +609,8 @@ class CorsaSwitch(devices.GenericSwitchDevice):
             br_id = sharedNonByocVFC
         LOG.info("PRUTH: delete_port - br_id on VFCHost: " + str(br_id) + " for network " + str(segmentation_id))
 
-        if ofport == None and port in self.config:
-            LOG.info("PRUTH: delete_port - port: " + str(port) + " maps to " + str(self.config[port]))
+        if ofport == None:
+            LOG.info("PRUTH: delete_port - port: " + str(port) + " maps to " + str(sdn_node_id))
             if br_id == sharedNonByocVFC:
                 ofport = self.get_sharedNonByocPort(port, segmentation_id)
                 if not vfc_host == self:
@@ -575,10 +620,10 @@ class CorsaSwitch(devices.GenericSwitchDevice):
                     ofport = int(str(p_num) + v)
                 LOG.info("PRUTH: delete_port - sharedNonByocVFC: " + str(br_id) + " ofport: " + str(ofport))
             else:
-                ofport=str(int(self.config[port])+10000)
+                ofport=str(int(sdn_node_id)+10000)
                 LOG.info("PRUTH: delete_port - ByocVFC: " + str(br_id) + " ofport: " + str(ofport))
         if not vfc_host == self:
-            vfc_host.delete_port(port, segmentation_id, vfc_host, ofport=ofport)
+            vfc_host.delete_port(port, segmentation_id, sdn_node_id, vfc_host, ofport=ofport)
         else:
             self.__delete_ofport(ofport, segmentation_id)
 
@@ -623,7 +668,7 @@ class CorsaSwitch(devices.GenericSwitchDevice):
 
 
 
-    def __delete_port(self, port, segmentation_id):
+    def __delete_port(self, port, segmentation_id, sdn_node_id):
         # OpenStack requires port ids to not be numbers
         # Corsa uses numbers
         # We are lying to OpenStack by adding a 'p ' to the beging of each port number.
@@ -644,8 +689,8 @@ class CorsaSwitch(devices.GenericSwitchDevice):
 
         ofport=None
         if port in self.config:
-            LOG.info("PRUTH: delete port " + str(port) + " maps to " + str(self.config[port]))
-            ofport=str(int(self.config[port])+10000)
+            LOG.info("PRUTH: delete port " + str(port) + " maps to " + str(sdn_node_id))
+            ofport=str(int(sdn_node_id)+10000)
 
         try:
           with ngs_lock.PoolLock(self.locker, **self.lock_kwargs):
