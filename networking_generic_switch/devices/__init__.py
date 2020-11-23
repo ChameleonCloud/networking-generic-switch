@@ -14,12 +14,11 @@
 
 import abc
 
-from oslo_log import log as logging
-from oslo_utils import strutils
 import six
 import stevedore
-
 from networking_generic_switch import exceptions as gsw_exc
+from oslo_log import log as logging
+from oslo_utils import strutils
 
 GENERIC_SWITCH_NAMESPACE = 'generic_switch.devices'
 LOG = logging.getLogger(__name__)
@@ -43,6 +42,8 @@ NGS_INTERNAL_OPTS = [
     {'name': 'ngs_network_name_format', 'default': '{network_id}'},
     # EXPERIMENTAL: when true try to batch up in flight switch requests
     {'name': 'ngs_batch_requests', 'default': False},
+    # If false, ngs will not add and delete VLANs from switches
+    {'name': 'ngs_manage_vlans', 'default': True},
 ]
 
 
@@ -133,6 +134,10 @@ class GenericSwitchDevice(object):
         """Return whether to batch up requests to the switch."""
         return strutils.bool_from_string(
             self.ngs_config['ngs_batch_requests'])
+
+    def _do_vlan_management(self):
+        """Check if drivers should add and remove VLANs from switches."""
+        return strutils.bool_from_string(self.ngs_config['ngs_manage_vlans'])
 
     @abc.abstractmethod
     def add_network(self, segmentation_id, network_id):
