@@ -15,13 +15,13 @@
 import json
 import queue
 
-import etcd3gw
 from etcd3gw import watch
 import eventlet
 from oslo_log import log as logging
 from oslo_utils import netutils
 from oslo_utils import uuidutils
 import tenacity
+from tooz.drivers import etcd3gw as etcd3driver
 
 LOG = logging.getLogger(__name__)
 
@@ -32,9 +32,11 @@ class SwitchQueue(object):
     RESULT_ITEM_KEY = "/ngs/batch/%s/output/%s"
     EXEC_LOCK = "/ngs/batch/%s/execute_lock"
 
-    def __init__(self, switch_name, etcd_client):
+    def __init__(self, switch_name, coordinator):
         self.switch_name = switch_name
-        self.client = etcd_client
+        self.coordinator = coordinator
+        self.coordinator.start()
+        self.client = self.coordinator.client
 
     def add_batch_and_wait_for_result(self, cmds):
         """Clients add batch, given key events.
@@ -186,58 +188,28 @@ class SwitchQueue(object):
             else:
                 LOG.debug("deleted input key: %s", input_key)
 
-    def acquire_worker_lock(self, acquire_timeout=300, lock_ttl=120,
-                            wait=None):
+    def acquire_worker_lock(self, acquire_timeout=300, wait=None):
         """Wait for lock needed to call record_result.
 
         This blocks until the work queue is empty of the switch lock is
         acquired. If we timeout waiting for the lock we raise an exception.
         """
         lock_name = self.EXEC_LOCK % self.switch_name
-        lock = self.client.lock(lock_name, lock_ttl)
+        lock = self.coordinator.get_lock(lock_name)
+        #lock = self.client.lock(lock_name, lock_ttl)
 
         if wait is None:
             wait = tenacity.wait_random(min=1, max=3)
 
-        @tenacity.retry(
-            # Log a message after each failed attempt.
-            after=tenacity.after_log(LOG, logging.DEBUG),
-            # Retry if we haven't got the lock yet
-            retry=tenacity.retry_if_result(lambda x: x is False),
-            # Stop after timeout.
-            stop=tenacity.stop_after_delay(acquire_timeout),
-            # Wait between lock retries
-            wait=wait,
-        )
-        def _acquire_lock_with_retry():
-            lock_acquired = lock.acquire()
-            if lock_acquired:
-                return lock
-
-            # Stop waiting for the lock if there is nothing to do
-            work = self._get_raw_batches()
-            if not work:
-                return None
-
-            # Trigger a retry
-            return False
-
-        return _acquire_lock_with_retry()
+        return lock
 
 
 class SwitchBatch(object):
     def __init__(self, switch_name, etcd_url=None, switch_queue=None):
         if switch_queue is None:
             parsed_url = netutils.urlsplit(etcd_url)
-            host = parsed_url.hostname
-            port = parsed_url.port
-            # TODO(johngarbutt): support certs
-            protocol = 'https' if parsed_url.scheme.endswith(
-                'https') else 'http'
-            etcd_client = etcd3gw.client(
-                host=host, port=port, protocol=protocol,
-                timeout=30)
-            self.queue = SwitchQueue(switch_name, etcd_client)
+            coordinator = etcd3driver.Etcd3Driver('switch_batch', parsed_url, {'timeout': 30, 'lock_timeout': 300})
+            self.queue = SwitchQueue(switch_name, coordinator)
         else:
             self.queue = switch_queue
         self.switch_name = switch_name
@@ -300,14 +272,11 @@ class SwitchBatch(object):
                   len(batches), self.switch_name)
 
         lock = self.queue.acquire_worker_lock()
+
         if lock is None:
             # This means we stopped waiting as the work queue was empty
             LOG.debug("Work list empty for %s", self.switch_name)
             return
-
-        # Check we got the lock
-        if not lock.is_acquired():
-            raise Exception("unable to get lock for: %s", self.switch_name)
 
         # be sure to drop the lock when we are done
         with lock:

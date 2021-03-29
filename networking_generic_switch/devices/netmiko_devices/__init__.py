@@ -196,9 +196,9 @@ class NetmikoSwitch(devices.GenericSwitchDevice):
         with net_connect:
             yield net_connect
 
-    def send_commands_to_device(self, cmd_set):
+    def send_commands_to_device(self, cmd_set, ignore_batch_setting=False):
         # If configured, batch up requests to the switch
-        if self.batch_cmds is not None:
+        if self.batch_cmds is not None and not ignore_batch_setting:
             return self.batch_cmds.do_batch(
                 cmd_set,
                 self._send_commands_to_device)

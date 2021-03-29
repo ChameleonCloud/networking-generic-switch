@@ -62,7 +62,7 @@ class DellNos(netmiko_devices.NetmikoSwitch):
     @netmiko_devices.check_output('plug port')
     def plug_port_to_network(self, port, segmentation_id):
         show_port_output = self.send_commands_to_device(
-            self._format_commands(self.QUERY_PORT, port=port))
+            self._format_commands(self.QUERY_PORT, port=port), ignore_batch_setting=True)
         matches = re.findall(self.QUERY_PORT_REGEX, show_port_output)
         current_vlan = matches[0] if matches else None
 
