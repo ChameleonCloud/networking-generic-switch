@@ -38,6 +38,11 @@ NGS_INTERNAL_OPTS = [
     {'name': 'ngs_switchport_mode', 'default': 'access'},
     # If True, disable switch ports that are not in use.
     {'name': 'ngs_disable_inactive_ports', 'default': False},
+    # String format for network name to configure on switches.
+    # Accepts {network_id} and {segmentation_id} formatting options.
+    {'name': 'ngs_network_name_format', 'default': '{network_id}'},
+    # EXPERIMENTAL: when true try to batch up in flight switch requests
+    {'name': 'ngs_batch_requests', 'default': False},
 ]
 
 
@@ -104,6 +109,22 @@ class GenericSwitchDevice(object):
         """Return whether inactive ports should be disabled."""
         return strutils.bool_from_string(
             self.ngs_config['ngs_disable_inactive_ports'])
+
+    def _get_network_name(self, network_id, segmentation_id):
+        """Return a network name to configure on switches.
+
+        :param network_id: ID of the network.
+        :param segmentation_id: segmentation ID of the network.
+        :returns: a formatted network name.
+        """
+        network_name_format = self.ngs_config['ngs_network_name_format']
+        return network_name_format.format(network_id=network_id,
+                                          segmentation_id=segmentation_id)
+
+    def _batch_requests(self):
+        """Return whether to batch up requests to the switch."""
+        return strutils.bool_from_string(
+            self.ngs_config['ngs_batch_requests'])
 
     @abc.abstractmethod
     def add_network(self, segmentation_id, network_id):
