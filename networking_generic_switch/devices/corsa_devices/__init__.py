@@ -25,15 +25,14 @@ import tenacity
 from tooz import coordination
 
 from networking_generic_switch import devices
+from networking_generic_switch.devices.corsa_devices import corsavfc
 from networking_generic_switch import exceptions as exc
 from networking_generic_switch import locking as ngs_lock
 
 import logging
-import corsavfc
 import requests
 import json
 import sys
-
 import time
 
 LOG = logging.getLogger(__name__)
