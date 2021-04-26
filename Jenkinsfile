@@ -2,7 +2,7 @@ pipeline {
   agent any
  
   options {
-    copyArtifactPermission(projectNames: 'neutron*')
+    copyArtifactPermission(projectNames: '/neutron*')
   }
 
   stages {
