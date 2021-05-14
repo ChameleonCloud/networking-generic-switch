@@ -20,10 +20,11 @@ from oslo_log import log as logging
 import socket
 import re
 
+
+
 from networking_generic_switch import config as gsw_conf
 from networking_generic_switch import devices
 from networking_generic_switch.devices import utils as device_utils
-
 
 LOG = logging.getLogger(__name__)
 
@@ -39,34 +40,42 @@ class GenericSwitchDriver(api.MechanismDriver):
         been initialized. No abstract methods defined below will be
         called prior to this method being called.
         """
-        LOG.info("PRUTH: GenericSwitchDriver")
-        self.vfcHost = None
+        LOG.info("Initializing GenericSwitchDriver")
         gsw_devices = gsw_conf.get_devices()
         self.switches = {}
-
-        self.haswellNodeRange=(201,299)
+        self.patchpanels = {}
+        self.leafs = {}
+        self.provisionables = {}
 
         for switch_info, device_cfg in gsw_devices.items():
             switch = devices.device_manager(device_cfg)
-            if hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
-                device_cfg['name']=switch_info
             self.switches[switch_info] = switch
-            if 'VFCHost' in device_cfg and device_cfg['VFCHost'] == 'True':
-                self.vfcHost = switch
-            if 'sharedNonByocVFC' in device_cfg:
-                self.sharedNonByocVFC = device_cfg['sharedNonByocVFC']
-            if 'sharedNonByocVLAN' in device_cfg:
-                self.sharedNonByocVLAN = device_cfg['sharedNonByocVLAN']
-            if 'sharedNonByocProvider' in device_cfg:
-                self.sharedNonByocProvider = device_cfg['sharedNonByocProvider']
-            LOG.info('--- PRUTH: Devices - switch %s ', str(switch) )
 
-        LOG.info('--- PRUTH: Devices - self.vfcHost %s ', str(self.vfcHost) )
-        LOG.info('Devices %s have been loaded - keys   ', self.switches.keys())
-        LOG.info('Devices %s have been loaded - values ', self.switches.values())
+            if not 'chi_switch_role' in device_cfg or device_cfg['chi_switch_role'] == 'leaf':
+                if not 'chi_switch_role' in device_cfg:
+                    LOG.warning("Adding switch without chi_switch_role. Assuming chi_switch_role = leaf")
+
+                LOG.info("Adding leaf switch")
+                self.leafs[switch_info] = switch
+
+            elif 'chi_switch_role' in device_cfg and device_cfg['chi_switch_role'] == 'patchpanel':
+                LOG.info("Adding patchpanel switch")
+                self.patchpanels[switch_info]= switch
+            elif 'chi_switch_role' in device_cfg and device_cfg['chi_switch_role'] == 'provisionable':
+                LOG.info("Adding provisionable switch")
+                self.provisionables[switch_info]= switch
+            else:
+                LOG.error("Attempted to Add switch with unkown chi_switch_role. Skipping. %s", str(switch))
+
         if not self.switches:
             LOG.error('No devices have been loaded')
         self.warned_del_network = False
+
+
+        LOG.debug("switches: " + str(self.switches))
+        LOG.debug("self.patchpanels: " + str(self.patchpanels))
+        LOG.debug("self.leafs: " + str(self.leafs))
+        LOG.debug("self.provisionables: " + str(self.provisionables))
 
     def create_network_precommit(self, context):
         """Allocate resources for a new network.
@@ -93,6 +102,10 @@ class GenericSwitchDriver(api.MechanismDriver):
         cause the deletion of the resource.
         """
 
+	import json
+        LOG.debug("create_network_postcommit: " + json.dumps(context.current, indent=2))
+        
+
         network = context.current
         network_id = network['id']
         project_id = network['project_id'].strip()
@@ -100,40 +113,26 @@ class GenericSwitchDriver(api.MechanismDriver):
         segmentation_id = network['provider:segmentation_id']
         physnet = network['provider:physical_network']
 
-        of_controller = self.__get_of_controller(network)
-        vfc_name = self.__get_vfc_name(network, project_id)
-
-        LOG.info("PRUTH: create_network: " + str(network) + ", network_id: " + str(network_id))
-
         if provider_type == 'vlan' and segmentation_id:
+            
+            extraArgs=self.__get_extra_network_config(network)
+            LOG.debug("extraArgs = " + str(extraArgs))
+
+            #of_controller = self.__get_of_controller(network)
             # Create vlan on all switches from this driver
             for switch_name, switch in self._get_devices_by_physnet(physnet):
                 try:
-                    is_byoc_network = False
-                    if hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
-                        if of_controller or vfc_name:
-                            is_byoc_network = True
-                        if is_byoc_network:
-                            if vfc_name:
-                                named_vfc_bridge = switch.find_named_vfc(vfc_name)
-                                if named_vfc_bridge:
-                                    #LOG.info("PRUTH: --- corsa-namedvfc - VFC exists - add_network_to_existing_vfc = " + str(named_vfc_bridge) )
-                                    switch.add_network_to_existing_vfc(segmentation_id, network_id, named_vfc_bridge, vfc_name, of_controller)
-                                else:
-                                    #LOG.info("PRUTH: --- corsa-namedvfc - VFC does not exist - add_network = " + str(named_vfc_bridge) )
-                                    switch.add_network(segmentation_id, network_id, project_id, of_controller, vfc_name)
-                            else:
-                                #LOG.info("PRUTH: --- corsa-unnamedvfc - custom ofcontroller - add_network " )
-                                switch.add_network(segmentation_id, network_id, project_id, of_controller)
-                        else:
-                            if physnet == self.sharedNonByocProvider:
-                                #LOG.info("PRUTH: --- corsa-unnamedvfc - sharedBYOC - add_network " )
-                                switch.add_network_to_sharedNonByoc_vfc(segmentation_id, network_id)
-                            else:
-                                #LOG.info("PRUTH: --- corsa-unnamedvfc - BYOC - add_network " )
-                                switch.add_network(segmentation_id, network_id, project_id)
+                    if switch_name in self.patchpanels:
+                        continue
+
+                    if extraArgs['switch-type'] == 'corsa':
+                        #if isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):  
+                        if switch_name in self.provisionables:
+                            #and hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
+                            LOG.debug("corsa-unnamedvfc - custom ofcontroller - add_network " )
+                            switch.add_network(segmentation_id, network_id, project_id, [extraArgs['ofcontroller_ip'],extraArgs['ofcontroller_port']])
                     else:
-                        LOG.info("PRUTH: --- dell-unnamedvfc - noofcontroller - add_network " )
+                        LOG.debug("regular isolated vlan network - add_network " )
                         switch.add_network(segmentation_id, network_id)
 
                 except Exception as e:
@@ -142,79 +141,65 @@ class GenericSwitchDriver(api.MechanismDriver):
                               {'net_id': network_id,
                                'switch': switch_name,
                                'exc': e})
-                else:
-                    LOG.info('Network %(net_id)s has been added on device '
-                             '%(device)s', {'net_id': network['id'],
-                                            'device': switch_name})
+                #LOG.info('Network %(net_id)s has been added on device '
+                #         '%(device)s', {'net_id': network['id'],
+                #                        'device': switch_name})
 
-    def __get_of_controller(self, network):
-        if 'description' in network.keys():
-            description = network['description'].strip()
-            LOG.info("--- PRUTH: __get_of_controller - Description = " + description )
+    def __get_extra_network_config(self, network):
+        """Gets config arguments from description field for chi networks
 
-            if description.startswith('OFController='):
-                VFCparameters = description.split(',')
-                key, controller = VFCparameters[0].split('=')
-                cont_ip, cont_port = controller.strip().split(':')
+        switch-type=corsa etc.
+        OFController=${OF_CONTROLLER_IP}:${OF_CONTROLLER_PORT}
+        VSwitchName= depricated
+        """
+        rtnArgs={}
 
-                # Validate controller IP address and port
-                try:
-                    socket.inet_aton(cont_ip)
-                except:
-                    raise Exception("The provided controller IP address is invalid: %s", str(cont_ip))
-                try:
-                    cont_port = int(cont_port)
-                    if cont_port < 0 or cont_port > 65535:
-                        raise ValueError
-                except:
-                    raise Exception("The provided controller port is invalid: %s", str(cont_port))
+        try:
 
-                return cont_ip, cont_port
+            if 'description' in network.keys():
+                description = network['description'].strip()
+                LOG.debug("__get_extra_network_config - Description = " + str(description) )
 
-        return None
+                rawArgs = description.split(',')
+            
+            
+                for rawArg in rawArgs:
+                    key, value = rawArg.split('=')
+                
+                    LOG.debug("__get_extra_network_config. key = " + str(key) +", value = " + str(value))
+                    if key.startswith('OFController'):
+                        LOG.debug("__get_extra_network_config. Adding ofcontroller args: value: " + str(value))
+                        ofcontroller_ip, ofcontroller_port = value.strip().split(':')
+                        LOG.debug("__get_extra_network_config. ofcontroller_ip = " + str(ofcontroller_ip) + ", ofcontroller_port = " + str(ofcontroller_port))
+                        try:
+                            socket.inet_aton(ofcontroller_ip)
+                        except:
+                            LOG.error("The provided controller IP address is invalid: %s", str(ofcontroller_ip))
+                            raise Exception("The provided controller IP address is invalid: %s", str(ofcontroller_ip))
+                
+                        try:
+                            ofcontroller_port = int(ofcontroller_port)
+                            if ofcontroller_port < 0 or ofcontroller_port > 65535:
+                                LOG.error("The provided controller port is invalid: %s", str(ofcontroller_port))
+                                raise ValueError
+                        except:
+                            LOG.error("The provided controller port is invalid: %s", str(ofcontroller_port))
+                            raise Exception("The provided controller port is invalid: %s", str(ofcontroller_port))
 
-    def __get_vfc_name(self, network, project_id=None):
-        if 'description' in network.keys():
-            description = network['description'].strip()
-
-            if description.startswith('OFController='):
-                VFCparameters = description.split(',')
-
-                if ( len(VFCparameters) > 1 ) and (VFCparameters[1].startswith('VSwitchName=')):
-                    key, v_switch_name = VFCparameters[1].split('=')
-
-                    if project_id:
-                        vfc_name = project_id + "-" + v_switch_name
+                        rtnArgs['ofcontroller_ip']=ofcontroller_ip
+                        rtnArgs['ofcontroller_port']=ofcontroller_port
                     else:
-                        vfc_name = "NONE-" + v_switch_name
-                    LOG.info("PRUTH: --- vfc_name: " + vfc_name )
-                    # FIXME: Validate VFC name
-                    try:
-                        #if not bool(re.match('^[a-zA-Z0-9]+$', vfc_name)) and (len(vfc_name) < 25):
-                        if (not v_switch_name.isalnum()) or len(v_switch_name) > 25:
-                            raise ValueError
-                    except:
-                        raise Exception("Invalid VSwitch Name: %s", vfc_name)
-                    return vfc_name
+                        LOG.debug("__get_extra_network_config. Adding other arg")
+                        key, value = rawArg.split('=')
+                        rtnArgs[key]=value
+                    
+        except:
+            LOG.debug("__get_extra_network_config. excpetion in processing description: ")
+        
 
-            elif description.startswith('VSwitchName='):
-                key, v_switch_name = description.split('=')
+        return rtnArgs
 
-                if project_id:
-                    vfc_name = project_id + "-" + v_switch_name
-                else:
-                    vfc_name = "NONE-" + v_switch_name
-                LOG.info("PRUTH: --- vfc_name: " + vfc_name )
-                # FIXME: Validate VFC name
-                try:
-                    if (not v_switch_name.isalnum()) or len(v_switch_name) > 25:
-                        raise ValueError
-                except:
-                        raise Exception("Invalid VSwitch Name: %s", vfc_name)
-                return vfc_name
-
-        return None
-
+        
 
     def update_network_precommit(self, context):
         """Update resources of a network.
@@ -232,6 +217,9 @@ class GenericSwitchDriver(api.MechanismDriver):
         network state. It is up to the mechanism driver to ignore
         state or state changes that it does not know or care about.
         """
+        import json
+        LOG.debug("update_network_postcommit: " + json.dumps(context.current, indent=2))
+
         pass
 
     def update_network_postcommit(self, context):
@@ -285,41 +273,36 @@ class GenericSwitchDriver(api.MechanismDriver):
         project_id = network['project_id'].strip()
 
         if provider_type == 'vlan' and segmentation_id:
+            
+            extraArgs=self.__get_extra_network_config(network)
+            LOG.debug("extraArgs = " + str(extraArgs))
+
             # Delete vlan on all switches from this driver
             for switch_name, switch in self._get_devices_by_physnet(physnet):
-                try:
-                    # NOTE(mgoddard): The del_network method was modified to
-                    # accept the network ID. The switch object may still be
-                    # implementing the old interface, so retry on a TypeError.
-                    try:
-                        switch.del_network(segmentation_id, network['id'])
-                    except TypeError:
-                        if not self.warned_del_network:
-                            msg = (
-                                'The del_network device method should accept '
-                                'the network ID. Falling back to just the '
-                                'segmentation ID for %(device)s. This '
-                                'transitional support will be removed in the '
-                                'Rocky release')
-                            LOG.warn(msg, {'device': switch_name})
-                            self.warned_del_network = True
 
-                        # TODO(diurnalist): Either make use of network_id for
-                        # this or pass the entire network
-                        if hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
-                            switch.del_network(segmentation_id, project_id)
-                        else:
-                            switch.del_network(segmentation_id)
+                if switch_name in self.patchpanels:
+                    continue
+
+
+                try:
+                    if extraArgs['switch-type'] == 'corsa':
+                        #if isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):                                                                                                       
+                        if switch_name in self.provisionables:
+                            #and hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):                                                             
+                            LOG.debug("corsa - custom ofcontroller - add_network " )
+                            #switch.del_network(segmentation_id, network_id, project_id, [extraArgs['ofcontroller_ip'],extraArgs['ofcontroller_port']])
+                            switch.del_network(segmentation_id, project_id) 
+                    else:
+                        LOG.debug("regular isolated vlan network - del network " )
+                        switch.del_network(segmentation_id)
+
                 except Exception as e:
                     LOG.error("Failed to delete network %(net_id)s "
                               "on device: %(switch)s, reason: %(exc)s",
                               {'net_id': network['id'],
                                'switch': switch_name,
                                'exc': e})
-                else:
-                    LOG.info('Network %(net_id)s has been deleted on device '
-                             '%(device)s', {'net_id': network['id'],
-                                            'device': switch_name})
+   
 
     def create_subnet_precommit(self, context):
         """Allocate resources for a new subnet.
@@ -423,6 +406,9 @@ class GenericSwitchDriver(api.MechanismDriver):
         cannot block.  Raising an exception will result in a rollback
         of the current transaction.
         """
+        import json
+        LOG.debug("create_port_precommit: " + json.dumps(context.current, indent=2))
+
         pass
 
     def create_port_postcommit(self, context):
@@ -435,6 +421,10 @@ class GenericSwitchDriver(api.MechanismDriver):
         drastically affect performance.  Raising an exception will
         result in the deletion of the resource.
         """
+        import json
+        LOG.debug("create_port_postcommit: " + json.dumps(context.current, indent=2))
+
+
         pass
 
     def update_port_precommit(self, context):
@@ -452,6 +442,10 @@ class GenericSwitchDriver(api.MechanismDriver):
         state. It is up to the mechanism driver to ignore state or
         state changes that it does not know or care about.
         """
+        import json
+        LOG.debug("update_port_precommit: " + json.dumps(context.current, indent=2))
+
+
         pass
 
     def update_port_postcommit(self, context):
@@ -470,6 +464,10 @@ class GenericSwitchDriver(api.MechanismDriver):
         state. It is up to the mechanism driver to ignore state or
         state changes that it does not know or care about.
         """
+
+	import json
+        LOG.debug("update_port_postcommit: " + json.dumps(context.current, indent=2))
+
         port = context.current
         if self._is_port_bound(port):
             binding_profile = port['binding:profile']
@@ -504,6 +502,10 @@ class GenericSwitchDriver(api.MechanismDriver):
         are not expected, but raising an exception will result in
         rollback of the transaction.
         """
+        import json
+        LOG.debug("delete_port_precommit: " + json.dumps(context.current, indent=2))
+
+
         pass
 
     def delete_port_postcommit(self, context):
@@ -518,6 +520,8 @@ class GenericSwitchDriver(api.MechanismDriver):
         expected, and will not prevent the resource from being
         deleted.
         """
+        import json
+        LOG.debug("delete_port_postcommit: " + json.dumps(context.current, indent=2))
 
         port = context.current
         if self._is_port_bound(port):
@@ -564,11 +568,13 @@ class GenericSwitchDriver(api.MechanismDriver):
         by the QoS service to identify the available QoS rules you
         can use with ports.
         """
+        import json
+        LOG.debug("bind_port: " + json.dumps(context.current, indent=2))
 
         port = context.current
         binding_profile = port['binding:profile']
         local_link_information = binding_profile.get('local_link_information')
-        LOG.info("PRUTH: Bindport, port: " + str(port) + ", binding_profile: " + str(binding_profile))
+        LOG.info("Bindport, port: " + str(port) + ", binding_profile: " + str(binding_profile))
 
         if self._is_port_supported(port) and local_link_information:
             switch_info = local_link_information[0].get('switch_info')
@@ -580,7 +586,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 self.switches, switch_info=switch_info,
                 ngs_mac_address=switch_id)
 
-            LOG.info("--- PRUTH: Bindport - switch %s : " + str(switch))
+            LOG.info("Bindport - switch %s : " + str(switch))
             if not switch:
                 return
             network = context.network.current
@@ -596,7 +602,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 is_byoc_network = True 
             else:
                 is_byoc_network = False
-            LOG.info("--- PRUTH: Bindport: is_byoc_network : " + str(is_byoc_network) )
+            LOG.info("Bindport: is_byoc_network : " + str(is_byoc_network) )
 
             if switch_physnets and physnet not in switch_physnets:
                 LOG.error("Cannot bind port %(port)s as device %(device)s is "
@@ -617,15 +623,15 @@ class GenericSwitchDriver(api.MechanismDriver):
                           switch_info=switch_info,
                           segmentation_id=segmentation_id))
 
-            LOG.info("--- PRUTH: Bindport - haswellNodeRange %s : " + str(self.haswellNodeRange[0]))
-            LOG.info("--- PRUTH: Bindport - haswellNodeRange %s : " + str(self.haswellNodeRange[1]))
+            LOG.info("Bindport - haswellNodeRange %s : " + str(self.haswellNodeRange[0]))
+            LOG.info("Bindport - haswellNodeRange %s : " + str(self.haswellNodeRange[1]))
             ### Determine if the node is a haswell node 
             if is_byoc_network and int(sdn_node_id) in range(int(self.haswellNodeRange[0]),int(self.haswellNodeRange[1])):
                 haswell_sdn = True
             
-            LOG.info("--- PRUTH: Bindport - sdn_node_id : " + str(sdn_node_id))
-            LOG.info("--- PRUTH: Bindport - haswell_sdn : " + str(haswell_sdn))
-            LOG.info("--- PRUTH: Bindport - segmentation_id : " + str(segmentation_id))
+            LOG.info("Bindport - sdn_node_id : " + str(sdn_node_id))
+            LOG.info("Bindport - haswell_sdn : " + str(haswell_sdn))
+            LOG.info("Bindport - segmentation_id : " + str(segmentation_id))
 
             # Move port to network
 
@@ -633,8 +639,8 @@ class GenericSwitchDriver(api.MechanismDriver):
                 switch.plug_port_to_network(port_id, segmentation_id, sdn_node_id, vfc_host=self.vfcHost)
             else:
                 if haswell_sdn:
-                    LOG.info("--- PRUTH: Bindport - haswell_sdn : " + str(haswell_sdn))
-                    LOG.info("--- PRUTH: Bindport - selfvfcHost %s : " + str(self.vfcHost))
+                    LOG.info("Bindport - haswell_sdn : " + str(haswell_sdn))
+                    LOG.info("Bindport - selfvfcHost %s : " + str(self.vfcHost))
                     switch.plug_port_to_network(port_id, sdn_node_id)
                     self.vfcHost.plug_port_to_network_haswellsdn(port_id, segmentation_id, sdn_node_id, vfc_host=self.vfcHost)
                 else:
@@ -645,7 +651,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                      "%(segment_id)s on device %(device)s",
                      {'port_id': port['id'], 'device': switch_info,
                       'segment_id': segmentation_id})
-            LOG.info("PRUTH: bind_port: 280")
+            LOG.info("bind_port: 280")
             context.set_binding(segments[0][api.ID],
                                 portbindings.VIF_TYPE_OTHER, {})
 
@@ -719,17 +725,17 @@ class GenericSwitchDriver(api.MechanismDriver):
             is_byoc_network = True
         else:
             is_byoc_network = False
-        LOG.info("--- PRUTH: _unplug_port_from_network: is_byoc_network : " + str(is_byoc_network) )
+        LOG.info("_unplug_port_from_network: is_byoc_network : " + str(is_byoc_network) )
 
-        LOG.info("--- PRUTH: _unplug_port_from_network - haswellNodeRange : " + str(self.haswellNodeRange[0]))
-        LOG.info("--- PRUTH: _unplug_port_from_network - haswellNodeRange : " + str(self.haswellNodeRange[1]))
+        LOG.info("_unplug_port_from_network - haswellNodeRange : " + str(self.haswellNodeRange[0]))
+        LOG.info("_unplug_port_from_network - haswellNodeRange : " + str(self.haswellNodeRange[1]))
         ### Determine if the node is a haswell node 
         if is_byoc_network and int(sdn_node_id) in range(int(self.haswellNodeRange[0]),int(self.haswellNodeRange[1])):
             haswell_sdn = True
 
-        LOG.info("--- PRUTH: _unplug_port_from_network - sdn_node_id : " + str(sdn_node_id))
-        LOG.info("--- PRUTH: _unplug_port_from_network - haswell_sdn : " + str(haswell_sdn))
-        LOG.info("--- PRUTH: _unplug_port_from_network - segmentation_id : " + str(segmentation_id))
+        LOG.info("_unplug_port_from_network - sdn_node_id : " + str(sdn_node_id))
+        LOG.info("_unplug_port_from_network - haswell_sdn : " + str(haswell_sdn))
+        LOG.info("_unplug_port_from_network - segmentation_id : " + str(segmentation_id))
 
 
         try:
@@ -737,8 +743,8 @@ class GenericSwitchDriver(api.MechanismDriver):
                 switch.delete_port(port_id, segmentation_id, sdn_node_id, vfc_host=self.vfcHost)
             else:
                 if haswell_sdn:
-                    LOG.info("--- PRUTH: Bindport - haswell_sdn : " + str(haswell_sdn))
-                    LOG.info("--- PRUTH: Bindport - selfvfcHost %s : " + str(self.vfcHost))
+                    LOG.info("Bindport - haswell_sdn : " + str(haswell_sdn))
+                    LOG.info("Bindport - selfvfcHost %s : " + str(self.vfcHost))
                     switch.delete_port(port_id, sdn_node_id)
                     self.vfcHost.delete_port(port_id, segmentation_id, sdn_node_id, vfc_host=self.vfcHost)
                 else:
