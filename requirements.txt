@@ -4,7 +4,7 @@
 etcd3gw>=0.2.4 # Apache-2.0
 eventlet>=0.18.2 # Apache-2.0
 stevedore>=1.20.0 # Apache-2.0
-netmiko>=2.4.1 # MIT
+netmiko>=3.0.0 # MIT
 neutron>=13.0.0.0b1 # Apache-2.0
 neutron-lib>=1.18.0 # Apache-2.0
 oslo.config>=5.2.0 # Apache-2.0
