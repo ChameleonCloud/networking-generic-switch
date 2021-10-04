@@ -34,8 +34,7 @@ class CorsaDP2100(corsa_devices.CorsaSwitch):
 
     @staticmethod
     def _detect_plug_port_failure(raw_output, port, vlan):
-	LOG.info('PRUTH: in _detect_plug_port_failure(raw_output, port, vlan) ')
-
+        LOG.info("PRUTH: in _detect_plug_port_failure(raw_output, port, vlan) ")
 
         PATTERN = "Error: .* Port is untagged in another Vlan."
         match = re.search(PATTERN, raw_output)
