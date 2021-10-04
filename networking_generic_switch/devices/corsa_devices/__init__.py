@@ -27,9 +27,9 @@ from tooz import coordination
 from networking_generic_switch import devices
 from networking_generic_switch import exceptions as exc
 from networking_generic_switch import locking as ngs_lock
+from networking_generic_switch.devices.corsa_devices import corsavfc
 
 import logging
-import corsavfc
 import requests
 import json
 import sys
