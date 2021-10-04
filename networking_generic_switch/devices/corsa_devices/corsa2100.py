@@ -14,37 +14,37 @@
 
 import re
 
-from oslo_log import log as logging
-
-from networking_generic_switch.devices import corsa_devices
 from networking_generic_switch import exceptions as exc
+from networking_generic_switch.devices import corsa_devices
+from oslo_log import log as logging
 
 LOG = logging.getLogger(__name__)
 
+
 class CorsaDP2100(corsa_devices.CorsaSwitch):
     PLUG_PORT_TO_NETWORK = (
-        'interface vlan {segmentation_id}',
-        'untagged {port}'
+        "interface vlan {segmentation_id}",
+        "untagged {port}",
     )
 
-    DELETE_PORT = (
-        'interface vlan {segmentation_id}',
-        'no untagged {port}'
-    )
+    DELETE_PORT = ("interface vlan {segmentation_id}", "no untagged {port}")
 
     @staticmethod
     def _detect_plug_port_failure(raw_output, port, vlan):
-        LOG.info("PRUTH: in _detect_plug_port_failure(raw_output, port, vlan) ")
+        LOG.info(
+            "PRUTH: in _detect_plug_port_failure(raw_output, port, vlan) "
+        )
 
         PATTERN = "Error: .* Port is untagged in another Vlan."
         match = re.search(PATTERN, raw_output)
         if match:
-            raise exc.GenericSwitchPlugPortToNetworkError(port=port,
-                                                          vlan=vlan,
-                                                          error=match.group(0))
+            raise exc.GenericSwitchPlugPortToNetworkError(
+                port=port, vlan=vlan, error=match.group(0)
+            )
+
 
 #    def plug_port_to_network(self, port, segmentation_id):
-#	LOG.info('PRUTH: in plug_port_to_network(self, port, segmentation_id) ')
+# 	LOG.info('PRUTH: in plug_port_to_network(self, port, segmentation_id) ')
 #
 #        raw_output = self.send_commands_to_device(
 #            self._format_commands(self.PLUG_PORT_TO_NETWORK,
