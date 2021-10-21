@@ -78,6 +78,14 @@ class GenericSwitchDevice(object):
     def __init__(self, device_cfg):
         self.ngs_config = {}
         self.config = {}
+
+        # hack to handle datatypes for netmiko
+        int_args = ["global_delay_factor", "keepalive"]
+        for arg in int_args:
+            tmp = device_cfg.get(arg, None)
+            if tmp:
+                device_cfg[arg] = float(tmp)
+
         # Do not expose NGS internal options to device config.
         for opt in NGS_INTERNAL_OPTS:
             opt_name = opt['name']
