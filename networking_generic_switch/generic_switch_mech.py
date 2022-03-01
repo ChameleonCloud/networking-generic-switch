@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import concurrent.futures
 import re
 import socket
 import sys
@@ -95,95 +96,105 @@ class GenericSwitchDriver(api.MechanismDriver):
         """
 
         network = context.current
+        # network_id = network["id"]
+        # project_id = network["project_id"].strip()
+        provider_type = network["provider:network_type"]
+        segmentation_id = network["provider:segmentation_id"]
+        physnet = network["provider:physical_network"]
+
+        if provider_type == "vlan" and segmentation_id:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+                # Create vlan on all switches from this driver
+                future_to_switch = {
+                    executor.submit(self.__create_corsa_network(network, switch)): {
+                        switch_name,
+                        switch,
+                    }
+                    for switch_name, switch in self._get_devices_by_physnet(physnet)
+                }
+                for future in concurrent.futures.as_completed(future_to_switch):
+                    future.result()
+
+    def __create_corsa_network(self, network, switch):
         network_id = network["id"]
         project_id = network["project_id"].strip()
-        provider_type = network["provider:network_type"]
         segmentation_id = network["provider:segmentation_id"]
         physnet = network["provider:physical_network"]
 
         of_controller = self.__get_of_controller(network)
         vfc_name = self.__get_vfc_name(network, project_id)
-
         LOG.info(
             "PRUTH: create_network: {}, network_id: {}".format(
                 str(network), str(network_id)
             )
         )
-
-        if provider_type == "vlan" and segmentation_id:
-            # Create vlan on all switches from this driver
-            for switch_name, switch in self._get_devices_by_physnet(physnet):
-                try:
-                    is_byoc_network = False
-                    if self.switch_is_corsadp2100(switch):
-                        if of_controller or vfc_name:
-                            is_byoc_network = True
-                        if is_byoc_network:
-                            if vfc_name:
-                                named_vfc_bridge = switch.find_named_vfc(vfc_name)
-                                if named_vfc_bridge:
-                                    # LOG.info("PRUTH: --- corsa-namedvfc -
-                                    # VFC exists - add_network_to_existing_vfc
-                                    #  = " + str(named_vfc_bridge) )
-                                    switch.add_network_to_existing_vfc(
-                                        segmentation_id,
-                                        network_id,
-                                        named_vfc_bridge,
-                                        vfc_name,
-                                        of_controller,
-                                    )
-                                else:
-                                    # LOG.info("PRUTH: --- corsa-namedvfc -
-                                    # does not exist - add_network = " +
-                                    # str(named_vfc_bridge) )
-                                    switch.add_network(
-                                        segmentation_id,
-                                        network_id,
-                                        project_id,
-                                        of_controller,
-                                        vfc_name,
-                                    )
-                            else:
-                                # LOG.info("PRUTH: --- corsa-unnamedvfc -
-                                # custom ofcontroller - add_network " )
-                                switch.add_network(
-                                    segmentation_id,
-                                    network_id,
-                                    project_id,
-                                    of_controller,
-                                )
+        try:
+            is_byoc_network = False
+            if self.switch_is_corsadp2100(switch):
+                if of_controller or vfc_name:
+                    is_byoc_network = True
+                if is_byoc_network:
+                    if vfc_name:
+                        named_vfc_bridge = switch.find_named_vfc(vfc_name)
+                        if named_vfc_bridge:
+                            # LOG.info("PRUTH: --- corsa-namedvfc -
+                            # VFC exists - add_network_to_existing_vfc
+                            #  = " + str(named_vfc_bridge) )
+                            switch.add_network_to_existing_vfc(
+                                segmentation_id,
+                                network_id,
+                                named_vfc_bridge,
+                                vfc_name,
+                                of_controller,
+                            )
                         else:
-                            if physnet == self.sharedNonByocProvider:
-                                # LOG.info("PRUTH: --- corsa-unnamedvfc -
-                                # sharedBYOC - add_network " )
-                                switch.add_network_to_sharedNonByoc_vfc(
-                                    segmentation_id, network_id
-                                )
-                            else:
-                                # LOG.info("PRUTH: --- corsa-unnamedvfc -
-                                # BYOC - add_network " )
-                                switch.add_network(
-                                    segmentation_id, network_id, project_id
-                                )
+                            # LOG.info("PRUTH: --- corsa-namedvfc -
+                            # does not exist - add_network = " +
+                            # str(named_vfc_bridge) )
+                            switch.add_network(
+                                segmentation_id,
+                                network_id,
+                                project_id,
+                                of_controller,
+                                vfc_name,
+                            )
                     else:
-                        LOG.info(
-                            "PRUTH: --- dell-unnamedvfc - noofcontroller"
-                            " - add_network "
+                        # LOG.info("PRUTH: --- corsa-unnamedvfc -
+                        # custom ofcontroller - add_network " )
+                        switch.add_network(
+                            segmentation_id,
+                            network_id,
+                            project_id,
+                            of_controller,
                         )
-                        switch.add_network(segmentation_id, network_id)
-
-                except Exception as e:
-                    LOG.error(
-                        "Failed to create network %(net_id)s "
-                        "on device: %(switch)s, reason: %(exc)s",
-                        {"net_id": network_id, "switch": switch_name, "exc": e},
-                    )
-                    raise
                 else:
-                    LOG.info(
-                        "Network %(net_id)s has been added on device " "%(device)s",
-                        {"net_id": network["id"], "device": switch_name},
-                    )
+                    if physnet == self.sharedNonByocProvider:
+                        # LOG.info("PRUTH: --- corsa-unnamedvfc -
+                        # sharedBYOC - add_network " )
+                        switch.add_network_to_sharedNonByoc_vfc(
+                            segmentation_id, network_id
+                        )
+                    else:
+                        # LOG.info("PRUTH: --- corsa-unnamedvfc -
+                        # BYOC - add_network " )
+                        switch.add_network(segmentation_id, network_id, project_id)
+            else:
+                LOG.info(
+                    "PRUTH: --- dell-unnamedvfc - noofcontroller" " - add_network "
+                )
+                switch.add_network(segmentation_id, network_id)
+        except Exception as e:
+            LOG.error(
+                "Failed to create network %(net_id)s "
+                "on device: %(switch)s, reason: %(exc)s",
+                {"net_id": network_id, "switch": switch_name, "exc": e},
+            )
+            raise
+        else:
+            LOG.info(
+                "Network %(net_id)s has been added on device " "%(device)s",
+                {"net_id": network["id"], "device": switch_name},
+            )
 
     def __get_of_controller(self, network):
         if "description" in network.keys():
