@@ -106,7 +106,7 @@ class GenericSwitchDriver(api.MechanismDriver):
             with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
                 # Create vlan on all switches from this driver
                 future_to_switch = {
-                    executor.submit(self.__create_corsa_network(network, switch)): {
+                    executor.submit(self.__create_corsa_network(network, switch_name, switch)): {
                         switch_name,
                         switch,
                     }
@@ -115,7 +115,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 for future in concurrent.futures.as_completed(future_to_switch):
                     future.result()
 
-    def __create_corsa_network(self, network, switch):
+    def __create_corsa_network(self, network, switch_name, switch):
         network_id = network["id"]
         project_id = network["project_id"].strip()
         segmentation_id = network["provider:segmentation_id"]
