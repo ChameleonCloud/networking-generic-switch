@@ -13,7 +13,6 @@
 #    under the License.
 
 import concurrent.futures
-import re
 import socket
 import sys
 
@@ -103,15 +102,15 @@ class GenericSwitchDriver(api.MechanismDriver):
         physnet = network["provider:physical_network"]
 
         if provider_type == "vlan" and segmentation_id:
-            with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
                 # Create vlan on all switches from this driver
-                future_to_switch = {
-                    executor.submit(self.__create_corsa_network(network, switch_name, switch)): {
-                        switch_name,
-                        switch,
-                    }
+                future_to_switch = [
+                    executor.submit(
+                        self.__create_corsa_network(network, switch_name, switch)
+                    )
                     for switch_name, switch in self._get_devices_by_physnet(physnet)
-                }
+                ]
+
                 for future in concurrent.futures.as_completed(future_to_switch):
                     future.result()
 
@@ -209,7 +208,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 # Validate controller IP address and port
                 try:
                     socket.inet_aton(cont_ip)
-                except:
+                except Exception:
                     raise Exception(
                         "The provided controller IP address is invalid: %s",
                         str(cont_ip),
@@ -218,7 +217,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                     cont_port = int(cont_port)
                     if cont_port < 0 or cont_port > 65535:
                         raise ValueError
-                except:
+                except Exception:
                     raise Exception(
                         "The provided controller port is invalid: %s", str(cont_port)
                     )
@@ -250,7 +249,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                         # and (len(vfc_name) < 25):
                         if (not v_switch_name.isalnum()) or len(v_switch_name) > 25:
                             raise ValueError
-                    except:
+                    except Exception:
                         raise Exception("Invalid VSwitch Name: %s", vfc_name)
                     return vfc_name
 
@@ -266,7 +265,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 try:
                     if (not v_switch_name.isalnum()) or len(v_switch_name) > 25:
                         raise ValueError
-                except:
+                except Exception:
                     raise Exception("Invalid VSwitch Name: %s", vfc_name)
                 return vfc_name
 
@@ -637,7 +636,7 @@ class GenericSwitchDriver(api.MechanismDriver):
             switch_physnets = switch._get_physical_networks()
 
             ### Determine if the network is BYOC
-            network_id = network["id"]
+            # network_id = network["id"]
             project_id = network["project_id"].strip()
             of_controller = self.__get_of_controller(network)
             vfc_name = self.__get_vfc_name(network, project_id)
@@ -784,7 +783,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         )
 
         ### Determine if the network is BYOC
-        network_id = network["id"]
+        # network_id = network["id"]
         project_id = network["project_id"].strip()
         of_controller = self.__get_of_controller(network)
         vfc_name = self.__get_vfc_name(network, project_id)
