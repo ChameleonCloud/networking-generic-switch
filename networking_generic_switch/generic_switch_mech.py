@@ -445,8 +445,9 @@ class GenericSwitchDriver(api.MechanismDriver):
         from neutron.objects import tag as tag_obj
         from neutron_lib.plugins import directory
 
-        #LOG.debug("XXXXXX Networks, " + str(network_obj.Network.get_objects(context)))
-        LOG.debug("XXXXXX Ports, " + str(port_obj.Port.get_objects(context)))
+        my_context = lib_context.get_admin_context()
+        LOG.debug("XXXXXX Networks, " + str(network_obj.Network.get_objects(my_context)))
+        LOG.debug("XXXXXX Ports, " + str(port_obj.Port.get_objects(my_context)))
 
         #LOG.dubug(f"XXXXXX Ports" + {port_obj.get_ports_by_router_and_network(context, router_id, owner, '95ee43a4-9335-4bf8-aab7-94075747d6f3') }")
 
