@@ -434,6 +434,129 @@ class GenericSwitchDriver(api.MechanismDriver):
         drastically affect performance.  Raising an exception will
         result in the deletion of the resource.
         """
+        import json
+        LOG.debug("create_port_postcommit: " + json.dumps(str(context.__dict__), indent=2))
+        LOG.debug("create_port_postcommit: " + json.dumps(context.current, indent=2))
+
+        from neutron.objects.ports import Port
+        from neutron.objects import ports as port_obj
+        from neutron.objects import network as network_obj
+        from neutron_lib import context as lib_context
+        from neutron.objects import tag as tag_obj
+        from neutron_lib.plugins import directory
+
+        LOG.debug(f"XXXXXX Networks {network_obj.Network.get_objects(context)}")
+        LOG.debug(f"XXXXXX Ports {port_obj.Port.get_objects(context)}")
+
+        #LOG.dubug(f"XXXXXX Ports" + {port_obj.get_ports_by_router_and_network(context, router_id, owner, '95ee43a4-9335-4bf8-aab7-94075747d6f3') }")
+
+        #sLOG.dubug(f"XXXXXX Ports" + port_obj.get_ports_by_router_and_network(context, router_id, owner, '95ee43a4-9335-4bf8-aab7-94075747d6f3')    )
+
+
+
+        #######
+        port = context.current
+        port_id = port['id']
+
+
+
+        # network_id = port['network_id']
+
+        # LOG.debug("create_port_postcommit: port_id: " + str(port_id) + ", network_id: " + str(network_id))
+
+        # admin_context = lib_context.get_admin_context()
+        # network = network_obj.Network.get_objects(admin_context,id=network_id)[0]
+        network = context.network.current
+
+        LOG.debug("create_port_postcommit: network: " + str(network))
+
+        provider_type = network['provider:network_type']
+        segmentation_id = network['provider:segmentation_id']
+        physnet = network['provider:physical_network']
+        project_id = network['project_id'].strip()
+
+        # device_owner = port['device_owner']
+        [port_type, reservation_id] = port['device_owner'].split(':', 1)
+        if port_type == 'stitchport':
+            LOG.debug('XXXXXXXXXXXXXXXXXXX device_owner: port_type: ' + str(port_type) + '  XXXXXXXXXXXXXXXXXXX')
+            LOG.debug('XXXXXXXXXXXXXXXXXXX device_owner: reservation_id: ' + str(reservation_id) + '  XXXXXXXXXXXX')
+            for switch_name, switch in self._get_devices_by_physnet(physnet):
+                try:
+                    LOG.debug('Adding patch: ' + str(switch_name))
+                    switch.add_patch(patch_id=reservation_id,
+                                     port1_name='xe-0/0/32.0',
+                                     port1_vlan='1113',
+                                     port2_name='xe-0/0/34.0',
+                                     port2_vlan='1106')
+                except Exception as e:
+                    LOG.error(e)
+            return
+
+        if provider_type == 'vlan' and segmentation_id:
+
+            extraArgs = self.__get_extra_network_config(network)
+            LOG.debug("extraArgs = " + str(extraArgs))
+
+            # if the port is an external stitched VLAN
+            # TODO
+
+            # if the port is an internal port for connecting a server
+            for switch_name, switch in self._get_devices_by_physnet(physnet):
+
+                try:
+                    if switch_name in self.provisionable_switches and physnet == \
+                            self.provisionable_switches[switch_name]['device_cfg']['chi_provider_net_name']:
+                        if segmentation_id in self.provisionable_switches[switch_name]['switch_map']:
+                            LOG.debug("corsa - custom controller - add_port ")
+                            switch.add_port(port_id, segmentation_id)
+
+                except Exception as e:
+                    LOG.error("Failed to delete network %(net_id)s "
+                              "on device: %(switch)s, reason: %(exc)s",
+                              {'net_id': network['id'],
+                               'switch': switch_name,
+                               'exc': e})
+
+        #######################################
+
+        # tag_plugin = directory.get_plugin(TAG_PLUGIN_TYPE)
+        # tag_supported_resources = TAG_SUPPORTED_RESOURCES
+
+        my_context = lib_context.get_admin_context()
+        # LOG.debug("XXXXXX Networks : " + str(network_obj.Network.get_objects(context)))
+
+        # LOG.dubug("XXXXXX " + port_obj.get_ports_by_router_and_network(context, router_id, owner, '95ee43a4-9335-4bf8-aab7-94075747d6f3')    )
+
+        port = context.current
+        binding_profile = port['binding:profile']
+        LOG.debug("XXXXXX Port : binding:profile: " + str(binding_profile))
+        # context.set_binding(segments[0][api.ID],
+        #                        portbindings.VIF_TYPE_OTHER, { 'test1': 'test2', 'testX': { 'x' : 'y', 'a':'b' }  , 'test3': 'test4' } )
+        # local_link_information = binding_profile.get(
+        #        'local_link_information')
+        # port['binding:profile'] = { 'test': 'value42' ,  'test1': 'value43' }
+        # port[portbindings.PROFILE] = { 'test100': 'value142' ,  'test101': 'value143' }
+        # port_obj.Port.update_object(my_context, portbindings.PROFILE, id=port['id'] )
+        # context.set_binding( 'my_degment_id' , 'my_vif_type',  {'test100': 'answer100'})
+
+        # LOG.debug("context._bindings: " + str(context._binding))
+
+        # ports=port_obj.Port.get_objects(my_context,network_id='7a10b2ce-81a3-4a9b-91e1-b976552b4b6c')
+        # for port in ports:
+        #    LOG.debug("XXXXXX Port : " + str(port))
+        #    #port_obj.Port.update_object(my_context, {'description': 'pruth43'}, id=port['id'] )
+        #    #port_obj.Port.update_object(my_context, {'binding_vif_details': 'pruth47'}, id=port['id'] )
+        #    #port_details = port.get('binding:vif_details', {})
+        #    #LOG.debug("XXXXXX Port binding:vif_details : " + str(port_details))
+        #
+        #    #port[portbindings.PROFILE] = { 'test100': 'value142' ,  'test101': 'value143' }
+        #    #port_obj.Port.update_object(my_context, {'binding': port['bindings']['profile']}, id=port['id'] )
+        #
+        #    #if port['name'] == 'pruth106':
+        #    #    LOG.debug("XXXXXX Ports pruth106")
+        #    #    LOG.debug("XXXXXX Ports pruth106: " + str(port['bindings']))
+        ##LOG.debug("XXXXXX Ports : " + str(port_obj.Port.get_objects(my_context,network_id='95ee43a4-9335-4bf8-aab7-94075747d6f3')))
+
         pass
 
     def update_port_precommit(self, context):
