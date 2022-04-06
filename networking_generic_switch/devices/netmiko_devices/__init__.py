@@ -76,6 +76,10 @@ class NetmikoSwitch(devices.GenericSwitchDevice):
 
     SAVE_CONFIGURATION = None
 
+    ADD_PATCH = None
+
+    REMOVE_PATCH = None
+
     ERROR_MSG_PATTERNS = ()
     """Sequence of error message patterns.
 
@@ -227,6 +231,29 @@ class NetmikoSwitch(devices.GenericSwitchDevice):
         cmds += self._format_commands(self.DELETE_NETWORK,
                                       segmentation_id=segmentation_id,
                                       network_id=network_id)
+        return self.send_commands_to_device(cmds)
+
+    @check_output('add patch')
+    def add_patch(self, patch_id, port1_name, port1_vlan, port2_name, port2_vlan):
+        cmds = []
+        cmds += self._format_commands(
+            self.ADD_PATCH,
+            patch_id=patch_id,
+            port1_name=port1_name,
+            port1_vlan=port1_vlan,
+            port2_name=port2_name,
+            port2_vlan=port2_vlan
+        )
+
+        return self.send_commands_to_device(cmds)
+
+    @check_output('remove patch')
+    def remove_patch(self, patch_id):
+        cmds = []
+        cmds += self._format_commands(
+            self.REMOVE_PATCH,
+            patch_id=patch_id)
+
         return self.send_commands_to_device(cmds)
 
     @check_output('plug port')
