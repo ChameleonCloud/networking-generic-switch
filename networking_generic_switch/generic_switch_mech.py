@@ -436,7 +436,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         """
         import json
         LOG.debug("create_port_postcommit: " + json.dumps(str(context.__dict__), indent=2))
-        LOG.debug("create_port_postcommit: " + json.dumps(context.current, indent=2))
+        LOG.debug("create_port_postcommit: " + json.dumps(str(context.current), indent=2))
 
         from neutron.objects.ports import Port
         from neutron.objects import ports as port_obj
@@ -446,10 +446,11 @@ class GenericSwitchDriver(api.MechanismDriver):
         from neutron_lib.plugins import directory
 
         admin_context = lib_context.get_admin_context()
-        LOG.debug("XXXXXX admin_context, " + json.dumps(admin_context, indent=2))
+        LOG.debug("XXXXXX admin_context, " + json.dumps(str(admin_context), indent=2))
 
-        LOG.debug("XXXXXX Networks, " + json.dumps(network_obj.Network.get_objects(admin_context), indent=2))
-        LOG.debug("XXXXXX Ports, " + json.dumps(port_obj.Port.get_objects(admin_context), indent=2))
+        LOG.debug("XXXXXX Networks, " + json.dumps(str(network_obj.Network.get_objects(admin_context)), indent=2))
+
+        LOG.debug("XXXXXX Ports, " + json.dumps(str(port_obj.Port.get_objects(admin_context)), indent=2))
 
         #LOG.dubug(f"XXXXXX Ports" + {port_obj.get_ports_by_router_and_network(context, router_id, owner, '95ee43a4-9335-4bf8-aab7-94075747d6f3') }")
 
