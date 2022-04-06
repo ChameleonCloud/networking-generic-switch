@@ -446,14 +446,14 @@ class GenericSwitchDriver(api.MechanismDriver):
         from neutron_lib.plugins import directory
 
         admin_context = lib_context.get_admin_context()
-        LOG.debug("XXXXXX admin_context, " + str(admin_context))
+        LOG.debug("XXXXXX admin_context, " + json.dumps(admin_context, indent=2))
 
-        LOG.debug("XXXXXX Networks, " + str(network_obj.Network.get_objects(admin_context)))
-        LOG.debug("XXXXXX Ports, " + str(port_obj.Port.get_objects(admin_context)))
+        LOG.debug("XXXXXX Networks, " + json.dumps(network_obj.Network.get_objects(admin_context), indent=2))
+        LOG.debug("XXXXXX Ports, " + json.dumps(port_obj.Port.get_objects(admin_context), indent=2))
 
         #LOG.dubug(f"XXXXXX Ports" + {port_obj.get_ports_by_router_and_network(context, router_id, owner, '95ee43a4-9335-4bf8-aab7-94075747d6f3') }")
 
-        #sLOG.dubug(f"XXXXXX Ports" + port_obj.get_ports_by_router_and_network(context, router_id, owner, '95ee43a4-9335-4bf8-aab7-94075747d6f3')    )
+        #LOG.dubug(f"XXXXXX Ports" + port_obj.get_ports_by_router_and_network(context, router_id, owner, '95ee43a4-9335-4bf8-aab7-94075747d6f3')    )
 
 
 
