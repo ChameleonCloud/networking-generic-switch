@@ -151,7 +151,7 @@ def bridge_create(headers,
 #
 # BRIDGE DELETE
 #
-#   200 OK   PRUTH: I think its actually 204
+#   200 OK   NOTE: I think its actually 204
 #   403 Forbidden
 #   404 Not found
 
@@ -569,8 +569,8 @@ def get_bridge_by_segmentation_id(headers,
             # Chameleon specific br_descr format: <PROJECT_ID>-<VFC_NAME>-VLAN-<TAG1>-<TAG2>
             # Extract VLAN tags
             vlan_tags = re.match( r'(.*?)-(.*?)-VLAN-(.*)', bridge_descr, re.I )
-            LOG.info("--- PRUTH: get_bridge_by_segmentation_id - bridge-descr   : " + bridge_descr )
-            LOG.info("--- PRUTH: get_bridge_by_segmentation_id - segmentation_id: " + str(segmentation_id))
+            LOG.debug("get_bridge_by_segmentation_id - bridge-descr   : " + bridge_descr )
+            LOG.debug("get_bridge_by_segmentation_id - segmentation_id: " + str(segmentation_id))
             if vlan_tags.group(3) and ( vlan_tags.group(3).find(str(segmentation_id)) > -1 ) :
                 return bridge
     return None
@@ -645,30 +645,30 @@ def reclaim_ofport(headers,
     bridges = get_bridges(headers,url_switch)
 
     links=bridges.json()["links"]
-    LOG.info("PRUTH: reclaim_ofport - bridges: " + str(links))
+    LOG.debug("reclaim_ofport - bridges: " + str(links))
     for bridge,value in links.items():
         #bridge = 'br'+str(i)
         #bridgeInfo = get_bridge(headers,url_switch,bridges[bridge])
         #link=links[str(bridge)]
-        LOG.info("PRUTH: bridge: " + str(bridge) + ", value: " + str(value )  )
+        LOG.debug("bridge: " + str(bridge) + ", value: " + str(value )  )
         url=value['href']
-        LOG.info("PRUTH: bridge url: " + str(bridge) + ", href: " + str(url)  )
+        LOG.debug("bridge url: " + str(bridge) + ", href: " + str(url)  )
         bridge_data = get_bridge(headers,url_switch,url)
         bridge_tunnels_url = str(bridge_data.json()['links']['tunnels']['href'])
-        LOG.info("PRUTH: bridge tunnels url: " + str(bridge_tunnels_url))
+        LOG.debug("bridge tunnels url: " + str(bridge_tunnels_url))
         bridge_tunnels = get_info(headers,url_switch,bridge_tunnels_url)
-        LOG.info("PRUTH: bridge tunnels: " + str(bridge_tunnels.json()))
+        LOG.debug("bridge tunnels: " + str(bridge_tunnels.json()))
         for tunnel,value in bridge_tunnels.json()['links'].items():
-            LOG.info("PRUTH: bridge tunnel: " + str(tunnel) + ", value: " + str(value))
+            LOG.debug("bridge tunnel: " + str(tunnel) + ", value: " + str(value))
             tunnel_url=value['href']
-            LOG.info("PRUTH: bridge tunnel_url: " + str(tunnel_url))
+            LOG.debug("bridge tunnel_url: " + str(tunnel_url))
             tunnel_info = get_info(headers,url_switch,tunnel_url)
-            LOG.info("PRUTH: bridge tunnel_info: " + str(tunnel_info.json()))
+            LOG.debug("bridge tunnel_info: " + str(tunnel_info.json()))
             current_port = tunnel_info.json()['port']
             current_ofport = tunnel_info.json()['ofport']
-            LOG.info("PRUTH: current_port: " + str(current_port) + ", ofport: " +  str(ofport)  +    ", current_ofport: " + str(current_ofport))
+            LOG.debug("current_port: " + str(current_port) + ", ofport: " +  str(ofport)  +    ", current_ofport: " + str(current_ofport))
             if str(current_ofport) == str(ofport):
-                LOG.info("PRUTH: FOUND PORT. KILL IT. ")
+                LOG.debug("FOUND PORT. KILL IT. ")
                 bridge_detach_tunnel(headers, url_switch, str(bridge), str(current_ofport))
 
     return None
@@ -686,30 +686,30 @@ def reclaim_port(headers,
     bridges = get_bridges(headers,url_switch)
 
     links=bridges.json()["links"]
-    LOG.info("PRUTH: bridges: " + str(links))
+    LOG.debug("bridges: " + str(links))
     for bridge,value in links.items():
         #bridge = 'br'+str(i)
         #bridgeInfo = get_bridge(headers,url_switch,bridges[bridge])
         #link=links[str(bridge)]
-        LOG.info("PRUTH: bridge: " + str(bridge) + ", value: " + str(value )  )
+        LOG.debug("bridge: " + str(bridge) + ", value: " + str(value )  )
         url=value['href']
-        LOG.info("PRUTH: bridge url: " + str(bridge) + ", href: " + str(url)  )
+        LOG.debug("bridge url: " + str(bridge) + ", href: " + str(url)  )
         bridge_data = get_bridge(headers,url_switch,url)
         bridge_tunnels_url = str(bridge_data.json()['links']['tunnels']['href'])
-        LOG.info("PRUTH: bridge tunnels url: " + str(bridge_tunnels_url))
+        LOG.debug("bridge tunnels url: " + str(bridge_tunnels_url))
         bridge_tunnels = get_info(headers,url_switch,bridge_tunnels_url)
-        LOG.info("PRUTH: bridge tunnels: " + str(bridge_tunnels.json()))
+        LOG.debug("bridge tunnels: " + str(bridge_tunnels.json()))
         for tunnel,value in bridge_tunnels.json()['links'].items():
-            LOG.info("PRUTH: bridge tunnel: " + str(tunnel) + ", value: " + str(value))
+            LOG.debug("bridge tunnel: " + str(tunnel) + ", value: " + str(value))
             tunnel_url=value['href']
-            LOG.info("PRUTH: bridge tunnel_url: " + str(tunnel_url))
+            LOG.debug("bridge tunnel_url: " + str(tunnel_url))
             tunnel_info = get_info(headers,url_switch,tunnel_url)
-            LOG.info("PRUTH: bridge tunnel_info: " + str(tunnel_info.json()))
+            LOG.debug("bridge tunnel_info: " + str(tunnel_info.json()))
             current_port = tunnel_info.json()['port']
             current_ofport = tunnel_info.json()['ofport']
-            LOG.info("PRUTH: current_port: " + str(current_port) + ", port: " +  str(port) + ", current_ofport: " + str(current_ofport))
+            LOG.debug("current_port: " + str(current_port) + ", port: " +  str(port) + ", current_ofport: " + str(current_ofport))
             if current_port == port:
-                LOG.info("PRUTH: FOUND PORT. KILL IT. ")
+                LOG.debug("FOUND PORT. KILL IT. ")
                 bridge_detach_tunnel(headers, url_switch, str(bridge), str(current_ofport))
 
     return None
