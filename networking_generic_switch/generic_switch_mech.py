@@ -436,7 +436,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         """
         import json
         LOG.debug("" + json.dumps(str(context.__dict__), indent=2))
-        LOG.debug("" + context.current)
+        LOG.debug("" + str(context.current))
 
         from neutron.objects.ports import Port
         from neutron.objects import ports as port_obj
