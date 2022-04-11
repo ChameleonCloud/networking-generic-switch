@@ -29,6 +29,7 @@ LOG = logging.getLogger(__name__)
 
 GENERIC_SWITCH_ENTITY = 'GENERICSWITCH'
 
+CONF = cfg.CONF
 
 class GenericSwitchDriver(api.MechanismDriver):
 
@@ -45,7 +46,7 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         self.haswellNodeRange=(201,299)
 
-        LOG.info("stitching_shadow_network: " + str(gsw_conf.coordination_opts))
+        LOG.info("stitching_shadow_network: " + str(CONF.ngs_coordination.stitching_shadow_network)
 
         for switch_info, device_cfg in gsw_devices.items():
             switch = devices.device_manager(device_cfg)
