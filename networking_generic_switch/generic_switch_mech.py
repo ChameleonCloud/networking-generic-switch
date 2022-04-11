@@ -17,6 +17,7 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import resources
 from neutron_lib.plugins.ml2 import api
 from oslo_log import log as logging
+from oslo_config import cfg
 import socket
 import re
 
