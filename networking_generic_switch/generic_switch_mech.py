@@ -45,6 +45,8 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         self.haswellNodeRange=(201,299)
 
+        print("stitching_shadow_network: " + str(cfg.CONF.ngs_coordination.stitching_shadow_network))
+
         for switch_info, device_cfg in gsw_devices.items():
             switch = devices.device_manager(device_cfg)
             if hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):

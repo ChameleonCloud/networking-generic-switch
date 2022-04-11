@@ -26,6 +26,9 @@ coordination_opts = [
                default=60,
                help='Timeout in seconds after which an attempt to grab a lock '
                     'is failed. Value of 0 is forever.'),
+    cfg.StrOpt('stitching_shadow_network',
+               help='The shadow network for blazar stitching info.'),
+
 ]
 
 CONF.register_opts(coordination_opts, group='ngs_coordination')
