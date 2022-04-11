@@ -47,7 +47,11 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         self.haswellNodeRange=(201,299)
 
-        LOG.info("stitching_shadow_network: " + str(CONF.ngs_coordination.stitching_shadow_network))
+        try:
+            LOG.info("stitching_shadow_network: " + str(CONF.ngs_coordination.stitching_shadow_network))
+            self.stitching_shadow_network = CONF.ngs_coordination.stitching_shadow_network
+        except:
+            LOG.info("stitching_shadow_network undefined")
 
         for switch_info, device_cfg in gsw_devices.items():
             switch = devices.device_manager(device_cfg)
@@ -455,6 +459,8 @@ class GenericSwitchDriver(api.MechanismDriver):
         LOG.debug("XXXXXX Networks")
         for net in network_obj.Network.get_objects(admin_context):
             LOG.debug("XXXXXX Net: " + str(net))
+            if str(net['name']) == self.stitching_shadow_network:
+                LOG.debug("XXXXXX FOUND STITCH NETWORK: " + str(net['name']) + ", " + str(net))
 
         LOG.debug("XXXXXX Ports, ")
         for port in port_obj.Port.get_objects(admin_context):
