@@ -460,11 +460,14 @@ class GenericSwitchDriver(api.MechanismDriver):
         for net in network_obj.Network.get_objects(admin_context):
             LOG.debug("XXXXXX Net: " + str(net))
             if str(net['name']) == self.stitching_shadow_network:
-                LOG.debug("XXXXXX FOUND STITCH NETWORK: " + str(net['name']) + ", " + str(net))
+                LOG.debug("XXXXXX FOUND SHADOW STITCH NETWORK: " + str(net['name']) + ", " + str(net))
+                stitching_shadow_network_id = net['id']
 
         LOG.debug("XXXXXX Ports, ")
         for port in port_obj.Port.get_objects(admin_context):
             LOG.debug("XXXXXX Port: " + str(port))
+            if port['network_id'] == stitching_shadow_network_id:
+                LOG.debug("XXXXXX FOUND SHADOW STITCH Port: " + str(port))
 
         #LOG.dubug(f"XXXXXX Ports" + {port_obj.get_ports_by_router_and_network(context, router_id, owner, '95ee43a4-9335-4bf8-aab7-94075747d6f3') }")
 
