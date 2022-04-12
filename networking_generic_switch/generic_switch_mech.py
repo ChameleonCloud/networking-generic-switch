@@ -66,6 +66,13 @@ class GenericSwitchDriver(api.MechanismDriver):
                 self.sharedNonByocVLAN = device_cfg['sharedNonByocVLAN']
             if 'sharedNonByocProvider' in device_cfg:
                 self.sharedNonByocProvider = device_cfg['sharedNonByocProvider']
+            if 'role' in device_cfg:
+                self.role = device_cfg['role']
+            if 'ports' in device_cfg:
+                self.ports = {}
+                for port_str in device_cfg['ports'].split(','):
+                    port_name, port_id = port_str.split(":")
+                    self.port[port_name] = port_id
             LOG.info('Devices - switch %s ', str(switch) )
 
         LOG.info('Devices - self.vfcHost %s ', str(self.vfcHost) )
@@ -469,21 +476,10 @@ class GenericSwitchDriver(api.MechanismDriver):
             if port['network_id'] == stitching_shadow_network_id:
                 LOG.debug("XXXXXX FOUND SHADOW STITCH Port: " + str(port))
 
-        #LOG.dubug(f"XXXXXX Ports" + {port_obj.get_ports_by_router_and_network(context, router_id, owner, '95ee43a4-9335-4bf8-aab7-94075747d6f3') }")
-
-        #LOG.dubug(f"XXXXXX Ports" + port_obj.get_ports_by_router_and_network(context, router_id, owner, '95ee43a4-9335-4bf8-aab7-94075747d6f3')    )
-
-
-
-        #######
         port = context.current
         port_id = port['id']
 
         LOG.debug("port: " + str(port))
-
-
-
-
         # network_id = port['network_id']
 
         # LOG.debug("create_port_postcommit: port_id: " + str(port_id) + ", network_id: " + str(network_id))
@@ -511,7 +507,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         if port_type == 'stitchport':
             LOG.debug('Adding stitch port: port_type: ' + str(port_type) + ', reservation_id: ' + str(reservation_id))
 
-            # Check it stitchport is authorized by blazar/shadow network
+            # Check if stitchport is authorized by blazar/shadow network
             #TODO
 
             # Add patch
