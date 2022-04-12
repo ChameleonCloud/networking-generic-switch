@@ -50,6 +50,15 @@ class GenericSwitchDriver(api.MechanismDriver):
         try:
             LOG.info("stitching_shadow_network: " + str(CONF.ngs_coordination.stitching_shadow_network))
             self.stitching_shadow_network = CONF.ngs_coordination.stitching_shadow_network
+
+            LOG.info("patchpanel_switch: " + str(CONF.ngs_coordination.patchpanel_switch))
+            self.patchpanel_switch_name = CONF.ngs_coordination.patchpanel_switch
+
+            LOG.info("port_map: " + str(CONF.ngs_coordination.port_map))
+            self.patchpanel_port_map = {}
+            for port_str in CONF.ngs_coordination.port_map.split(','):
+                port_name, port_id = port_str.split(":")
+                self.patchpanel_port_map[port_name] = port_id
         except:
             LOG.info("stitching_shadow_network undefined")
 
@@ -66,14 +75,6 @@ class GenericSwitchDriver(api.MechanismDriver):
                 self.sharedNonByocVLAN = device_cfg['sharedNonByocVLAN']
             if 'sharedNonByocProvider' in device_cfg:
                 self.sharedNonByocProvider = device_cfg['sharedNonByocProvider']
-            if 'role' in device_cfg and 'port_map' in device_cfg:
-                if device_cfg['role'] == 'patchpanel':
-                    self.patchpanel = switch
-                    self.patchpanel_port_map={}
-                    for port_str in device_cfg['port_map'].split(','):
-                        port_name, port_id = port_str.split(":")
-                        self.patchpanel_port_map[port_name] = port_id
-                self.role = device_cfg['role']
             LOG.info('Devices - switch %s ', str(switch) )
 
         LOG.info('Devices - self.vfcHost %s ', str(self.vfcHost) )
