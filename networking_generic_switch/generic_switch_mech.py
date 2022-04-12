@@ -68,6 +68,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 self.sharedNonByocProvider = device_cfg['sharedNonByocProvider']
             if 'role' in device_cfg and 'port_map' in device_cfg:
                 if device_cfg['role'] == 'patchpanel':
+                    self.patchpanel = switch
                     self.patchpanel_port_map={}
                     for port_str in device_cfg['port_map'].split(','):
                         port_name, port_id = port_str.split(":")
@@ -517,25 +518,25 @@ class GenericSwitchDriver(api.MechanismDriver):
             #TODO
 
             # Add patch
-            for switch_name, switch in self._get_devices_by_physnet(physnet):
-                try:
-                    port1_name = 'fabric'
-                    port1_vlan = self.patchpanel_port_map[port1_name]
-                    port2_name = 'physnet'
-                    port2_vlan = self.patchpanel_port_map[port2_name]
-                    LOG.debug('Adding patch: ' + str(switch) +
-                              ', port1_name: ' + str(port1_name) +
-                              ', port1_vlan: ' + str(port1_vlan) +
-                              ', port2_name: ' + str(port2_name) +
-                              ', port2_vlan: ' + str(port2_vlan)
-                              )
-                    #switch.add_patch(patch_id=reservation_id,
-                    #                 port1_name='xe-0/0/32.0',
-                    #                 port1_vlan='1113',
-                    #                 port2_name='xe-0/0/34.0',
-                    #                 port2_vlan='1106')
-                except Exception as e:
-                    LOG.error(e)
+            try:
+                port1_name = self.patchpanel_port_map['fabric']
+                port1_vlan = 1234
+                port2_name = self.patchpanel_port_map['physnet']
+                port2_vlan = 4321
+                LOG.debug('Adding patch: ' + str(switch) +
+                          ', port1_name: ' + str(port1_name) +
+                          ', port1_vlan: ' + str(port1_vlan) +
+                          ', port2_name: ' + str(port2_name) +
+                          ', port2_vlan: ' + str(port2_vlan)
+                          )
+                self.patchpanel.add_patch(patch_id=reservation_id,
+                                 port1_name=port1_name,
+                                 port1_vlan=port1_vlan,
+                                 port2_name=port2_name,
+                                 port2_vlan=port2_vlan)
+            except Exception as e:
+                LOG.error(e)
+
         elif provider_type == 'vlan' and segmentation_id:
 
             extraArgs = self.__get_extra_network_config(network)
