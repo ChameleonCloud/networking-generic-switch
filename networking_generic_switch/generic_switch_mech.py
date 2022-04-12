@@ -511,11 +511,11 @@ class GenericSwitchDriver(api.MechanismDriver):
             for switch_name, switch in self._get_devices_by_physnet(physnet):
                 try:
                     LOG.debug('Adding patch: ' + str(switch_name))
-                    switch.add_patch(patch_id=reservation_id,
-                                     port1_name='xe-0/0/32.0',
-                                     port1_vlan='1113',
-                                     port2_name='xe-0/0/34.0',
-                                     port2_vlan='1106')
+                    #switch.add_patch(patch_id=reservation_id,
+                    #                 port1_name='xe-0/0/32.0',
+                    #                 port1_vlan='1113',
+                    #                 port2_name='xe-0/0/34.0',
+                    #                 port2_vlan='1106')
                 except Exception as e:
                     LOG.error(e)
             return
