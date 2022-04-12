@@ -498,7 +498,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         segmentation_id = network['provider:segmentation_id']
         physnet = network['provider:physical_network']
         project_id = network['project_id'].strip()
-        LOG.debug('XXXXXXXXXXXXXXXXXXX project_id: project_id: ' + str(project_id) + '  XXXXXXXXXXXXXXXXXXX')
+        LOG.debug('project_id: ' + str(project_id))
 
         port_type = None
         if 'type' in port['binding:profile']:
@@ -509,8 +509,12 @@ class GenericSwitchDriver(api.MechanismDriver):
             reservation_id = port['binding:profile']['reservation_id']
 
         if port_type == 'stitchport':
-            LOG.debug('XXXXXXXXXXXXXXXXXXX device_owner: port_type: ' + str(port_type) + '  XXXXXXXXXXXXXXXXXXX')
-            LOG.debug('XXXXXXXXXXXXXXXXXXX device_owner: reservation_id: ' + str(reservation_id) + '  XXXXXXXXXXXX')
+            LOG.debug('Adding stitch port: port_type: ' + str(port_type) + ', reservation_id: ' + str(reservation_id))
+
+            # Check it stitchport is authorized by blazar/shadow network
+            #TODO
+
+            # Add patch
             for switch_name, switch in self._get_devices_by_physnet(physnet):
                 try:
                     LOG.debug('Adding patch: ' + str(switch_name))
@@ -521,9 +525,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                     #                 port2_vlan='1106')
                 except Exception as e:
                     LOG.error(e)
-            return
-
-        if provider_type == 'vlan' and segmentation_id:
+        elif provider_type == 'vlan' and segmentation_id:
 
             extraArgs = self.__get_extra_network_config(network)
             LOG.debug("extraArgs = " + str(extraArgs))
@@ -548,45 +550,6 @@ class GenericSwitchDriver(api.MechanismDriver):
                                'switch': switch_name,
                                'exc': e})
 
-        #######################################
-
-        # tag_plugin = directory.get_plugin(TAG_PLUGIN_TYPE)
-        # tag_supported_resources = TAG_SUPPORTED_RESOURCES
-
-        my_context = lib_context.get_admin_context()
-        # LOG.debug("XXXXXX Networks : " + str(network_obj.Network.get_objects(context)))
-
-        # LOG.dubug("XXXXXX " + port_obj.get_ports_by_router_and_network(context, router_id, owner, '95ee43a4-9335-4bf8-aab7-94075747d6f3')    )
-
-        port = context.current
-        binding_profile = port['binding:profile']
-        LOG.debug("XXXXXX Port : binding:profile: " + str(binding_profile))
-        # context.set_binding(segments[0][api.ID],
-        #                        portbindings.VIF_TYPE_OTHER, { 'test1': 'test2', 'testX': { 'x' : 'y', 'a':'b' }  , 'test3': 'test4' } )
-        # local_link_information = binding_profile.get(
-        #        'local_link_information')
-        # port['binding:profile'] = { 'test': 'value42' ,  'test1': 'value43' }
-        # port[portbindings.PROFILE] = { 'test100': 'value142' ,  'test101': 'value143' }
-        # port_obj.Port.update_object(my_context, portbindings.PROFILE, id=port['id'] )
-        # context.set_binding( 'my_degment_id' , 'my_vif_type',  {'test100': 'answer100'})
-
-        # LOG.debug("context._bindings: " + str(context._binding))
-
-        # ports=port_obj.Port.get_objects(my_context,network_id='7a10b2ce-81a3-4a9b-91e1-b976552b4b6c')
-        # for port in ports:
-        #    LOG.debug("XXXXXX Port : " + str(port))
-        #    #port_obj.Port.update_object(my_context, {'description': 'pruth43'}, id=port['id'] )
-        #    #port_obj.Port.update_object(my_context, {'binding_vif_details': 'pruth47'}, id=port['id'] )
-        #    #port_details = port.get('binding:vif_details', {})
-        #    #LOG.debug("XXXXXX Port binding:vif_details : " + str(port_details))
-        #
-        #    #port[portbindings.PROFILE] = { 'test100': 'value142' ,  'test101': 'value143' }
-        #    #port_obj.Port.update_object(my_context, {'binding': port['bindings']['profile']}, id=port['id'] )
-        #
-        #    #if port['name'] == 'pruth106':
-        #    #    LOG.debug("XXXXXX Ports pruth106")
-        #    #    LOG.debug("XXXXXX Ports pruth106: " + str(port['bindings']))
-        ##LOG.debug("XXXXXX Ports : " + str(port_obj.Port.get_objects(my_context,network_id='95ee43a4-9335-4bf8-aab7-94075747d6f3')))
 
         pass
 
