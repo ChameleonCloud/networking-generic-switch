@@ -47,6 +47,8 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         self.haswellNodeRange=(201,299)
 
+        self.stitching_shadow_network = ''
+        self.patchpanel_port_map = {}
         try:
             LOG.info("stitching_shadow_network: " + str(CONF.ngs_coordination.stitching_shadow_network))
             self.stitching_shadow_network = CONF.ngs_coordination.stitching_shadow_network
