@@ -72,7 +72,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 self.ports = {}
                 for port_str in device_cfg['ports'].split(','):
                     port_name, port_id = port_str.split(":")
-                    self.port[port_name] = port_id
+                    self.ports[port_name] = port_id
             LOG.info('Devices - switch %s ', str(switch) )
 
         LOG.info('Devices - self.vfcHost %s ', str(self.vfcHost) )
