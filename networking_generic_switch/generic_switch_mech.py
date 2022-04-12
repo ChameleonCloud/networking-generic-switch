@@ -523,7 +523,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 port1_vlan = 1234
                 port2_name = self.patchpanel_port_map['physnet']
                 port2_vlan = 4321
-                LOG.debug('Adding patch: ' + str(switch) +
+                LOG.debug('Adding patch: ' + str(self.patchpanel) +
                           ', port1_name: ' + str(port1_name) +
                           ', port1_vlan: ' + str(port1_vlan) +
                           ', port2_name: ' + str(port2_name) +
