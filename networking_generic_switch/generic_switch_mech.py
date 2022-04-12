@@ -517,7 +517,8 @@ class GenericSwitchDriver(api.MechanismDriver):
             # Add patch
             for switch_name, switch in self._get_devices_by_physnet(physnet):
                 try:
-                    LOG.debug('Adding patch: ' + str(switch_name))
+                    LOG.debug('Adding patch: ' + str(switch_name) )
+                    LOG.debug('switch: ' + str(switch))
                     #switch.add_patch(patch_id=reservation_id,
                     #                 port1_name='xe-0/0/32.0',
                     #                 port1_vlan='1113',
