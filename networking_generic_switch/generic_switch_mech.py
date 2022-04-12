@@ -518,6 +518,7 @@ class GenericSwitchDriver(api.MechanismDriver):
             # Add patch
             try:
                 for switch_name, switch in self._get_devices_by_physnet(physnet):
+                    LOG.debug("Searching for patchpanel switch (" + self.patchpanel_switch_name + ". candidate: " + str(switch_name))
                     if switch_name == self.patchpanel_switch_name:
                         self.patchpanel_switch = switch
                         break
