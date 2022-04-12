@@ -479,6 +479,9 @@ class GenericSwitchDriver(api.MechanismDriver):
         port = context.current
         port_id = port['id']
 
+        LOG.debug("port: " + str(port))
+
+
 
 
         # network_id = port['network_id']
@@ -495,6 +498,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         segmentation_id = network['provider:segmentation_id']
         physnet = network['provider:physical_network']
         project_id = network['project_id'].strip()
+
 
         # device_owner = port['device_owner']
         [port_type, reservation_id] = port['device_owner'].split(':', 1)
