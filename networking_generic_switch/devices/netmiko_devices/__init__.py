@@ -92,9 +92,9 @@ class NetmikoSwitch(devices.GenericSwitchDevice):
         device_type = self.config.get('device_type', '')
         # use part that is after 'netmiko_'
         device_type = device_type.partition('netmiko_')[2]
-        if device_type not in netmiko.platforms:
-            raise exc.GenericSwitchNetmikoNotSupported(
-                device_type=device_type)
+        #if device_type not in netmiko.platforms:
+        #    raise exc.GenericSwitchNetmikoNotSupported(
+        #        device_type=device_type)
         self.config['device_type'] = device_type
 
         try:

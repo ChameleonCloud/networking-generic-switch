@@ -74,11 +74,6 @@ class GenericSwitchDriver(api.MechanismDriver):
                         port_name, port_id = port_str.split(":")
                         self.patchpanel_port_map[port_name] = port_id
                 self.role = device_cfg['role']
-            if 'ports' in device_cfg:
-                self.ports = {}
-                for port_str in device_cfg['ports'].split(','):
-                    port_name, port_id = port_str.split(":")
-                    self.ports[port_name] = port_id
             LOG.info('Devices - switch %s ', str(switch) )
 
         LOG.info('Devices - self.vfcHost %s ', str(self.vfcHost) )
