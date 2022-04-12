@@ -498,12 +498,15 @@ class GenericSwitchDriver(api.MechanismDriver):
         segmentation_id = network['provider:segmentation_id']
         physnet = network['provider:physical_network']
         project_id = network['project_id'].strip()
+        LOG.debug('XXXXXXXXXXXXXXXXXXX project_id: project_id: ' + str(project_id) + '  XXXXXXXXXXXXXXXXXXX')
 
+        port_type = None
+        if 'type' in port['binding:profile']:
+            port_type = port['binding:profile']['type']
 
-        device_owner = port['device_owner']
-        #[port_type, reservation_id] = port['device_owner'].split(':', 1)
-        port_type = port['binding:profile']['type']
-        reservation_id = port['binding:profile']['reservation_id']
+        reservation_id = None
+        if 'reservation_id' in port['binding:profile']:
+            reservation_id = port['binding:profile']['reservation_id']
 
         if port_type == 'stitchport':
             LOG.debug('XXXXXXXXXXXXXXXXXXX device_owner: port_type: ' + str(port_type) + '  XXXXXXXXXXXXXXXXXXX')
