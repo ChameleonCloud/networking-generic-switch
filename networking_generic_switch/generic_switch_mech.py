@@ -66,7 +66,12 @@ class GenericSwitchDriver(api.MechanismDriver):
                 self.sharedNonByocVLAN = device_cfg['sharedNonByocVLAN']
             if 'sharedNonByocProvider' in device_cfg:
                 self.sharedNonByocProvider = device_cfg['sharedNonByocProvider']
-            if 'role' in device_cfg:
+            if 'role' in device_cfg and 'port_map' in device_cfg:
+                if device_cfg['role'] == 'patchpanel':
+                    self.patchpanel_port_map={}
+                    for port_str in device_cfg['port_map'].split(','):
+                        port_name, port_id = port_str.split(":")
+                        self.patchpanel_port_map[port_name] = port_id
                 self.role = device_cfg['role']
             if 'ports' in device_cfg:
                 self.ports = {}
@@ -506,6 +511,7 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         if port_type == 'stitchport':
             LOG.debug('Adding stitch port: port_type: ' + str(port_type) + ', reservation_id: ' + str(reservation_id))
+            LOG.debug('patchpanel_port_map: ', str(self.patchpanel_port_map))
 
             # Check if stitchport is authorized by blazar/shadow network
             #TODO
