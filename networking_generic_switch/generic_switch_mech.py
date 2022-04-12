@@ -517,11 +517,13 @@ class GenericSwitchDriver(api.MechanismDriver):
 
             # Add patch
             try:
+                self.patchpanel_switch = self._get_devices_by_physnet(physnet)[self.patchpanel_switch_name]
+
                 port1_name = self.patchpanel_port_map['fabric']
                 port1_vlan = 1234
                 port2_name = self.patchpanel_port_map['physnet']
                 port2_vlan = 4321
-                LOG.debug('Adding patch: ' + str(self.patchpanel) +
+                LOG.debug('Adding patch: ' + str(self.patchpanel_switch) +
                           ', port1_name: ' + str(port1_name) +
                           ', port1_vlan: ' + str(port1_vlan) +
                           ', port2_name: ' + str(port2_name) +
