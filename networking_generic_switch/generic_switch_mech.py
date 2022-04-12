@@ -500,8 +500,11 @@ class GenericSwitchDriver(api.MechanismDriver):
         project_id = network['project_id'].strip()
 
 
-        # device_owner = port['device_owner']
-        [port_type, reservation_id] = port['device_owner'].split(':', 1)
+        device_owner = port['device_owner']
+        #[port_type, reservation_id] = port['device_owner'].split(':', 1)
+        port_type = port['binding:profile']['type']
+        reservation_id = port['binding:profile']['reservation_id']
+
         if port_type == 'stitchport':
             LOG.debug('XXXXXXXXXXXXXXXXXXX device_owner: port_type: ' + str(port_type) + '  XXXXXXXXXXXXXXXXXXX')
             LOG.debug('XXXXXXXXXXXXXXXXXXX device_owner: reservation_id: ' + str(reservation_id) + '  XXXXXXXXXXXX')
