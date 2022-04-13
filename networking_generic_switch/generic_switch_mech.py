@@ -56,7 +56,7 @@ class GenericSwitchDriver(api.MechanismDriver):
             LOG.info("patchpanel_switch: " + str(CONF.ngs_coordination.patchpanel_switch))
             self.patchpanel_switch_name = CONF.ngs_coordination.patchpanel_switch
 
-            LOG.info("port_map: " + str(CONF.ngs_coordination.port_map))
+            LOG.info("port_map: " + str(CONF.ngs_coordination.patchpanel_port_map))
             self.patchpanel_port_map = {}
             for port_str in CONF.ngs_coordination.port_map.split(','):
                 port_name, port_id = port_str.split(":")

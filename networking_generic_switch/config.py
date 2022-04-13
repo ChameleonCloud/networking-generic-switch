@@ -30,7 +30,7 @@ coordination_opts = [
                help='The shadow network for blazar stitching info.'),
     cfg.StrOpt('patchpanel_switch',
                help='The name of the patchpanel switch.'),
-    cfg.StrOpt('port_map',
+    cfg.StrOpt('patchpanel_port_map',
                help='The map between the patchpanel switch ports and names.'),
 ]
 
