@@ -500,6 +500,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         project_id = network['project_id'].strip()
         LOG.debug('project_id: ' + str(project_id))
 
+
         port_type = None
         if 'type' in port['binding:profile']:
             port_type = port['binding:profile']['type']
@@ -524,8 +525,8 @@ class GenericSwitchDriver(api.MechanismDriver):
                         break
 
                 port1_name = self.patchpanel_port_map['fabric']
-                port1_vlan = 123
-                port2_name = self.patchpanel_port_map['physnet']
+                port1_vlan = 1234
+                port2_name = self.patchpanel_port_map[physnet]
                 port2_vlan = segmentation_id
                 LOG.debug('Adding patch: ' + str(self.patchpanel_switch) +
                           ', port1_name: ' + str(port1_name) +
