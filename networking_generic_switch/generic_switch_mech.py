@@ -526,7 +526,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 port1_name = self.patchpanel_port_map['fabric']
                 port1_vlan = 123
                 port2_name = self.patchpanel_port_map['physnet']
-                port2_vlan = 321
+                port2_vlan = segmentation_id
                 LOG.debug('Adding patch: ' + str(self.patchpanel_switch) +
                           ', port1_name: ' + str(port1_name) +
                           ', port1_vlan: ' + str(port1_vlan) +
