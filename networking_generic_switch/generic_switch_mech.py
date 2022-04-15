@@ -540,8 +540,8 @@ class GenericSwitchDriver(api.MechanismDriver):
                 #LOG.debug("Candidate shadow_port: " + str(shadow_port))
                 #if not 'bindings' in shadow_port['bindings']:
                 #if hasattr(shadow_port_candidate,'bindings') and shadow_port_candidate['bindings'] == None:
-                if shadow_port_candidate['bindings'] == None:
-                    LOG.debug("port does not have bindings, skipping")
+                if shadow_port_candidate['bindings'] == None and 'project_id' in shadow_port_candidate['bindings'].keys() and  'reservation_id' in shadow_port_candidate['bindings'].keys() :
+                    LOG.debug("port does not have bindings or stitchport info, skipping")
                     continue
                 LOG.debug("project_id " + str(project_id))
                 LOG.debug("reservation_id " + str(reservation_id))
