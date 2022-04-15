@@ -33,11 +33,11 @@ JUNIPER_INTERNAL_OPTS = [
 class Juniper(netmiko_devices.NetmikoSwitch):
 
     ADD_NETWORK = (
-        'set vlans net{network_id} vlan-id {segmentation_id}',
+        'set vlans {network_id} vlan-id {segmentation_id}',
     )
 
     DELETE_NETWORK = (
-        'delete vlans net{network_id}',
+        'delete vlans {network_id}',
     )
 
     PLUG_PORT_TO_NETWORK = (
