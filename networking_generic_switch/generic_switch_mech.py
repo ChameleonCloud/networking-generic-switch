@@ -467,18 +467,19 @@ class GenericSwitchDriver(api.MechanismDriver):
         admin_context = lib_context.get_admin_context()
         LOG.debug("XXXXXX admin_context, " + str(admin_context))
 
-        LOG.debug("XXXXXX Networks")
-        for net in network_obj.Network.get_objects(admin_context):
-            LOG.debug("XXXXXX Net: " + str(net))
-            if str(net['name']) == self.stitching_shadow_network:
-                LOG.debug("XXXXXX FOUND SHADOW STITCH NETWORK: " + str(net['name']) + ", " + str(net))
-                stitching_shadow_network_id = net['id']
+        #LOG.debug("XXXXXX Networks")
+        #for net in network_obj.Network.get_objects(admin_context):
+        #    LOG.debug("XXXXXX Net: " + str(net))
+        #    if str(net['name']) == self.stitching_shadow_network:
+        #        LOG.debug("XXXXXX FOUND SHADOW STITCH NETWORK: " + str(net['name']) + ", " + str(net))
+        #        stitching_shadow_network_id = net['id']
 
-        LOG.debug("XXXXXX Ports, ")
-        for port in port_obj.Port.get_objects(admin_context):
-            LOG.debug("XXXXXX Port: " + str(port))
-            if port['network_id'] == stitching_shadow_network_id:
-                LOG.debug("XXXXXX FOUND SHADOW STITCH Port: " + str(port))
+        #LOG.debug("XXXXXX Ports, ")
+        #for port in port_obj.Port.get_objects(admin_context):
+        #    LOG.debug("XXXXXX Port: " + str(port))
+        #    if port['network_id'] == stitching_shadow_network_id:
+        #        shadow_port = port
+        #        LOG.debug("XXXXXX FOUND SHADOW STITCH Port: " + str(port))
 
         port = context.current
         port_id = port['id']
@@ -505,10 +506,6 @@ class GenericSwitchDriver(api.MechanismDriver):
         if 'type' in port['binding:profile']:
             port_type = port['binding:profile']['type']
 
-        reservation_id = None
-        if 'reservation_id' in port['binding:profile']:
-            reservation_id = port['binding:profile']['reservation_id']
-
         if network['name'] ==  'stitching_shadow_network':
             LOG.info('adding shadow port. no physical config required')
             LOG.debug('port:  ' + str(port))
@@ -519,6 +516,24 @@ class GenericSwitchDriver(api.MechanismDriver):
             # Check if stitchport is authorized by blazar/shadow network
             #TODO
 
+            if 'reservation_id' in port['binding:profile']:
+                reservation_id = port['binding:profile']['reservation_id']
+
+            LOG.debug("XXXXXX Searching for shadow port, ")
+            shadow_port = None
+            for shadow_port in port_obj.Port.get_objects(admin_context):
+                LOG.debug("Candidate port: " + str(port))
+                if shadow_port['network_id'] == self.stitching_shadow_network['id'] and \
+                        shadow_port['binding:profile']['project_id'] == project_id  and \
+                        shadow_port['binding:profile']['reservation_id'] == reservation_id:
+                    shadow_port = port
+                    LOG.debug("XXXXXX FOUND SHADOW STITCH Port: " + str(port))
+                    break
+
+            #get shadow vlan and stitchport from shadow port
+            stichport_name = shadow_port['binding:profile']['stitchport']
+            stichport_vlan = shadow_port['binding:profile']['vlan']
+
             # Add patch
             try:
                 for switch_name, switch in self._get_devices_by_physnet(physnet):
@@ -527,8 +542,8 @@ class GenericSwitchDriver(api.MechanismDriver):
                         self.patchpanel_switch = switch
                         break
 
-                port1_name = self.patchpanel_port_map['fabric']
-                port1_vlan = 1234
+                port1_name = self.patchpanel_port_map[stichport_name]
+                port1_vlan = stichport_vlan
                 port2_name = self.patchpanel_port_map[physnet]
                 port2_vlan = segmentation_id
                 LOG.debug('Adding patch: ' + str(self.patchpanel_switch) +
@@ -548,6 +563,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         elif provider_type == 'vlan' and segmentation_id:
             # if the port is an internal port for connecting a server
             for switch_name, switch in self._get_devices_by_physnet(physnet):
+                # Skip configuring the patchpanel for regular networks
                 if hasattr(self, 'patchpanel_switch_name') and switch_name == self.patchpanel_switch_name:
                     LOG.debug("Skipping patchpaned switch config for vlan network")
                     continue
