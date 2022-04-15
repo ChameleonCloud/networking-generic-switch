@@ -498,7 +498,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         segmentation_id = network['provider:segmentation_id']
         physnet = network['provider:physical_network']
         project_id = network['project_id'].strip()
-        LOG.debug('project_id: ' + str(project_id))
+        LOG.debug('project_id: ' + str(project_id)):w!
 
 
         port_type = None
@@ -509,7 +509,10 @@ class GenericSwitchDriver(api.MechanismDriver):
         if 'reservation_id' in port['binding:profile']:
             reservation_id = port['binding:profile']['reservation_id']
 
-        if port_type == 'stitchport':
+        if network['name'] == 'stitching_shadow_network':
+            LOG.info('adding shadowport. no physical config required')
+            pass
+        elif port_type == 'stitchport':
             LOG.debug('Adding stitch port: port_type: ' + str(port_type) + ', reservation_id: ' + str(reservation_id))
             LOG.debug('patchpanel_port_map:  ' + str(self.patchpanel_port_map))
 
