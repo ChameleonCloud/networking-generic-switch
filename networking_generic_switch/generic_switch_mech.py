@@ -547,13 +547,6 @@ class GenericSwitchDriver(api.MechanismDriver):
                 LOG.error(e)
 
         elif provider_type == 'vlan' and segmentation_id:
-
-            extraArgs = self.__get_extra_network_config(network)
-            LOG.debug("extraArgs = " + str(extraArgs))
-
-            # if the port is an external stitched VLAN
-            # TODO
-
             # if the port is an internal port for connecting a server
             for switch_name, switch in self._get_devices_by_physnet(physnet):
 
@@ -570,9 +563,6 @@ class GenericSwitchDriver(api.MechanismDriver):
                               {'net_id': network['id'],
                                'switch': switch_name,
                                'exc': e})
-
-
-        pass
 
     def update_port_precommit(self, context):
         """Update resources of a port.
