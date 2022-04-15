@@ -510,7 +510,7 @@ class GenericSwitchDriver(api.MechanismDriver):
             LOG.info('adding shadow port. no physical config required')
             LOG.debug('port:  ' + str(port))
         elif port_type == 'stitchport':
-            LOG.debug('Adding stitch port: port_type: ' + str(port_type) + ', reservation_id: ' + str(reservation_id))
+            LOG.debug('Adding stitch port: port_type: ' + str(port_type))
             LOG.debug('patchpanel_port_map:  ' + str(self.patchpanel_port_map))
 
             # Check if stitchport is authorized by blazar/shadow network
