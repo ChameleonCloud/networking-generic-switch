@@ -523,8 +523,15 @@ class GenericSwitchDriver(api.MechanismDriver):
             shadow_port = None
             for shadow_port in port_obj.Port.get_objects(admin_context):
                 LOG.debug("Candidate port: " + str(port))
+                LOG.debug("shadow_port['network_id']" + str(shadow_port['network_id']))
+                LOG.debug("self.stitching_shadow_network['id']" + str(self.stitching_shadow_network['id']))
+                LOG.debug("shadow_port['binding:profile']['project_id']" + str(shadow_port['binding:profile']['project_id']))
+                LOG.debug("shadow_port['binding:profile']['reservation_id']" + str(shadow_port['binding:profile']['reservation_id']))
+                LOG.debug("project_id" + str(project_id))
+                LOG.debug("reservation_id" + str(reservation_id))
+
                 if shadow_port['network_id'] == self.stitching_shadow_network['id'] and \
-                        shadow_port['binding:profile']['project_id'] == project_id  and \
+                        shadow_port['binding:profile']['project_id'] == project_id and \
                         shadow_port['binding:profile']['reservation_id'] == reservation_id:
                     shadow_port = port
                     LOG.debug("XXXXXX FOUND SHADOW STITCH Port: " + str(port))
