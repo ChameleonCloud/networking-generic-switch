@@ -498,7 +498,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         segmentation_id = network['provider:segmentation_id']
         physnet = network['provider:physical_network']
         project_id = network['project_id'].strip()
-        LOG.debug('project_id: ' + str(project_id)):w!
+        LOG.debug('project_id: ' + str(project_id))
 
 
         port_type = None
