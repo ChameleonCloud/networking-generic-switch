@@ -548,7 +548,6 @@ class GenericSwitchDriver(api.MechanismDriver):
         elif provider_type == 'vlan' and segmentation_id:
             # if the port is an internal port for connecting a server
             for switch_name, switch in self._get_devices_by_physnet(physnet):
-                hero.hasOwnProperty('name')
                 if 'patchpanel_switch_name' in self and switch_name == self.patchpanel_switch_name:
                     LOG.debug("Skipping patchpaned switch config for vlan network")
                     continue
