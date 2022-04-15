@@ -523,6 +523,9 @@ class GenericSwitchDriver(api.MechanismDriver):
             shadow_port = None
             for shadow_port in port_obj.Port.get_objects(admin_context):
                 LOG.debug("Candidate shadow_port: " + str(shadow_port))
+                if not 'binding:profile' in shadow_port.keys():
+                    LOG.debug("port does not have binding:profile, skipping")
+                    continue
                 LOG.debug("project_id " + str(project_id))
                 LOG.debug("reservation_id " + str(reservation_id))
                 LOG.debug("shadow_port['binding:profile']['project_id'] " + str(shadow_port['binding:profile']['project_id']))
