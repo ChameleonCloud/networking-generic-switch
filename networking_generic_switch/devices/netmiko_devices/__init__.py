@@ -180,7 +180,7 @@ class NetmikoSwitch(devices.GenericSwitchDevice):
             yield net_connect
 
     def send_commands_to_device(self, cmd_set):
-        if not cmd_set:
+        if not cmd_xset:
             LOG.debug("Nothing to execute")
             return
 

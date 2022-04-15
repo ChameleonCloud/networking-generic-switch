@@ -512,7 +512,6 @@ class GenericSwitchDriver(api.MechanismDriver):
         if network['name'] ==  'stitching_shadow_network':
             LOG.info('adding shadow port. no physical config required')
             LOG.debug('port:  ' + str(port))
-            pass
         elif port_type == 'stitchport':
             LOG.debug('Adding stitch port: port_type: ' + str(port_type) + ', reservation_id: ' + str(reservation_id))
             LOG.debug('patchpanel_port_map:  ' + str(self.patchpanel_port_map))
