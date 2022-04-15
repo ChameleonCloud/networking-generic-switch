@@ -509,7 +509,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         if 'reservation_id' in port['binding:profile']:
             reservation_id = port['binding:profile']['reservation_id']
 
-        if network['name'] == 'stitching_shadow_network':
+        if network['name'] ==  'stitching_shadow_network':
             LOG.info('adding shadowport. no physical config required')
             pass
         elif port_type == 'stitchport':
