@@ -538,7 +538,8 @@ class GenericSwitchDriver(api.MechanismDriver):
                         #shadow_port['bindings'] binding: PortBinding(host='',port_id=b12d066a-469e-41fa-9ada-dc3cf9f1c468,profile={"type": "shadow", "project_id": "1234567890", "reservation_id": "abcdefg", "vlan": "1234", "stitchport": "fabric"},status='ACTIVE',vif_details=None,vif_type='unbound',vnic_type='normal')
 
                 #LOG.debug("Candidate shadow_port: " + str(shadow_port))
-                if not 'bindings' in shadow_port.keys():
+                #if not 'bindings' in shadow_port['bindings']:
+                if shadow_port['bindings'] == None:
                     LOG.debug("port does not have bindings, skipping")
                     continue
                 LOG.debug("project_id " + str(project_id))
