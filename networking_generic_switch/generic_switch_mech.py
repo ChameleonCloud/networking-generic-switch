@@ -525,8 +525,9 @@ class GenericSwitchDriver(api.MechanismDriver):
                 # Prints the nicely formatted dictionary
                 #pprint.pprint(shadow_port)
                 #pprint.pformat(dictionary)
-                import pprint
-                LOG.debug("Candidate shadow_port: " + str(pprint.pformat(shadow_port)))
+                import json
+                #print(json.dumps(dictionary, indent=4, sort_keys=True))
+                LOG.debug("Candidate shadow_port: " + str(json.dumps(shadow_port, indent=4, sort_keys=True)))
                 #LOG.debug("Candidate shadow_port: " + str(shadow_port))
                 if not 'binding:profile' in shadow_port.keys():
                     LOG.debug("port does not have binding:profile, skipping")
