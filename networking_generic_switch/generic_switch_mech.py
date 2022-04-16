@@ -47,11 +47,11 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         self.haswellNodeRange=(201,299)
 
-        self.stitching_shadow_network = ''
+        self.stitching_shadow_network_name = ''
         self.patchpanel_port_map = {}
         try:
             LOG.info("stitching_shadow_network: " + str(CONF.ngs_coordination.stitching_shadow_network))
-            self.stitching_shadow_network = CONF.ngs_coordination.stitching_shadow_network
+            self.stitching_shadow_network_name = CONF.ngs_coordination.stitching_shadow_network
 
             LOG.info("patchpanel_switch: " + str(CONF.ngs_coordination.patchpanel_switch))
             self.patchpanel_switch_name = CONF.ngs_coordination.patchpanel_switch
@@ -467,12 +467,13 @@ class GenericSwitchDriver(api.MechanismDriver):
         admin_context = lib_context.get_admin_context()
         LOG.debug("XXXXXX admin_context, " + str(admin_context))
 
-        #LOG.debug("XXXXXX Networks")
-        #for net in network_obj.Network.get_objects(admin_context):
-        #    LOG.debug("XXXXXX Net: " + str(net))
-        #    if str(net['name']) == self.stitching_shadow_network:
-        #        LOG.debug("XXXXXX FOUND SHADOW STITCH NETWORK: " + str(net['name']) + ", " + str(net))
-        #        stitching_shadow_network_id = net['id']
+        LOG.debug("XXXXXX Networks")
+        for net in network_obj.Network.get_objects(admin_context):
+            LOG.debug("XXXXXX Net: " + str(net))
+            if str(net['name']) == self.stitching_shadow_network_name:
+                LOG.debug("XXXXXX FOUND SHADOW STITCH NETWORK: " + str(net['name']) + ", " + str(net))
+                stitching_shadow_network = net
+                stitching_shadow_network_id = net['id']
 
         #LOG.debug("XXXXXX Ports, ")
         #for port in port_obj.Port.get_objects(admin_context):
@@ -506,7 +507,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         if 'type' in port['binding:profile']:
             port_type = port['binding:profile']['type']
 
-        if network['name'] ==  'stitching_shadow_network':
+        if network['name'] == 'stitching_shadow_network':
             LOG.info('adding shadow port. no physical config required')
             LOG.debug('port:  ' + str(port))
         elif port_type == 'stitchport':
@@ -558,11 +559,11 @@ class GenericSwitchDriver(api.MechanismDriver):
                     LOG.debug("\nshadow_port_candidate['bindings']['profile']['project_id'] " + str(shadow_port_candidate['bindings'][0]['profile']['project_id']))
                     LOG.debug("\nshadow_port_candidate['bindings']['profile']['reservation_id'] " + str(shadow_port_candidate['bindings'][0]['profile']['reservation_id']))
                     LOG.debug("\nshadow_port_candidate['network_id'] " + str(shadow_port_candidate['network_id']))
-                    LOG.debug("\nself.stitching_shadow_network['id'] " + str(self.stitching_shadow_network['id']))
+                    LOG.debug("\nstitching_shadow_network['id'] " + str(stitching_shadow_network['id']))
 
 
 
-                    if shadow_port_candidate['network_id'] == self.stitching_shadow_network['id'] and \
+                    if shadow_port_candidate['network_id'] == stitching_shadow_network['id'] and \
                             shadow_port_candidate['bindings'][0]['profile']['project_id'] == project_id and \
                             shadow_port_candidate['bindings'][0]['profile']['reservation_id'] == reservation_id:
                         shadow_port = shadow_port_candidate
