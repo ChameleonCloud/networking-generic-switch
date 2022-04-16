@@ -578,8 +578,8 @@ class GenericSwitchDriver(api.MechanismDriver):
                 raise Exception("SHADOW STITCH NOT FOUND!")
 
             #get shadow vlan and stitchport from shadow port
-            stichport_name = shadow_port['bindings']['stitchport']
-            stichport_vlan = shadow_port['bindings']['vlan']
+            stichport_name = shadow_port['bindings'][0]['profile']['stitchport']
+            stichport_vlan = shadow_port['bindings'][0]['profile']['vlan']
 
             # Add patch
             try:
