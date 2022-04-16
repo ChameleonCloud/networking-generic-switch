@@ -52,7 +52,10 @@ class GenericSwitchDriver(api.MechanismDriver):
         try:
             LOG.info("stitching_shadow_network: " + str(CONF.ngs_coordination.stitching_shadow_network))
             self.stitching_shadow_network_name = CONF.ngs_coordination.stitching_shadow_network
+        except:
+            LOG.info("stitching_shadow_network undefined")
 
+        try:
             LOG.info("patchpanel_switch: " + str(CONF.ngs_coordination.patchpanel_switch))
             self.patchpanel_switch_name = CONF.ngs_coordination.patchpanel_switch
 
@@ -60,9 +63,12 @@ class GenericSwitchDriver(api.MechanismDriver):
             self.patchpanel_port_map = {}
             for port_str in CONF.ngs_coordination.port_map.split(','):
                 port_name, port_id = port_str.split(":")
+                LOG.info("port_map adding: " + str(port_name) + ", " + str(port_id))
                 self.patchpanel_port_map[port_name] = port_id
+
+            LOG.info("port_map built: " + str(self.patchpanel_port_map ))
         except:
-            LOG.info("stitching_shadow_network undefined")
+            LOG.info("patchpanel_switch undefined")
 
         for switch_info, device_cfg in gsw_devices.items():
             switch = devices.device_manager(device_cfg)
