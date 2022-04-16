@@ -49,6 +49,7 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         self.stitching_shadow_network_name = ''
         self.patchpanel_port_map = {}
+        self.patch_vlans = []
         try:
             LOG.info("stitching_shadow_network: " + str(CONF.ngs_coordination.stitching_shadow_network))
             self.stitching_shadow_network_name = CONF.ngs_coordination.stitching_shadow_network
@@ -67,6 +68,12 @@ class GenericSwitchDriver(api.MechanismDriver):
                 self.patchpanel_port_map[port_name] = port_id
 
             LOG.info("port_map built: " + str(self.patchpanel_port_map ))
+
+            LOG.info("patch_vlans: " + str(CONF.ngs_coordination.patch_vlans))
+            [patch_vlan_low,patch_vlan_low] = CONF.ngs_coordination.patch_vlans).split(':')
+            for i in range(patch_vlan_low,patch_vlan_high+1):
+                self.patch_vlans.append({ 'name': 'p'+str(i), 'vlan': vlan } )
+            LOG.debug('Patch VLANs: ' + str(self.patch_vlans))
         except Exception as e:
             import traceback
             LOG.info("patchpanel_switch undefined" + str(traceback.format_exc()))

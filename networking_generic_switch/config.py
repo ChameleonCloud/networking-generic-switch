@@ -32,6 +32,8 @@ coordination_opts = [
                help='The name of the patchpanel switch.'),
     cfg.StrOpt('patchpanel_port_map',
                help='The map between the patchpanel switch ports and names.'),
+    cfg.StrOpt('patch_vlans',
+               help='Range of VLANs to use as patches on the patch panel.'),
 ]
 
 CONF.register_opts(coordination_opts, group='ngs_coordination')
