@@ -553,16 +553,16 @@ class GenericSwitchDriver(api.MechanismDriver):
                     #    continue
                     LOG.debug("\nproject_id " + str(project_id))
                     LOG.debug("\nreservation_id " + str(reservation_id))
-                    LOG.debug("\nshadow_port_candidate['bindings']['project_id'] " + str(shadow_port_candidate['bindings']['project_id']))
-                    LOG.debug("\nshadow_port_candidate['bindings']['reservation_id'] " + str(shadow_port_candidate['bindings']['reservation_id']))
+                    LOG.debug("\nshadow_port_candidate['bindings']['project_id'] " + str(shadow_port_candidate['bindings']['profile']['project_id']))
+                    LOG.debug("\nshadow_port_candidate['bindings']['reservation_id'] " + str(shadow_port_candidate['bindings']['profile']['reservation_id']))
                     LOG.debug("\nshadow_port_candidate['network_id'] " + str(shadow_port_candidate['network_id']))
                     LOG.debug("\nself.stitching_shadow_network['id'] " + str(self.stitching_shadow_network['id']))
 
 
 
                     if shadow_port_candidate['network_id'] == self.stitching_shadow_network['id'] and \
-                            shadow_port_candidate['bindings']['project_id'] == project_id and \
-                            shadow_port_candidate['bindings']['reservation_id'] == reservation_id:
+                            shadow_port_candidate['bindings']['profile']['project_id'] == project_id and \
+                            shadow_port_candidate['bindings']['profile']['reservation_id'] == reservation_id:
                         shadow_port = shadow_port_candidate
                         LOG.debug("XXXXXX FOUND SHADOW STITCH Port: " + str(port))
                         break
