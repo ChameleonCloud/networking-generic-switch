@@ -71,7 +71,7 @@ class GenericSwitchDriver(api.MechanismDriver):
 
             LOG.info("patch_vlans: " + str(CONF.ngs_coordination.patch_vlans))
             [patch_vlan_low,patch_vlan_high] = CONF.ngs_coordination.patch_vlans.split(':')
-            for i in range(patch_vlan_low,patch_vlan_high+1):
+            for i in range(int(patch_vlan_low),int(patch_vlan_high)+1):
                 self.patch_vlans.append({ 'name': 'p'+str(i), 'vlan': vlan } )
             LOG.debug('Patch VLANs: ' + str(self.patch_vlans))
         except Exception as e:
