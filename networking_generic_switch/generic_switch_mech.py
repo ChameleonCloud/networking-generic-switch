@@ -534,7 +534,7 @@ class GenericSwitchDriver(api.MechanismDriver):
 
                     if shadow_port_candidate['name'] == 'pruth1_shadowport':
                         LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx")
-                        for binding in shadow_port['bindings']:
+                        for binding in shadow_port_candidate['bindings']:
                             LOG.debug("shadow_port_candidate['bindings'] type: " + str(type(binding)))
                             LOG.debug("shadow_port_candidate['bindings'] binding: " + str(binding))
 
