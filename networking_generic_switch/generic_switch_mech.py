@@ -61,7 +61,7 @@ class GenericSwitchDriver(api.MechanismDriver):
 
             LOG.info("port_map: " + str(CONF.ngs_coordination.patchpanel_port_map))
             self.patchpanel_port_map = {}
-            for port_str in CONF.ngs_coordination.port_map.split(','):
+            for port_str in CONF.ngs_coordination.patchpanel_port_map.split(','):
                 port_name, port_id = port_str.split(":")
                 LOG.info("port_map adding: " + str(port_name) + ", " + str(port_id))
                 self.patchpanel_port_map[port_name] = port_id
