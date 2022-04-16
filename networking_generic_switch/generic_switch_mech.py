@@ -528,8 +528,8 @@ class GenericSwitchDriver(api.MechanismDriver):
                 #import json
                 #print(json.dumps(dictionary, indent=4, sort_keys=True))
 
-                LOG.debug("Candidate shadow_port (pretty2): " + json.dumps(shadow_port_candidate, default=str, indent=4))
-                #LOG.debug("Candidate shadow_port (pretty2): " + json.dumps(shadow_port, default=str, indent=4))
+                #LOG.debug("Candidate shadow_port (pretty2): " + json.dumps(shadow_port_candidate, default=str, indent=4))
+                LOG.debug("Candidate shadow_port (pretty2): " + str(shadow_port_candidate))
 
                 if shadow_port_candidate['name'] == 'pruth1_shadowport':
                     LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx")
