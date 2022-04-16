@@ -130,6 +130,9 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         LOG.debug("network: " + str(network) + ", network_id: " + str(network_id))
 
+        if hasattr(self, 'stitching_shadow_network_name') and network['name'] == self.stitching_shadow_network_name:
+            LOG.debug('adding to shadow network. no physical config required')
+
         if provider_type == 'vlan' and segmentation_id:
             # Create vlan on all switches from this driver
             for switch_name, switch in self._get_devices_by_physnet(physnet):
@@ -514,7 +517,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         if 'type' in port['binding:profile']:
             port_type = port['binding:profile']['type']
 
-        if network['name'] == 'stitching_shadow_network':
+        if hasattr(self, 'stitching_shadow_network_name') and network['name'] == self.stitching_shadow_network_name:
             LOG.info('adding shadow port. no physical config required')
             LOG.debug('port:  ' + str(port))
         elif port_type == 'stitchport':
