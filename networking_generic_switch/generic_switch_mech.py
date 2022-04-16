@@ -67,8 +67,9 @@ class GenericSwitchDriver(api.MechanismDriver):
                 self.patchpanel_port_map[port_name] = port_id
 
             LOG.info("port_map built: " + str(self.patchpanel_port_map ))
-        except:
-            LOG.info("patchpanel_switch undefined")
+        except Exception as e:
+            import traceback
+            LOG.info("patchpanel_switch undefined" + str(traceback.format_exc())
 
         for switch_info, device_cfg in gsw_devices.items():
             switch = devices.device_manager(device_cfg)
