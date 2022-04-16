@@ -533,10 +533,15 @@ class GenericSwitchDriver(api.MechanismDriver):
                     LOG.debug("Candidate shadow_port (pretty2): " + str(shadow_port_candidate))
 
                     if shadow_port_candidate['name'] == 'pruth1_shadowport':
-                        LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx")
-                        for binding in shadow_port_candidate['bindings']:
-                            LOG.debug("shadow_port_candidate['bindings'] type: " + str(type(binding)))
-                            LOG.debug("shadow_port_candidate['bindings'] binding: " + str(binding))
+                        LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+
+                    binding = None
+                    for binding_candidate in shadow_port_candidate['bindings']:
+                        LOG.debug("shadow_port_candidate['bindings'] type: " + str(type(binding_candidate)))
+                        LOG.debug("shadow_port_candidate['bindings'] binding: " + str(binding_candidate))
+                        if binding_candidate['project_id'] != None:
+                            binding = binding_candidate
+                            break
 
                             #shadow_port['bindings'] binding: PortBinding(host='',port_id=b12d066a-469e-41fa-9ada-dc3cf9f1c468,profile={"type": "shadow", "project_id": "1234567890", "reservation_id": "abcdefg", "vlan": "1234", "stitchport": "fabric"},status='ACTIVE',vif_details=None,vif_type='unbound',vnic_type='normal')
 
