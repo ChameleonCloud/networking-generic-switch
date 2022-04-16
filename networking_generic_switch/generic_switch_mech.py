@@ -611,13 +611,14 @@ class GenericSwitchDriver(api.MechanismDriver):
                 port1_vlan = stichport_vlan
                 port2_name = self.patchpanel_port_map[physnet]
                 port2_vlan = segmentation_id
+                patch = self.patch_vlans.pop(0) #TODO: roll back on failure. This might leak patch vlans
                 LOG.debug('Adding patch: ' + str(self.patchpanel_switch) +
                           ', port1_name: ' + str(port1_name) +
                           ', port1_vlan: ' + str(port1_vlan) +
                           ', port2_name: ' + str(port2_name) +
                           ', port2_vlan: ' + str(port2_vlan)
                           )
-                self.patchpanel_switch.add_patch(patch_id='2100',
+                self.patchpanel_switch.add_patch(patch_id=patch['vlan'],
                                  port1_name=port1_name,
                                  port1_vlan=port1_vlan,
                                  port2_name=port2_name,
