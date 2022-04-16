@@ -543,7 +543,9 @@ class GenericSwitchDriver(api.MechanismDriver):
                         #    binding = binding_candidate
                         #    break
 
-                        #shadow_port['bindings'] binding: PortBinding(host='',port_id=b12d066a-469e-41fa-9ada-dc3cf9f1c468,profile={"type": "shadow", "project_id": "1234567890", "reservation_id": "abcdefg", "vlan": "1234", "stitchport": "fabric"},status='ACTIVE',vif_details=None,vif_type='unbound',vnic_type='normal')
+                    binding = shadow_port_candidate['bindings'][0]
+
+                    #shadow_port['bindings'] binding: PortBinding(host='',port_id=b12d066a-469e-41fa-9ada-dc3cf9f1c468,profile={"type": "shadow", "project_id": "1234567890", "reservation_id": "abcdefg", "vlan": "1234", "stitchport": "fabric"},status='ACTIVE',vif_details=None,vif_type='unbound',vnic_type='normal')
 
                     #LOG.debug("Candidate shadow_port: " + str(shadow_port))
                     #if not 'bindings' in shadow_port['bindings']:
@@ -553,16 +555,16 @@ class GenericSwitchDriver(api.MechanismDriver):
                     #    continue
                     LOG.debug("\nproject_id " + str(project_id))
                     LOG.debug("\nreservation_id " + str(reservation_id))
-                    LOG.debug("\nshadow_port_candidate['bindings']['profile']['project_id'] " + str(shadow_port_candidate['bindings']['profile']['project_id']))
-                    LOG.debug("\nshadow_port_candidate['bindings']['profile']['reservation_id'] " + str(shadow_port_candidate['bindings']['profile']['reservation_id']))
+                    LOG.debug("\nshadow_port_candidate['bindings']['profile']['project_id'] " + str(shadow_port_candidate['bindings'][0]['profile']['project_id']))
+                    LOG.debug("\nshadow_port_candidate['bindings']['profile']['reservation_id'] " + str(shadow_port_candidate['bindings'][0]['profile']['reservation_id']))
                     LOG.debug("\nshadow_port_candidate['network_id'] " + str(shadow_port_candidate['network_id']))
                     LOG.debug("\nself.stitching_shadow_network['id'] " + str(self.stitching_shadow_network['id']))
 
 
 
                     if shadow_port_candidate['network_id'] == self.stitching_shadow_network['id'] and \
-                            shadow_port_candidate['bindings']['profile']['project_id'] == project_id and \
-                            shadow_port_candidate['bindings']['profile']['reservation_id'] == reservation_id:
+                            shadow_port_candidate['bindings'][0]['profile']['project_id'] == project_id and \
+                            shadow_port_candidate['bindings'][0]['profile']['reservation_id'] == reservation_id:
                         shadow_port = shadow_port_candidate
                         LOG.debug("XXXXXX FOUND SHADOW STITCH Port: " + str(port))
                         break
