@@ -606,7 +606,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                                  port2_name=port2_name,
                                  port2_vlan=port2_vlan)
             except Exception as e:
-                LOG.error(e + ", traceback: " + str(traceback.format_exc()))
+                LOG.error(str(e) + ", traceback: " + str(traceback.format_exc()))
 
         elif provider_type == 'vlan' and segmentation_id:
             # if the port is an internal port for connecting a server
