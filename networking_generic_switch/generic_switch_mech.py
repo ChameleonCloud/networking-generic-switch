@@ -546,12 +546,12 @@ class GenericSwitchDriver(api.MechanismDriver):
                     if shadow_port_candidate['bindings'] == None and 'project_id' in shadow_port_candidate['bindings'].keys() and  'reservation_id' in shadow_port_candidate['bindings'].keys() :
                         LOG.debug("port does not have bindings or stitchport info, skipping")
                         continue
-                    LOG.debug("project_id " + str(project_id))
-                    LOG.debug("reservation_id " + str(reservation_id))
-                    LOG.debug("shadow_port_candidate['bindings']['project_id'] " + str(shadow_port_candidate['bindings']['project_id']))
-                    LOG.debug("shadow_port_candidate['bindings']['reservation_id'] " + str(shadow_port_candidate['bindings']['reservation_id']))
-                    LOG.debug("shadow_port_candidate['network_id'] " + str(shadow_port_candidate['network_id']))
-                    LOG.debug("self.stitching_shadow_network['id'] " + str(self.stitching_shadow_network['id']))
+                    LOG.debug("\nproject_id " + str(project_id))
+                    LOG.debug("\nreservation_id " + str(reservation_id))
+                    LOG.debug("\nshadow_port_candidate['bindings']['project_id'] " + str(shadow_port_candidate['bindings']['project_id']))
+                    LOG.debug("\nshadow_port_candidate['bindings']['reservation_id'] " + str(shadow_port_candidate['bindings']['reservation_id']))
+                    LOG.debug("\nshadow_port_candidate['network_id'] " + str(shadow_port_candidate['network_id']))
+                    LOG.debug("\nself.stitching_shadow_network['id'] " + str(self.stitching_shadow_network['id']))
 
 
 
