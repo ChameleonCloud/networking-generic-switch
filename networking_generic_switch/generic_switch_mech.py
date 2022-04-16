@@ -522,44 +522,48 @@ class GenericSwitchDriver(api.MechanismDriver):
             LOG.debug("XXXXXX Searching for shadow port, ")
             shadow_port = None
             for shadow_port_candidate in port_obj.Port.get_objects(admin_context):
-                # Prints the nicely formatted dictionary
-                #pprint.pprint(shadow_port)
-                #pprint.pformat(dictionary)
-                #import json
-                #print(json.dumps(dictionary, indent=4, sort_keys=True))
+                try:
+                    # Prints the nicely formatted dictionary
+                    #pprint.pprint(shadow_port)
+                    #pprint.pformat(dictionary)
+                    #import json
+                    #print(json.dumps(dictionary, indent=4, sort_keys=True))
 
-                #LOG.debug("Candidate shadow_port (pretty2): " + json.dumps(shadow_port_candidate, default=str, indent=4))
-                LOG.debug("Candidate shadow_port (pretty2): " + str(shadow_port_candidate))
+                    #LOG.debug("Candidate shadow_port (pretty2): " + json.dumps(shadow_port_candidate, default=str, indent=4))
+                    LOG.debug("Candidate shadow_port (pretty2): " + str(shadow_port_candidate))
 
-                if shadow_port_candidate['name'] == 'pruth1_shadowport':
-                    LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx")
-                    for binding in shadow_port['bindings']:
-                        LOG.debug("shadow_port_candidate['bindings'] type: " + str(type(binding)))
-                        LOG.debug("shadow_port_candidate['bindings'] binding: " + str(binding))
+                    if shadow_port_candidate['name'] == 'pruth1_shadowport':
+                        LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx")
+                        for binding in shadow_port['bindings']:
+                            LOG.debug("shadow_port_candidate['bindings'] type: " + str(type(binding)))
+                            LOG.debug("shadow_port_candidate['bindings'] binding: " + str(binding))
 
-                        #shadow_port['bindings'] binding: PortBinding(host='',port_id=b12d066a-469e-41fa-9ada-dc3cf9f1c468,profile={"type": "shadow", "project_id": "1234567890", "reservation_id": "abcdefg", "vlan": "1234", "stitchport": "fabric"},status='ACTIVE',vif_details=None,vif_type='unbound',vnic_type='normal')
+                            #shadow_port['bindings'] binding: PortBinding(host='',port_id=b12d066a-469e-41fa-9ada-dc3cf9f1c468,profile={"type": "shadow", "project_id": "1234567890", "reservation_id": "abcdefg", "vlan": "1234", "stitchport": "fabric"},status='ACTIVE',vif_details=None,vif_type='unbound',vnic_type='normal')
 
-                #LOG.debug("Candidate shadow_port: " + str(shadow_port))
-                #if not 'bindings' in shadow_port['bindings']:
-                #if hasattr(shadow_port_candidate,'bindings') and shadow_port_candidate['bindings'] == None:
-                if shadow_port_candidate['bindings'] == None and 'project_id' in shadow_port_candidate['bindings'].keys() and  'reservation_id' in shadow_port_candidate['bindings'].keys() :
-                    LOG.debug("port does not have bindings or stitchport info, skipping")
+                    #LOG.debug("Candidate shadow_port: " + str(shadow_port))
+                    #if not 'bindings' in shadow_port['bindings']:
+                    #if hasattr(shadow_port_candidate,'bindings') and shadow_port_candidate['bindings'] == None:
+                    if shadow_port_candidate['bindings'] == None and 'project_id' in shadow_port_candidate['bindings'].keys() and  'reservation_id' in shadow_port_candidate['bindings'].keys() :
+                        LOG.debug("port does not have bindings or stitchport info, skipping")
+                        continue
+                    LOG.debug("project_id " + str(project_id))
+                    LOG.debug("reservation_id " + str(reservation_id))
+                    LOG.debug("shadow_port_candidate['bindings']['project_id'] " + str(shadow_port_candidate['bindings']['project_id']))
+                    LOG.debug("shadow_port_candidate['bindings']['reservation_id'] " + str(shadow_port_candidate['bindings']['reservation_id']))
+                    LOG.debug("shadow_port_candidate['network_id'] " + str(shadow_port_candidate['network_id']))
+                    LOG.debug("self.stitching_shadow_network['id'] " + str(self.stitching_shadow_network['id']))
+
+
+
+                    if shadow_port_candidate['network_id'] == self.stitching_shadow_network['id'] and \
+                            shadow_port_candidate['bindings']['project_id'] == project_id and \
+                            shadow_port_candidate['bindings']['reservation_id'] == reservation_id:
+                        shadow_port = shadow_port_candidate
+                        LOG.debug("XXXXXX FOUND SHADOW STITCH Port: " + str(port))
+                        break
+                except Exception as e:
+                    LOG.debug("Excpetion in testing shadow_port_candidate: " + str(e)  + ", shadow_port_candidate: " + str(shadow_port_candidate))
                     continue
-                LOG.debug("project_id " + str(project_id))
-                LOG.debug("reservation_id " + str(reservation_id))
-                LOG.debug("shadow_port_candidate['bindings']['project_id'] " + str(shadow_port_candidate['bindings']['project_id']))
-                LOG.debug("shadow_port_candidate['bindings']['reservation_id'] " + str(shadow_port_candidate['bindings']['reservation_id']))
-                LOG.debug("shadow_port_candidate['network_id'] " + str(shadow_port_candidate['network_id']))
-                LOG.debug("self.stitching_shadow_network['id'] " + str(self.stitching_shadow_network['id']))
-
-
-
-                if shadow_port_candidate['network_id'] == self.stitching_shadow_network['id'] and \
-                        shadow_port_candidate['bindings']['project_id'] == project_id and \
-                        shadow_port_candidate['bindings']['reservation_id'] == reservation_id:
-                    shadow_port = shadow_port_candidate
-                    LOG.debug("XXXXXX FOUND SHADOW STITCH Port: " + str(port))
-                    break
 
             if shadow_port == None:
                 LOG.debug("XXXXXX SHADOW STITCH NOT FOUND!")
