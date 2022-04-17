@@ -535,13 +535,16 @@ class GenericSwitchDriver(api.MechanismDriver):
         if 'type' in port['binding:profile']:
             port_type = port['binding:profile']['type']
 
+            if 'reservation_id' in port['binding:profile']:
+                reservation_id = port['binding:profile']['reservation_id']
+
+            if 'project_id' in port['binding:profile']:
+                project_id = port['binding:profile']['project_id']
+
 
             if port_type == 'stitchport':
                 LOG.debug('Adding stitch port: port_type: ' + str(port_type))
                 LOG.debug('patchpanel_port_map:  ' + str(self.patchpanel_port_map))
-
-                if 'reservation_id' in port['binding:profile']:
-                    reservation_id = port['binding:profile']['reservation_id']
 
             LOG.debug("XXXXXX Searching for shadow port, ")
             for shadow_port_candidate in port_obj.Port.get_objects(admin_context):
@@ -567,7 +570,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                         #    binding = binding_candidate
                         #    break
 
-                    binding = shadow_port_candidate['bindings'][0]
+                    shadow_port_candidate_binding_profile = shadow_port_candidate['bindings'][0]
 
                     #shadow_port['bindings'] binding: PortBinding(host='',port_id=b12d066a-469e-41fa-9ada-dc3cf9f1c468,profile={"type": "shadow", "project_id": "1234567890", "reservation_id": "abcdefg", "vlan": "1234", "stitchport": "fabric"},status='ACTIVE',vif_details=None,vif_type='unbound',vnic_type='normal')
 
@@ -579,8 +582,8 @@ class GenericSwitchDriver(api.MechanismDriver):
                     #    continue
                     LOG.debug("\nproject_id " + str(project_id))
                     LOG.debug("\nreservation_id " + str(reservation_id))
-                    LOG.debug("\nshadow_port_candidate['bindings']['profile']['project_id'] " + str(shadow_port_candidate['bindings'][0]['profile']['project_id']))
-                    LOG.debug("\nshadow_port_candidate['bindings']['profile']['reservation_id'] " + str(shadow_port_candidate['bindings'][0]['profile']['reservation_id']))
+                    LOG.debug("\nshadow_port_candidate['bindings']['profile']['project_id'] " + str(shadow_port_candidate_binding_profile['project_id']))
+                    LOG.debug("\nshadow_port_candidate['bindings']['profile']['reservation_id'] " + str(shadow_port_candidate_binding_profile['reservation_id']))
                     LOG.debug("\nshadow_port_candidate['network_id'] " + str(shadow_port_candidate['network_id']))
                     LOG.debug("\nstitching_shadow_network['id'] " + str(stitching_shadow_network['id']))
 
