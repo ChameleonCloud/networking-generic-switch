@@ -49,6 +49,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         self.haswellNodeRange=(201,299)
 
         self.stitching_shadow_network_name = ''
+        self.stitching_shadow_network = None
         self.patchpanel_switch = None
         self.patchpanel_port_map = {}
         self.patch_vlans_available = []
@@ -148,7 +149,7 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         LOG.debug("network: " + str(network) + ", network_id: " + str(network_id))
 
-        if hasattr(self, 'stitching_shadow_network_name') and network['name'] == self.stitching_shadow_network_name:
+        if self.stitching_shadow_network != None and network['id'] == self.stitching_shadow_network['id']:
             LOG.debug('adding to shadow network. no physical config required')
             return
 
@@ -339,7 +340,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         physnet = network['provider:physical_network']
         project_id = network['project_id'].strip()
 
-        if hasattr(self, 'stitching_shadow_network_name') and network['name'] == self.stitching_shadow_network_name:
+        if self.stitching_shadow_network != None and network['id'] == self.stitching_shadow_network['id']:
             LOG.debug('deleting shadow network. no physical config required')
             return
 
@@ -551,6 +552,11 @@ class GenericSwitchDriver(api.MechanismDriver):
                     #pprint.pformat(dictionary)
                     #import json
                     #print(json.dumps(dictionary, indent=4, sort_keys=True))
+
+                    if self.stitching_shadow_network != None and shadow_port_candidate['network_id'] != self.stitching_shadow_network['id']:
+                        LOG.debug("Skipping non-shadow network port")
+                        continue
+
 
                     #LOG.debug("Candidate shadow_port (pretty2): " + json.dumps(shadow_port_candidate, default=str, indent=4))
                     if shadow_port_candidate['name'] == port['name']:
