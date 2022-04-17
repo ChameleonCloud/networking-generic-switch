@@ -153,14 +153,13 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         LOG.debug("network: " + str(network) + ", network_id: " + str(network_id))
 
-        if self.stitching_shadow_network != None and network['id'] == self.stitching_shadow_network['id']:
-            LOG.debug('adding to shadow network. no physical config required')
-            return
-
         if self.stitching_shadow_network_name != None and self.stitching_shadow_network_name == network['name']:
             LOG.debug("Setting new stitching_shadow_network")
             self.stitching_shadow_network = network
 
+        if self.stitching_shadow_network != None and network['id'] == self.stitching_shadow_network['id']:
+            LOG.debug('adding to shadow network. no physical config required')
+            return
 
         if provider_type == 'vlan' and segmentation_id:
             # Create vlan on all switches from this driver
