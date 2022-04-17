@@ -711,7 +711,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 port2_name = self.patchpanel_port_map[physnet]
                 port2_vlan = segmentation_id
                 patch = self.patch_vlans_available.pop(0) #TODO: roll back on failure. This might leak patch vlans
-                shadow_port_binding_profile['patch_panel_vlan_id'] = "p"+str(patch)
+
                 LOG.info('Adding patch: ' + str(self.patchpanel_switch) +
                           ', port1_name: ' + str(port1_name) +
                           ', port1_vlan: ' + str(port1_vlan) +
@@ -723,6 +723,10 @@ class GenericSwitchDriver(api.MechanismDriver):
                                  port1_vlan=port1_vlan,
                                  port2_name=port2_name,
                                  port2_vlan=port2_vlan)
+                binding = shadow_port['bindings'][0]
+                binding['profile']['patch'] =  str(patch)
+                shadow_port['bindings'] = [ binding ]
+                shadow_port_binding_profile = shadow_port['bindings'][0]
                 shadow_port.update()
                 self.patch_vlans_allocated[port['id']] = patch
             except Exception as e:
