@@ -584,6 +584,8 @@ class GenericSwitchDriver(api.MechanismDriver):
                     LOG.debug("\nshadow_port_candidate['network_id'] " + str(shadow_port_candidate['network_id']))
                     LOG.debug("\nstitching_shadow_network['id'] " + str(stitching_shadow_network['id']))
 
+                    if shadow_port_candidate['name'] == port['name']:
+                        LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
 
                     shadow_port_candidate_binding_profile = shadow_port['bindings'][0]['profile']
                     if shadow_port_candidate['network_id'] == stitching_shadow_network['id'] and \
