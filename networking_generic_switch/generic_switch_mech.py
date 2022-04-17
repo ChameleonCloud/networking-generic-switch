@@ -566,10 +566,10 @@ class GenericSwitchDriver(api.MechanismDriver):
                     LOG.debug("\nstitching_shadow_network['id'] " + str(stitching_shadow_network['id']))
 
 
-
+                    shadow_port_candidate_binding_profile = shadow_port['bindings'][0]['profile']
                     if shadow_port_candidate['network_id'] == stitching_shadow_network['id'] and \
-                            shadow_port_candidate['bindings'][0]['profile']['project_id'] == project_id and \
-                            shadow_port_candidate['bindings'][0]['profile']['reservation_id'] == reservation_id:
+                            shadow_port_candidate_binding_profile['project_id'] == project_id and \
+                            shadow_port_candidate_binding_profile['reservation_id'] == reservation_id:
                         shadow_port = shadow_port_candidate
                         LOG.debug("XXXXXX FOUND SHADOW STITCH Port: " + str(port))
                         #TODO: add tests for: stitchport not already used.
@@ -635,8 +635,9 @@ class GenericSwitchDriver(api.MechanismDriver):
                 reservation_id = port['binding:profile']['reservation_id']
 
             #get shadow vlan and stitchport from shadow port
-            stichport_name = shadow_port['bindings'][0]['profile']['stitchport']
-            stichport_vlan = shadow_port['bindings'][0]['profile']['vlan']
+            shadow_port_binding_profile = shadow_port['bindings'][0]['profile']
+            stichport_name = shadow_port_binding_profile['stitchport']
+            stichport_vlan = shadow_port_binding_profile['vlan']
             LOG.debug('stichport_name: ' + str(stichport_name) + ", stichport_vlan: " + str(stichport_vlan))
 
             # Add patch
