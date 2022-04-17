@@ -638,6 +638,9 @@ class GenericSwitchDriver(api.MechanismDriver):
     def __get_shadow_network(self):
         admin_context = lib_context.get_admin_context()
         LOG.debug("XXXXXX Networks")
+        #nets = network_obj.Network.get_objects(admin_context, name=self.stitching_shadow_network_name)
+        return network_obj.Network.get_object(admin_context, name=self.stitching_shadow_network_name)
+
         nets = network_obj.Network.get_objects(admin_context, name=self.stitching_shadow_network_name)
         LOG.debug("XXXXXX###############  Nets: " + str(nets))
         if len(nets) == 1:
@@ -724,11 +727,14 @@ class GenericSwitchDriver(api.MechanismDriver):
                                  port2_name=port2_name,
                                  port2_vlan=port2_vlan)
                 binding = shadow_port['bindings'][0]
-                binding['profile']['patch'] =  str(patch)
-                shadow_port['bindings'] = [ binding ]
+                binding['profile']['patch'] = str(patch)
+                binding.update()
+                #shadow_port['bindings'] = [ binding ]
                 shadow_port_binding_profile = shadow_port['bindings'][0]
+                shadow_port['description'] = 'this is the updated description'
                 shadow_port.update()
                 self.patch_vlans_allocated[port['id']] = patch
+
             except Exception as e:
                 LOG.error(str(e) + ", traceback: " + str(traceback.format_exc()))
 
