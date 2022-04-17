@@ -738,7 +738,13 @@ class GenericSwitchDriver(api.MechanismDriver):
                 port_binding = update_port[0]['bindings'][0]
                 LOG.debug("type(port_binding): " + str(type(port_binding)))
                 LOG.debug("port_binding.profile.items(): " + str(port_binding.profile.items()))
-                port_binding.profile = { 'testkey42': 'testval43' }
+
+                new_binding_profile = {}
+                for k,v in port_binding.profile.items():
+                    new_binding_profile[k] = v
+                new_binding_profile['patch_panel_vlan'] = patch['vlan']
+                new_binding_profile['patch_port_id'] = port['id']
+                port_binding.profile = new_binding_profile
                 port_binding.update()
 
                 update_port[0].description = 'this is the updated description'
