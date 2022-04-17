@@ -736,7 +736,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 update_port = port_obj.Port.get_objects(admin_context, id=shadow_port['id'])
                 LOG.debug("update_port: " + str(update_port))
                 update_port[0].description = 'this is the updated description'
-                update_port.update()
+                update_port[0].update()
 
                 self.patch_vlans_allocated[port['id']] = patch
 
