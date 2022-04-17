@@ -534,13 +534,9 @@ class GenericSwitchDriver(api.MechanismDriver):
         shadow_port = None
         if 'type' in port['binding:profile']:
             port_type = port['binding:profile']['type']
-
+            project_id = port['project_id']
             if 'reservation_id' in port['binding:profile']:
                 reservation_id = port['binding:profile']['reservation_id']
-
-            if 'project_id' in port['binding:profile']:
-                project_id = port['binding:profile']['project_id']
-
 
             if port_type == 'stitchport':
                 LOG.debug('Adding stitch port: port_type: ' + str(port_type))
