@@ -510,7 +510,11 @@ class GenericSwitchDriver(api.MechanismDriver):
             LOG.debug("No shadow network, skipping")
             return None
 
-        if self.stitching_shadow_network['id'] != None and port['network_id'] != self.stitching_shadow_network['id']:
+        LOG.debug("XXXXXX self.stitching_shadow_network: " + str(self.stitching_shadow_network))
+        LOG.debug("XXXXXX self.stitching_shadow_network['id']: " + str(self.stitching_shadow_network['id']))
+        LOG.debug("XXXXXX port['network_id']: " + str(port['network_id']))
+
+        if self.stitching_shadow_network != None and port['network_id'] != self.stitching_shadow_network['id']:
             LOG.debug("Skipping non-shadow network port")
             return None
 
