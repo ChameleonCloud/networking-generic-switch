@@ -52,7 +52,7 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         self.haswellNodeRange=(201,299)
 
-        self.stitching_shadow_network_name = ''
+        self.stitching_shadow_network_name = None
         self.stitching_shadow_network = None
         self.patchpanel_switch = None
         self.patchpanel_port_map = {}
@@ -507,6 +507,13 @@ class GenericSwitchDriver(api.MechanismDriver):
         from neutron.objects import tag as tag_obj
         from neutron_lib.plugins import directory
 
+        if self.stitching_shadow_network_name == None:
+            LOG.debug("Shadow port not set, skipping")
+            return None
+
+        if self.stitching_shadow_network == None:
+            self.stitching_shadow_network = self.__get_shadow_network()
+
         if self.stitching_shadow_network == None:
             LOG.debug("No shadow network, skipping")
             return None
@@ -628,8 +635,18 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         return shadow_port
 
-    def __get_shadow_network(self, network):
-        pass
+    def __get_shadow_network(self):
+        admin_context = lib_context.get_admin_context()
+        LOG.debug("XXXXXX admin_context, " + str(admin_context))
+
+        LOG.debug("XXXXXX Networks")
+        for net in network_obj.Network.get_objects(admin_context):
+            LOG.debug("XXXXXX Net: " + str(net))
+            if str(net['name']) == self.stitching_shadow_network_name:
+                LOG.debug("XXXXXX FOUND SHADOW STITCH NETWORK: " + str(net['name']) + ", " + str(net))
+                self.stitching_shadow_network = net
+
+        return self.stitching_shadow_network
 
     def __get_patchpanel_switch(self):
         admin_context = lib_context.get_admin_context()
