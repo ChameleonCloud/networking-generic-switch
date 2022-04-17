@@ -620,7 +620,9 @@ class GenericSwitchDriver(api.MechanismDriver):
             LOG.debug("Searching for patchpanel switch (" + self.patchpanel_switch_name + ". candidate: " + str(switch_name))
             if switch_name == self.patchpanel_switch_name:
                 self.patchpanel_switch = switch
-                return self.patchpanel_switch
+                break
+
+        return self.patchpanel_switch
 
     def create_port_postcommit(self, context):
         """Create a port.
