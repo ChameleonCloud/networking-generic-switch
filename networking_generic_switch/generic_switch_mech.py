@@ -559,7 +559,7 @@ class GenericSwitchDriver(api.MechanismDriver):
 
 
                     #LOG.debug("Candidate shadow_port (pretty2): " + json.dumps(shadow_port_candidate, default=str, indent=4))
-                    if shadow_port_candidate['name'] == port['name']:
+                    if port['name'] in shadow_port_candidate['name']:
                         LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
 
 
@@ -587,21 +587,19 @@ class GenericSwitchDriver(api.MechanismDriver):
                               "reservation_id " + str(reservation_id) + "\n" +
                               "shadow_port_candidate['project_id'] " + str(shadow_port_candidate['project_id']) + "\n" +
                               "shadow_port_candidate_binding_profile['reservation_id'] " + str(shadow_port_candidate_binding_profile['reservation_id']) + "\n" +
-                              "shadow_port_candidate['network_id'] " + str(shadow_port_candidate['network_id']) + "\n" +
-                              "stitching_shadow_network['id'] " + str(stitching_shadow_network['id']) + "\n" )
+                              )
 
-                    if shadow_port_candidate['name'] == port['name']:
+                    if port['name'] in shadow_port_candidate['name']:
                         LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
 
-                    if shadow_port_candidate['network_id'] == stitching_shadow_network['id'] and \
-                            shadow_port_candidate_binding_profile['project_id'] == project_id and \
-                            shadow_port_candidate_binding_profile['reservation_id'] == reservation_id:
-                        shadow_port = shadow_port_candidate
+                    if shadow_port_candidate_binding_profile['project_id'] == project_id and \
+                       shadow_port_candidate_binding_profile['reservation_id'] == reservation_id:
                         LOG.debug("XXXXXX FOUND SHADOW STITCH Port: " + str(port))
                         #TODO: add tests for: stitchport not already used.
+                        shadow_port = shadow_port_candidate
                         break
                 except Exception as e:
-                    LOG.debug("Excpetion in testing shadow_port_candidate: " + str(e)  + ", " + str(traceback.format_exc()) + ", shadow_port_candidate: " + str(shadow_port_candidate))
+                    LOG.debug("Exception in testing shadow_port_candidate: " + str(e)  + ", " + str(traceback.format_exc()) + ", shadow_port_candidate: " + str(shadow_port_candidate))
                     continue
 
             if shadow_port == None:
