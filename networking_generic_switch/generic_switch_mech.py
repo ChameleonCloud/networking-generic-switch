@@ -586,8 +586,8 @@ class GenericSwitchDriver(api.MechanismDriver):
                     LOG.debug("\n" + "project_id " + str(project_id) + "\n" +
                               "reservation_id " + str(reservation_id) + "\n" +
                               "shadow_port_candidate['project_id'] " + str(shadow_port_candidate['project_id']) + "\n" +
-                              "shadow_port_candidate_binding_profile['reservation_id'] " + str(shadow_port_candidate_binding_profile['reservation_id']) + "\n" +
-                              )
+                              "shadow_port_candidate_binding_profile['reservation_id'] " + str(shadow_port_candidate_binding_profile['reservation_id']) + "\n" )
+                        
 
                     if port['name'] in shadow_port_candidate['name']:
                         LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
