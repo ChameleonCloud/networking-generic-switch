@@ -26,6 +26,10 @@ from networking_generic_switch import config as gsw_conf
 from networking_generic_switch import devices
 from networking_generic_switch.devices import utils as device_utils
 
+from neutron.objects import ports as port_obj
+from neutron.objects import network as network_obj
+from neutron_lib import context as lib_context
+
 
 LOG = logging.getLogger(__name__)
 
@@ -495,9 +499,7 @@ class GenericSwitchDriver(api.MechanismDriver):
 
     def __get_shadow_port(self, port):
         from neutron.objects.ports import Port
-        from neutron.objects import ports as port_obj
-        from neutron.objects import network as network_obj
-        from neutron_lib import context as lib_context
+
         from neutron.objects import tag as tag_obj
         from neutron_lib.plugins import directory
 
