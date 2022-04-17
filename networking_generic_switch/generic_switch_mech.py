@@ -510,6 +510,7 @@ class GenericSwitchDriver(api.MechanismDriver):
 
 
         port_type = None
+        shadow_port = None
         if 'type' in port['binding:profile']:
             port_type = port['binding:profile']['type']
 
@@ -525,7 +526,6 @@ class GenericSwitchDriver(api.MechanismDriver):
                     reservation_id = port['binding:profile']['reservation_id']
 
             LOG.debug("XXXXXX Searching for shadow port, ")
-            shadow_port = None
             for shadow_port_candidate in port_obj.Port.get_objects(admin_context):
                 try:
                     # Prints the nicely formatted dictionary
