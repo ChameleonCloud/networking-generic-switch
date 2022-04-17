@@ -540,9 +540,6 @@ class GenericSwitchDriver(api.MechanismDriver):
                 LOG.debug('Adding stitch port: port_type: ' + str(port_type))
                 LOG.debug('patchpanel_port_map:  ' + str(self.patchpanel_port_map))
 
-                # Check if stitchport is authorized by blazar/shadow network
-                # TODO
-
                 if 'reservation_id' in port['binding:profile']:
                     reservation_id = port['binding:profile']['reservation_id']
 
@@ -556,6 +553,10 @@ class GenericSwitchDriver(api.MechanismDriver):
                     #print(json.dumps(dictionary, indent=4, sort_keys=True))
 
                     #LOG.debug("Candidate shadow_port (pretty2): " + json.dumps(shadow_port_candidate, default=str, indent=4))
+                    if shadow_port_candidate['name'] == port['name']:
+                        LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+
+
                     LOG.debug("Candidate shadow_port (pretty2): " + str(shadow_port_candidate))
 
                     binding = None
