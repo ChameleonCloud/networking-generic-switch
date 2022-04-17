@@ -579,7 +579,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                     #    continue
                     LOG.debug("\nproject_id " + str(project_id))
                     LOG.debug("\nreservation_id " + str(reservation_id))
-                    LOG.debug("\nshadow_port_candidate['bindings']['profile']['project_id'] " + str(shadow_port_candidate_binding_profile['project_id']))
+                    LOG.debug("\nshadow_port_candidate['project_id'] " + str(shadow_port_candidate['project_id']))
                     LOG.debug("\nshadow_port_candidate['bindings']['profile']['reservation_id'] " + str(shadow_port_candidate_binding_profile['reservation_id']))
                     LOG.debug("\nshadow_port_candidate['network_id'] " + str(shadow_port_candidate['network_id']))
                     LOG.debug("\nstitching_shadow_network['id'] " + str(stitching_shadow_network['id']))
