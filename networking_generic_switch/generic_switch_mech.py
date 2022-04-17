@@ -637,20 +637,19 @@ class GenericSwitchDriver(api.MechanismDriver):
 
     def __get_shadow_network(self):
         admin_context = lib_context.get_admin_context()
-        LOG.debug("XXXXXX admin_context, " + str(admin_context))
-
         LOG.debug("XXXXXX Networks")
         nets = network_obj.Network.get_objects(admin_context, name=self.stitching_shadow_network_name)
         LOG.debug("XXXXXX###############  Nets: " + str(nets))
-        #for net in network_obj.Network.get_objects(admin_context):
-        #for net in network_obj.Network.get_objects(admin_context, name=self.stitching_shadow_network_name):
-        for net in nets:
-            #dnses = DNSNameServer.get_objects(context, address=obj_utils.StringContains('10.0.0'))
-
+        if len(nets) == 1:
             LOG.debug("XXXXXX Net: " + str(net))
             if str(net['name']) == self.stitching_shadow_network_name:
                 LOG.debug("XXXXXX FOUND SHADOW STITCH NETWORK: " + str(net['name']) + ", " + str(net))
                 self.stitching_shadow_network = net
+        elif len(nets) < 1:
+            LOG.debug("No shadow network ")
+            self.stitching_shadow_network = None
+        else:
+            raise Exception("More than one network with shadow network name: " + str(nets))
 
         return self.stitching_shadow_network
 
@@ -711,6 +710,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 port2_name = self.patchpanel_port_map[physnet]
                 port2_vlan = segmentation_id
                 patch = self.patch_vlans_available.pop(0) #TODO: roll back on failure. This might leak patch vlans
+                shadow_port_binding_profile['patch_panel_vlan_id'] = "p"+str(patch)
                 LOG.info('Adding patch: ' + str(self.patchpanel_switch) +
                           ', port1_name: ' + str(port1_name) +
                           ', port1_vlan: ' + str(port1_vlan) +
@@ -722,6 +722,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                                  port1_vlan=port1_vlan,
                                  port2_name=port2_name,
                                  port2_vlan=port2_vlan)
+                shadow_port.update()
                 self.patch_vlans_allocated[port['id']] = patch
             except Exception as e:
                 LOG.error(str(e) + ", traceback: " + str(traceback.format_exc()))
