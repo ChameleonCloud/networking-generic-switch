@@ -602,17 +602,17 @@ class GenericSwitchDriver(api.MechanismDriver):
                     LOG.debug("Exception in testing shadow_port_candidate: " + str(e)  + ", " + str(traceback.format_exc()) + ", shadow_port_candidate: " + str(shadow_port_candidate))
                     continue
 
-            if shadow_port == None:
-                LOG.debug("XXXXXX SHADOW STITCH NOT FOUND!")
-                #return None
-                #raise Exception("SHADOW STITCH NOT FOUND!")
+        if shadow_port == None:
+            LOG.debug("XXXXXX SHADOW STITCH NOT FOUND!")
+            #return None
+            #raise Exception("SHADOW STITCH NOT FOUND!")
 
         return shadow_port
 
     def __get_shadow_network(self, network):
         pass
 
-    def __set_patch_panel_switch(self):
+    def __get_patchpanel_switch(self):
         admin_context = lib_context.get_admin_context()
         LOG.debug("XXXXXX admin_context, " + str(admin_context))
 
@@ -620,7 +620,7 @@ class GenericSwitchDriver(api.MechanismDriver):
             LOG.debug("Searching for patchpanel switch (" + self.patchpanel_switch_name + ". candidate: " + str(switch_name))
             if switch_name == self.patchpanel_switch_name:
                 self.patchpanel_switch = switch
-                break
+                return self.patchpanel_switch
 
     def create_port_postcommit(self, context):
         """Create a port.
@@ -673,7 +673,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                           ', port2_name: ' + str(port2_name) +
                           ', port2_vlan: ' + str(port2_vlan)
                           )
-                self.patchpanel_switch.add_patch(patch_id=patch['vlan'],
+                self.__get_patchpanel_switch.add_patch(patch_id=patch['vlan'],
                                  port1_name=port1_name,
                                  port1_vlan=port1_vlan,
                                  port2_name=port2_name,
