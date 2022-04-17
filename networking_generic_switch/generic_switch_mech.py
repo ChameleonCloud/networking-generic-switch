@@ -587,12 +587,12 @@ class GenericSwitchDriver(api.MechanismDriver):
                               "reservation_id " + str(reservation_id) + "\n" +
                               "shadow_port_candidate['project_id'] " + str(shadow_port_candidate['project_id']) + "\n" +
                               "shadow_port_candidate_binding_profile['reservation_id'] " + str(shadow_port_candidate_binding_profile['reservation_id']) + "\n" )
-                        
+
 
                     if port['name'] in shadow_port_candidate['name']:
                         LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
 
-                    if shadow_port_candidate_binding_profile['project_id'] == project_id and \
+                    if shadow_port_candidate['project_id'] == project_id and \
                        shadow_port_candidate_binding_profile['reservation_id'] == reservation_id:
                         LOG.debug("XXXXXX FOUND SHADOW STITCH Port: " + str(port))
                         #TODO: add tests for: stitchport not already used.
