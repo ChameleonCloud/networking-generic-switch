@@ -642,7 +642,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         LOG.debug("XXXXXX###############  Nets: " + str(nets))
         if len(nets) == 1:
             net = nets[0]
-            LOG.debug("XXXXXX Net: " + str(net)
+            LOG.debug("XXXXXX Net: " + str(net))
             if str(net['name']) == self.stitching_shadow_network_name:
                 LOG.debug("XXXXXX FOUND SHADOW STITCH NETWORK: " + str(net['name']) + ", " + str(net))
                 self.stitching_shadow_network = net
