@@ -19,6 +19,7 @@ from neutron_lib.plugins.ml2 import api
 from oslo_log import log as logging
 from oslo_config import cfg
 import socket
+import traceback
 import re
 
 from networking_generic_switch import config as gsw_conf
@@ -676,7 +677,6 @@ class GenericSwitchDriver(api.MechanismDriver):
                                  port2_vlan=port2_vlan)
                 self.patch_vlans_allocated[port['id']] = patch
             except Exception as e:
-                import traceback
                 LOG.error(str(e) + ", traceback: " + str(traceback.format_exc()))
 
         elif provider_type == 'vlan' and segmentation_id:
