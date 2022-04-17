@@ -675,7 +675,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                           ', port2_name: ' + str(port2_name) +
                           ', port2_vlan: ' + str(port2_vlan)
                           )
-                self.__get_patchpanel_switch.add_patch(patch_id=patch['vlan'],
+                self.__get_patchpanel_switch().add_patch(patch_id=patch['vlan'],
                                  port1_name=port1_name,
                                  port1_vlan=port1_vlan,
                                  port2_name=port2_name,
