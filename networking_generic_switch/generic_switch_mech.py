@@ -595,7 +595,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                         #TODO: add tests for: stitchport not already used.
                         break
                 except Exception as e:
-                    LOG.debug("Excpetion in testing shadow_port_candidate: " + str(e)  + ", " + str(traceback.format_exc() + ", shadow_port_candidate: " + str(shadow_port_candidate))
+                    LOG.debug("Excpetion in testing shadow_port_candidate: " + str(e)  + ", " + str(traceback.format_exc()) + ", shadow_port_candidate: " + str(shadow_port_candidate))
                     continue
 
             if shadow_port == None:
