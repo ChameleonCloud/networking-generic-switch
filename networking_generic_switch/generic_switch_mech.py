@@ -566,7 +566,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                         #    binding = binding_candidate
                         #    break
 
-                    shadow_port_candidate_binding_profile = shadow_port_candidate['bindings'][0]
+                    shadow_port_candidate_binding_profile = shadow_port_candidate['bindings'][0]['profile']
 
                     #shadow_port['bindings'] binding: PortBinding(host='',port_id=b12d066a-469e-41fa-9ada-dc3cf9f1c468,profile={"type": "shadow", "project_id": "1234567890", "reservation_id": "abcdefg", "vlan": "1234", "stitchport": "fabric"},status='ACTIVE',vif_details=None,vif_type='unbound',vnic_type='normal')
 
