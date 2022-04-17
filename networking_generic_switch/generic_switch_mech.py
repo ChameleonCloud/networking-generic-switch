@@ -149,6 +149,7 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         if hasattr(self, 'stitching_shadow_network_name') and network['name'] == self.stitching_shadow_network_name:
             LOG.debug('adding to shadow network. no physical config required')
+            return
 
         if provider_type == 'vlan' and segmentation_id:
             # Create vlan on all switches from this driver
