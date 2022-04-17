@@ -736,7 +736,8 @@ class GenericSwitchDriver(api.MechanismDriver):
                 update_port = port_obj.Port.get_objects(admin_context, id=shadow_port['id'])
                 LOG.debug("update_port: " + str(update_port))
                 port_binding = update_port[0]['bindings'][0]
-                port_binding.profile = {'testkey': 'testval42'}
+                LOG.debug("type(port_binding): " + str(type(port_binding)))
+                port_binding.profile['testkey42'] = 'testval43'
                 port_binding.update()
 
                 update_port[0].description = 'this is the updated description'
