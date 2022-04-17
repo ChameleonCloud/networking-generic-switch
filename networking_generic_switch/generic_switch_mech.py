@@ -640,7 +640,13 @@ class GenericSwitchDriver(api.MechanismDriver):
         LOG.debug("XXXXXX admin_context, " + str(admin_context))
 
         LOG.debug("XXXXXX Networks")
-        for net in network_obj.Network.get_objects(admin_context):
+        nets = network_obj.Network.get_objects(admin_context, name=self.stitching_shadow_network_name)
+        LOG.debug("XXXXXX###############  Nets: " + str(nets))
+        #for net in network_obj.Network.get_objects(admin_context):
+        #for net in network_obj.Network.get_objects(admin_context, name=self.stitching_shadow_network_name):
+        for net in nets:
+            #dnses = DNSNameServer.get_objects(context, address=obj_utils.StringContains('10.0.0'))
+
             LOG.debug("XXXXXX Net: " + str(net))
             if str(net['name']) == self.stitching_shadow_network_name:
                 LOG.debug("XXXXXX FOUND SHADOW STITCH NETWORK: " + str(net['name']) + ", " + str(net))
