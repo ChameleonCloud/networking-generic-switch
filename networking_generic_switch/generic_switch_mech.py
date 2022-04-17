@@ -502,6 +502,13 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         from neutron.objects import tag as tag_obj
         from neutron_lib.plugins import directory
+        if self.stitching_shadow_network == None:
+            LOG.debug("No shadow network, skipping")
+            return None
+
+        if self.stitching_shadow_network['id'] != None and port['network_id'] != self.stitching_shadow_network['id']:
+            LOG.debug("Skipping non-shadow network port")
+            return None
 
         admin_context = lib_context.get_admin_context()
         LOG.debug("XXXXXX admin_context, " + str(admin_context))
