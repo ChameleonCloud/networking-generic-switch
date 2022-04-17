@@ -737,7 +737,8 @@ class GenericSwitchDriver(api.MechanismDriver):
                 LOG.debug("update_port: " + str(update_port))
                 port_binding = update_port[0]['bindings'][0]
                 LOG.debug("type(port_binding): " + str(type(port_binding)))
-                port_binding.profile['testkey42'] = 'testval43'
+                LOG.debug("port_binding.profile.items(): " + str(port_binding.profile.items()))
+                port_binding.profile = { 'testkey42': 'testval43' }
                 port_binding.update()
 
                 update_port[0].description = 'this is the updated description'
