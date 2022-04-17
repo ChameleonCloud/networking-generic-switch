@@ -154,6 +154,11 @@ class GenericSwitchDriver(api.MechanismDriver):
         if provider_type == 'vlan' and segmentation_id:
             # Create vlan on all switches from this driver
             for switch_name, switch in self._get_devices_by_physnet(physnet):
+                # Skip configuring the patchpanel for regular networks
+                if hasattr(self, 'patchpanel_switch_name') and switch_name == self.patchpanel_switch_name:
+                    LOG.debug("Skipping patchpanel switch config for vlan network")
+                    continue
+
                 try:
                     is_byoc_network = False
                     if hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
@@ -188,10 +193,13 @@ class GenericSwitchDriver(api.MechanismDriver):
                               {'net_id': network_id,
                                'switch': switch_name,
                                'exc': e})
+
                 else:
                     LOG.info('Network %(net_id)s has been added on device '
-                             '%(device)s', {'net_id': network['id'],
-                                            'device': switch_name})
+                         '%(device)s', {'net_id': network['id'],
+                                        'device': switch_name})
+
+
 
     def __get_of_controller(self, network):
         if 'description' in network.keys():
@@ -330,9 +338,18 @@ class GenericSwitchDriver(api.MechanismDriver):
         physnet = network['provider:physical_network']
         project_id = network['project_id'].strip()
 
+        if hasattr(self, 'stitching_shadow_network_name') and network['name'] == self.stitching_shadow_network_name:
+            LOG.debug('deleting shadow network. no physical config required')
+            return
+
         if provider_type == 'vlan' and segmentation_id:
             # Delete vlan on all switches from this driver
             for switch_name, switch in self._get_devices_by_physnet(physnet):
+                # Skip configuring the patchpanel for regular networks
+                if hasattr(self, 'patchpanel_switch_name') and switch_name == self.patchpanel_switch_name:
+                    LOG.debug("Skipping patchpanel switch config for vlan network")
+                    continue
+
                 try:
                     # NOTE(mgoddard): The del_network method was modified to
                     # accept the network ID. The switch object may still be
@@ -356,6 +373,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                             switch.del_network(segmentation_id, project_id)
                         else:
                             switch.del_network(segmentation_id)
+
                 except Exception as e:
                     LOG.error("Failed to delete network %(net_id)s "
                               "on device: %(switch)s, reason: %(exc)s",
@@ -364,8 +382,10 @@ class GenericSwitchDriver(api.MechanismDriver):
                                'exc': e})
                 else:
                     LOG.info('Network %(net_id)s has been deleted on device '
-                             '%(device)s', {'net_id': network['id'],
-                                            'device': switch_name})
+                         '%(device)s', {'net_id': network['id'],
+                                        'device': switch_name})
+
+
 
     def create_subnet_precommit(self, context):
         """Allocate resources for a new subnet.
@@ -537,9 +557,6 @@ class GenericSwitchDriver(api.MechanismDriver):
 
                     #LOG.debug("Candidate shadow_port (pretty2): " + json.dumps(shadow_port_candidate, default=str, indent=4))
                     LOG.debug("Candidate shadow_port (pretty2): " + str(shadow_port_candidate))
-
-                    if shadow_port_candidate['name'] == 'pruth1_shadowport':
-                        LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
 
                     binding = None
                     for binding_candidate in shadow_port_candidate['bindings']:
