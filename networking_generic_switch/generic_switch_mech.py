@@ -462,20 +462,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         """
         pass
 
-    def create_port_postcommit(self, context):
-        """Create a port.
-
-        :param context: PortContext instance describing the port.
-
-        Called after the transaction compt6letes. Call can block, though
-        will block the entire process so care should be taken to not
-        drastically affect performance.  Raising an exception will
-        result in the deletion of the resource.
-        """
-        import json
-        LOG.debug("" + json.dumps(str(context.__dict__), indent=2))
-        LOG.debug("" + str(context.current))
-
+    def __get_shadow_port(self, port):
         from neutron.objects.ports import Port
         from neutron.objects import ports as port_obj
         from neutron.objects import network as network_obj
@@ -501,7 +488,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         #        shadow_port = port
         #        LOG.debug("XXXXXX FOUND SHADOW STITCH Port: " + str(port))
 
-        port = context.current
+        #port = context.current  # NOW passed in
         port_id = port['id']
 
         LOG.debug("port: " + str(port))
@@ -511,33 +498,23 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         # admin_context = lib_context.get_admin_context()
         # network = network_obj.Network.get_objects(admin_context,id=network_id)[0]
-        network = context.network.current
 
-        LOG.debug("create_port_postcommit: network: " + str(network))
-
-        provider_type = network['provider:network_type']
-        segmentation_id = network['provider:segmentation_id']
-        physnet = network['provider:physical_network']
-        project_id = network['project_id'].strip()
-        LOG.debug('project_id: ' + str(project_id))
 
 
         port_type = None
         if 'type' in port['binding:profile']:
             port_type = port['binding:profile']['type']
 
-        if hasattr(self, 'stitching_shadow_network_name') and network['name'] == self.stitching_shadow_network_name:
-            LOG.info('adding shadow port. no physical config required')
-            LOG.debug('port:  ' + str(port))
-        elif port_type == 'stitchport':
-            LOG.debug('Adding stitch port: port_type: ' + str(port_type))
-            LOG.debug('patchpanel_port_map:  ' + str(self.patchpanel_port_map))
 
-            # Check if stitchport is authorized by blazar/shadow network
-            #TODO
+            if port_type == 'stitchport':
+                LOG.debug('Adding stitch port: port_type: ' + str(port_type))
+                LOG.debug('patchpanel_port_map:  ' + str(self.patchpanel_port_map))
 
-            if 'reservation_id' in port['binding:profile']:
-                reservation_id = port['binding:profile']['reservation_id']
+                # Check if stitchport is authorized by blazar/shadow network
+                # TODO
+
+                if 'reservation_id' in port['binding:profile']:
+                    reservation_id = port['binding:profile']['reservation_id']
 
             LOG.debug("XXXXXX Searching for shadow port, ")
             shadow_port = None
@@ -595,7 +572,49 @@ class GenericSwitchDriver(api.MechanismDriver):
 
             if shadow_port == None:
                 LOG.debug("XXXXXX SHADOW STITCH NOT FOUND!")
-                raise Exception("SHADOW STITCH NOT FOUND!")
+                #return None
+                #raise Exception("SHADOW STITCH NOT FOUND!")
+
+        return shadow_port
+
+    def __get_shadow_network(self, network):
+        pass
+
+    def create_port_postcommit(self, context):
+        """Create a port.
+
+        :param context: PortContext instance describing the port.
+
+        Called after the transaction compt6letes. Call can block, though
+        will block the entire process so care should be taken to not
+        drastically affect performance.  Raising an exception will
+        result in the deletion of the resource.
+        """
+        import json
+        LOG.debug("" + json.dumps(str(context.__dict__), indent=2))
+        LOG.debug("" + str(context.current))
+
+        port = context.current
+        project_id = port['project_id'].strip()
+        shadow_port = self.__get_shadow_port(port)
+
+        network = context.network.current
+        provider_type = network['provider:network_type']
+        segmentation_id = network['provider:segmentation_id']
+        physnet = network['provider:physical_network']
+        #project_id = network['project_id'].strip()
+        #LOG.debug('project_id: ' + str(project_id))
+
+        port_type = None
+        #if 'type' in port['binding:profile']:
+        if shadow_port:
+            port_type = port['binding:profile']['type']
+
+            LOG.debug('Adding port with shadowport: port_type: ' + str(port_type))
+            LOG.debug('patchpanel_port_map:  ' + str(self.patchpanel_port_map))
+
+            if 'reservation_id' in port['binding:profile']:
+                reservation_id = port['binding:profile']['reservation_id']
 
             #get shadow vlan and stitchport from shadow port
             stichport_name = shadow_port['bindings'][0]['profile']['stitchport']
@@ -647,9 +666,9 @@ class GenericSwitchDriver(api.MechanismDriver):
                             switch.add_port(port_id, segmentation_id)
 
                 except Exception as e:
-                    LOG.error("Failed to delete network %(net_id)s "
+                    LOG.error("Failed to crete port %(port)s "
                               "on device: %(switch)s, reason: %(exc)s",
-                              {'net_id': network['id'],
+                              {'port_id': port['id'],
                                'switch': switch_name,
                                'exc': e})
 
