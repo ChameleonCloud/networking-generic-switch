@@ -641,7 +641,8 @@ class GenericSwitchDriver(api.MechanismDriver):
         nets = network_obj.Network.get_objects(admin_context, name=self.stitching_shadow_network_name)
         LOG.debug("XXXXXX###############  Nets: " + str(nets))
         if len(nets) == 1:
-            LOG.debug("XXXXXX Net: " + str(net))
+            net = nets[0]
+            LOG.debug("XXXXXX Net: " + str(net)
             if str(net['name']) == self.stitching_shadow_network_name:
                 LOG.debug("XXXXXX FOUND SHADOW STITCH NETWORK: " + str(net['name']) + ", " + str(net))
                 self.stitching_shadow_network = net
