@@ -157,7 +157,7 @@ class GenericSwitchDriver(api.MechanismDriver):
             LOG.debug('adding to shadow network. no physical config required')
             return
 
-        if self.stitching_shadow_network_name == None and self.stitching_shadow_network_name == network['name']:
+        if self.stitching_shadow_network_name != None and self.stitching_shadow_network_name == network['name']:
             self.stitching_shadow_network = network
             LOG.debug("Setting new stitching_shadow_network")
 
