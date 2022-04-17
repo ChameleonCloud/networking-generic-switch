@@ -48,6 +48,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         self.haswellNodeRange=(201,299)
 
         self.stitching_shadow_network_name = ''
+        self.patchpanel_switch = None
         self.patchpanel_port_map = {}
         self.patch_vlans_available = []
         try:
@@ -59,6 +60,13 @@ class GenericSwitchDriver(api.MechanismDriver):
         try:
             LOG.info("patchpanel_switch: " + str(CONF.ngs_coordination.patchpanel_switch))
             self.patchpanel_switch_name = CONF.ngs_coordination.patchpanel_switch
+
+            for switch_name, switch in self.switches.items():
+                LOG.debug("Searching for patchpanel switch (" + self.patchpanel_switch_name + ". candidate: " + str(
+                    switch_name))
+                if switch_name == self.patchpanel_switch_name:
+                    self.patchpanel_switch = switch
+                    break
 
             LOG.info("port_map: " + str(CONF.ngs_coordination.patchpanel_port_map))
             self.patchpanel_port_map = {}
@@ -580,6 +588,16 @@ class GenericSwitchDriver(api.MechanismDriver):
     def __get_shadow_network(self, network):
         pass
 
+    def __set_patch_panel_switch(self):
+        admin_context = lib_context.get_admin_context()
+        LOG.debug("XXXXXX admin_context, " + str(admin_context))
+
+        for switch_name, switch in self.switches.items():
+            LOG.debug("Searching for patchpanel switch (" + self.patchpanel_switch_name + ". candidate: " + str(switch_name))
+            if switch_name == self.patchpanel_switch_name:
+                self.patchpanel_switch = switch
+                break
+
     def create_port_postcommit(self, context):
         """Create a port.
 
@@ -623,11 +641,8 @@ class GenericSwitchDriver(api.MechanismDriver):
 
             # Add patch
             try:
-                for switch_name, switch in self._get_devices_by_physnet(physnet):
-                    LOG.debug("Searching for patchpanel switch (" + self.patchpanel_switch_name + ". candidate: " + str(switch_name))
-                    if switch_name == self.patchpanel_switch_name:
-                        self.patchpanel_switch = switch
-                        break
+                #if self.patchpanel_switch_name and not self.patchpanel_switch:
+                #    self.__set_patch_panel_switch()
 
                 port1_name = self.patchpanel_port_map[stichport_name]
                 port1_vlan = stichport_vlan
