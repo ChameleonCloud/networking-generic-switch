@@ -587,7 +587,6 @@ class GenericSwitchDriver(api.MechanismDriver):
                     if shadow_port_candidate['name'] == port['name']:
                         LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
 
-                    shadow_port_candidate_binding_profile = shadow_port['bindings'][0]['profile']
                     if shadow_port_candidate['network_id'] == stitching_shadow_network['id'] and \
                             shadow_port_candidate_binding_profile['project_id'] == project_id and \
                             shadow_port_candidate_binding_profile['reservation_id'] == reservation_id:
