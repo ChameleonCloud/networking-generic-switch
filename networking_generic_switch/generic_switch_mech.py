@@ -910,6 +910,9 @@ class GenericSwitchDriver(api.MechanismDriver):
 
                 self.patch_vlans_available.append( { 'name': 'p'+str(patch_vlan), 'vlan': patch_vlan} )
 
+                LOG.debug('patch_vlans_available: ' + str(self.patch_vlans_available))
+
+
             except Exception as e:
                 import traceback
                 LOG.error(str(e) + ", traceback: " + str(traceback.format_exc()))
