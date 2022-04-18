@@ -657,9 +657,9 @@ class GenericSwitchDriver(api.MechanismDriver):
         self.__get_patchpanel_switch()
         return self.patch_vlans_available.pop(0)
 
-    def __return_available_patch_vlan(self, patch_vlan):
-        self.__get_patchpanel_switch()
-        self.patch_vlans_available.append(patch_vlan)
+    #def __return_available_patch_vlan(self, patch_vlan):
+    #    self.__get_patchpanel_switch()
+    #    self.patch_vlans_available.append(patch_vlan)
 
     def __get_patchpanel_switch(self):
         admin_context = lib_context.get_admin_context()
@@ -691,6 +691,7 @@ class GenericSwitchDriver(api.MechanismDriver):
 
             # Create the list of available patch panel VLANs from the config file
             LOG.info("patch_vlans_available: " + str(CONF.ngs_coordination.patch_vlans))
+            self.patch_vlans_available = []
             [patch_vlan_low,patch_vlan_high] = CONF.ngs_coordination.patch_vlans.split(':')
             for vlan in range(int(patch_vlan_low),int(patch_vlan_high)+1):
                 self.patch_vlans_available.append(vlan)
@@ -957,9 +958,9 @@ class GenericSwitchDriver(api.MechanismDriver):
                 shadow_port_binding.profile = new_binding_profile
                 shadow_port_binding.update()
 
-                self.__return_available_patch_vlan(patch_vlan)
-
-                LOG.debug('patch_vlans_available: ' + str(self.patch_vlans_available))
+                # No need to return the vlans. Get patch vlan build a new list with updated info
+                #self.__return_available_patch_vlan(patch_vlan)
+                #LOG.debug('patch_vlans_available: ' + str(self.patch_vlans_available))
 
 
             except Exception as e:
