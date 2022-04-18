@@ -74,14 +74,14 @@ class GenericSwitchDriver(api.MechanismDriver):
             #         self.patchpanel_switch = switch
             #         break
             #
-            # LOG.info("port_map: " + str(CONF.ngs_coordination.patchpanel_port_map))
-            # self.patchpanel_port_map = {}
-            # for port_str in CONF.ngs_coordination.patchpanel_port_map.split(','):
-            #     port_name, port_id = port_str.split(":")
-            #     LOG.info("port_map adding: " + str(port_name) + ", " + str(port_id))
-            #     self.patchpanel_port_map[port_name] = port_id
-            #
-            # LOG.info("port_map built: " + str(self.patchpanel_port_map ))
+            LOG.info("port_map: " + str(CONF.ngs_coordination.patchpanel_port_map))
+            self.patchpanel_port_map = {}
+            for port_str in CONF.ngs_coordination.patchpanel_port_map.split(','):
+                port_name, port_id = port_str.split(":")
+                LOG.info("port_map adding: " + str(port_name) + ", " + str(port_id))
+                self.patchpanel_port_map[port_name] = port_id
+
+            LOG.info("port_map built: " + str(self.patchpanel_port_map ))
             #
             # LOG.info("patch_vlans_available: " + str(CONF.ngs_coordination.patch_vlans))
             # [patch_vlan_low,patch_vlan_high] = CONF.ngs_coordination.patch_vlans.split(':')
