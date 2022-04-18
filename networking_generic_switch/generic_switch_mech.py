@@ -653,6 +653,14 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         return self.stitching_shadow_network
 
+    def __get_available_patch_vlan(self):
+        self.__get_patchpanel_switch()
+        return self.patch_vlans_available.pop(0)
+
+    def __return_available_patch_vlan(self, patch_vlan):
+        self.__get_patchpanel_switch()
+        self.patch_vlans_available.append(patch_vlan)
+
     def __get_patchpanel_switch(self):
         admin_context = lib_context.get_admin_context()
         LOG.debug("XXXXXX admin_context, " + str(admin_context))
@@ -754,8 +762,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 port1_vlan = stichport_vlan
                 port2_name = self.patchpanel_port_map[physnet]
                 port2_vlan = segmentation_id
-                patch_vlan = self.patch_vlans_available.pop(0) #TODO: roll back on failure. This might leak patch vlans
-
+                patch_vlan = self.__get_available_patch_vlan()
                 LOG.info('Adding patch: ' + str(self.patchpanel_switch) +
                           ', port1_name: ' + str(port1_name) +
                           ', port1_vlan: ' + str(port1_vlan) +
@@ -950,7 +957,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 shadow_port_binding.profile = new_binding_profile
                 shadow_port_binding.update()
 
-                self.patch_vlans_available.append( patch_vlan )
+                self.__return_available_patch_vlan(patch_vlan)
 
                 LOG.debug('patch_vlans_available: ' + str(self.patch_vlans_available))
 
