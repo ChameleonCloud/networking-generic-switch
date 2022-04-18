@@ -724,31 +724,25 @@ class GenericSwitchDriver(api.MechanismDriver):
                                  port1_vlan=port1_vlan,
                                  port2_name=port2_name,
                                  port2_vlan=port2_vlan)
-                #binding = shadow_port['bindings'][0]
-                #binding['profile']['patch'] = str(patch)
-                #binding.update()
-                #shadow_port['bindings'] = [ binding ]
-                #shadow_port_binding_profile = shadow_port['bindings'][0]
-                #shadow_port['description'] = 'this is the updated description'
-                #shadow_port.update()
+
 
                 admin_context = lib_context.get_admin_context()
-                update_port = port_obj.Port.get_objects(admin_context, id=shadow_port['id'])
-                LOG.debug("update_port: " + str(update_port))
-                port_binding = update_port[0]['bindings'][0]
-                LOG.debug("type(port_binding): " + str(type(port_binding)))
-                LOG.debug("port_binding.profile.items(): " + str(port_binding.profile.items()))
+                #update_port = port_obj.Port.get_objects(admin_context, id=shadow_port['id'])
+                #update_port
+                #LOG.debug("update_port: " + str(update_port))
+                #port_binding = update_port[0]['bindings'][0]
+                #LOG.debug("type(port_binding): " + str(type(port_binding)))
+                #LOG.debug("port_binding.profile.items(): " + str(port_binding.profile.items()))
 
                 new_binding_profile = {}
-                for k,v in port_binding.profile.items():
+                for k,v in shadow_port_binding_profile.items():
                     new_binding_profile[k] = v
                 new_binding_profile['patch_panel_vlan'] = patch['vlan']
                 new_binding_profile['patch_port_id'] = port['id']
-                port_binding.profile = new_binding_profile
-                port_binding.update()
-
-                update_port[0].description = 'this is the updated description'
-                update_port[0].update()
+                shadow_port_binding_profile.profile = new_binding_profile
+                shadow_port_binding_profile.update()
+                #update_port[0].description = 'this is the updated description'
+                #update_port[0].update()
 
 
 
