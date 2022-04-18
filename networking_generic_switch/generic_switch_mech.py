@@ -691,7 +691,8 @@ class GenericSwitchDriver(api.MechanismDriver):
         physnet = network['provider:physical_network']
 
         if shadow_port:
-            shadow_port_binding_profile = shadow_port['bindings'][0]['profile']
+            shadow_port_binding = shadow_port['bindings'][0]
+            shadow_port_binding_profile = shadow_port_binding['profile']
             port_type = port['binding:profile']['type']
 
             LOG.debug('Adding port with shadowport: port_type: ' + str(port_type))
@@ -734,17 +735,16 @@ class GenericSwitchDriver(api.MechanismDriver):
                 #LOG.debug("type(port_binding): " + str(type(port_binding)))
                 #LOG.debug("port_binding.profile.items(): " + str(port_binding.profile.items()))
 
+                shadow_port_binding = shadow_port['bindings'][0]
                 new_binding_profile = {}
                 for k,v in shadow_port_binding_profile.items():
                     new_binding_profile[k] = v
                 new_binding_profile['patch_panel_vlan'] = patch['vlan']
                 new_binding_profile['patch_port_id'] = port['id']
-                shadow_port_binding_profile.profile = new_binding_profile
-                shadow_port_binding_profile.update()
+                shadow_port_binding.profile = new_binding_profile
+                shadow_port_binding.update()
                 #update_port[0].description = 'this is the updated description'
                 #update_port[0].update()
-
-
 
                 self.patch_vlans_allocated[port['id']] = patch
 
