@@ -692,7 +692,7 @@ class GenericSwitchDriver(api.MechanismDriver):
             LOG.debug("XXXXXX admin_context, " + str(admin_context))
 
             LOG.debug("XXXXXX Ports, ")
-            for port in port_obj.Port.get_object(admin_context, network_id=self.stitching_shadow_network['id']):
+            for port in port_obj.Port.get_objects(admin_context, network_id=self.stitching_shadow_network['id']):
                 LOG.debug("XXXXXX Port: " + str(port))
                 try:
                     patch_vlan = port['bindings'][0]['profile']['patch_panel_vlan']
