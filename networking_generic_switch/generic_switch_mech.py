@@ -746,7 +746,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 #update_port[0].description = 'this is the updated description'
                 #update_port[0].update()
 
-                self.patch_vlans_allocated[port['id']] = patch
+                #self.patch_vlans_allocated[port['id']] = patch
 
             except Exception as e:
                 LOG.error(str(e) + ", traceback: " + str(traceback.format_exc()))
@@ -889,18 +889,26 @@ class GenericSwitchDriver(api.MechanismDriver):
                 port2_name = self.patchpanel_port_map[physnet]
                 port2_vlan = segmentation_id
 
-                LOG.debug('self.patch_vlans_allocated: ' + str(self.patch_vlans_allocated))
-
-
-                patch = self.patch_vlans_allocated.pop(port['id']) #TODO: roll back on failure. This might leak patch vlans
+                #patch = self.patch_vlans_allocated.pop(port['id']) #TODO: roll back on failure. This might leak patch vlans
+                patch_vlan = port['binding:profile']['patch_panel_vlan']
                 LOG.debug('Deleting patch: ' + str(self.patchpanel_switch) +
                           ', port1_name: ' + str(port1_name) +
                           ', port1_vlan: ' + str(port1_vlan) +
                           ', port2_name: ' + str(port2_name) +
                           ', port2_vlan: ' + str(port2_vlan)
                           )
-                self.patchpanel_switch.remove_patch(patch_id=patch['vlan'])
-                self.patch_vlans_available.append(patch)
+                self.patchpanel_switch.remove_patch(patch_id=patch_vlan)
+
+                shadow_port_binding = shadow_port['bindings'][0]
+                new_binding_profile = {}
+                for k, v in shadow_port_binding_profile.items():
+                    new_binding_profile[k] = v
+                new_binding_profile.pop('patch_panel_vlan')
+                new_binding_profile.pop('patch_port_id')
+                shadow_port_binding.profile = new_binding_profile
+                shadow_port_binding.update()
+
+                self.patch_vlans_available.append( { 'name': 'p'+str(patch_vlan), 'vlan': patch_vlan} )
 
             except Exception as e:
                 import traceback
