@@ -30,6 +30,7 @@ from neutron.objects import ports as port_obj
 from neutron.objects import network as network_obj
 from neutron_lib import context as lib_context
 
+import logging
 
 LOG = logging.getLogger(__name__)
 #logging.basicConfig(format='%(levelname)s:%(threadName)s:%(message)s', level=logging.DEBUG)
