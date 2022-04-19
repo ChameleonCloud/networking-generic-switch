@@ -737,6 +737,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 port2_name = self.patchpanel_port_map[physnet]
                 port2_vlan = segmentation_id
                 patch_vlan = self.__get_available_patch_vlan()
+
                 LOG.info('Adding patch: ' + str(self.patchpanel_switch) +
                          ', patch_vlan: ' + str(patch_vlan) +
                          ', port1_name: ' + str(port1_name) +
@@ -744,20 +745,22 @@ class GenericSwitchDriver(api.MechanismDriver):
                           ', port2_name: ' + str(port2_name) +
                           ', port2_vlan: ' + str(port2_vlan)
                           )
+                shadow_port_binding = shadow_port['bindings'][0]
+                new_binding_profile = {}
+                for k, v in shadow_port_binding_profile.items():
+                    new_binding_profile[k] = v
+                new_binding_profile['patch_panel_vlan'] = patch_vlan
+                new_binding_profile['patch_port_id'] = port['id']
+                shadow_port_binding.profile = new_binding_profile
+                shadow_port_binding.update()
+
                 self.__get_patchpanel_switch().add_patch(patch_id=patch_vlan,
                                  port1_name=port1_name,
                                  port1_vlan=port1_vlan,
                                  port2_name=port2_name,
                                  port2_vlan=port2_vlan)
 
-                shadow_port_binding = shadow_port['bindings'][0]
-                new_binding_profile = {}
-                for k,v in shadow_port_binding_profile.items():
-                    new_binding_profile[k] = v
-                new_binding_profile['patch_panel_vlan'] = patch_vlan
-                new_binding_profile['patch_port_id'] = port['id']
-                shadow_port_binding.profile = new_binding_profile
-                shadow_port_binding.update()
+
 
             except Exception as e:
                 LOG.error(str(e) + ", traceback: " + str(traceback.format_exc()))
