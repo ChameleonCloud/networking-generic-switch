@@ -632,7 +632,8 @@ class GenericSwitchDriver(api.MechanismDriver):
         self.__get_patchpanel_switch()
         patch_vlan = self.patch_vlans_available.pop(0)
 
-        LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX__get_available_patch_vlan, returning patch_vlan: " + str(patch_vlan))
+        thread_id = threading.get_native_id()
+        LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX__get_available_patch_vlan, returning patch_vlan: " + str(patch_vlan) + ", thread_id: " + str(thread_id))
 
         return patch_vlan
 
