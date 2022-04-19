@@ -16,7 +16,7 @@ from neutron.db import provisioning_blocks
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import resources
 from neutron_lib.plugins.ml2 import api
-#from oslo_log import log as logging
+from oslo_log import log as logging
 from oslo_config import cfg
 import socket
 import traceback
@@ -30,7 +30,6 @@ from neutron.objects import ports as port_obj
 from neutron.objects import network as network_obj
 from neutron_lib import context as lib_context
 
-import logging
 
 LOG = logging.getLogger(__name__)
 #logging.basicConfig(format='%(levelname)s:%(threadName)s:%(message)s', level=logging.DEBUG)
