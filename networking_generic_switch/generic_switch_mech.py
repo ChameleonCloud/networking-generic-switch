@@ -50,7 +50,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         called prior to this method being called.
         """
 
-        logging.basicConfig(format='%(levelname)s:%(threadName)s:%(message)s', level=logging.DEBUG)
+        #logging.basicConfig(format='%(levelname)s:%(threadName)s:%(message)s', level=logging.DEBUG)
 
         self.vfcHost = None
         gsw_devices = gsw_conf.get_devices()
