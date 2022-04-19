@@ -20,7 +20,7 @@ from oslo_log import log as logging
 from oslo_config import cfg
 import socket
 import traceback
-import res
+#import res
 
 from networking_generic_switch import config as gsw_conf
 from networking_generic_switch import devices
