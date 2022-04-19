@@ -16,11 +16,11 @@ from neutron.db import provisioning_blocks
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import resources
 from neutron_lib.plugins.ml2 import api
-from oslo_log import log as logging
+#from oslo_log import log as logging
 from oslo_config import cfg
 import socket
 import traceback
-import re
+import res
 
 from networking_generic_switch import config as gsw_conf
 from networking_generic_switch import devices
