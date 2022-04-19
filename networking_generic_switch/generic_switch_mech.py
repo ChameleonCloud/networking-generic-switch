@@ -48,6 +48,9 @@ class GenericSwitchDriver(api.MechanismDriver):
         been initialized. No abstract methods defined below will be
         called prior to this method being called.
         """
+
+        logging.basicConfig(format='%(levelname)s:%(threadName)s:%(message)s', level=logging.DEBUG)
+
         self.vfcHost = None
         gsw_devices = gsw_conf.get_devices()
         self.switches = {}
