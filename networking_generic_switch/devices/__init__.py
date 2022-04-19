@@ -9,7 +9,6 @@
 #    Unless required by applicable law or agreed to in writing, software
 #    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-#    License for the specific language governing permissions and limitations
 #    under the License.
 
 import abc
@@ -22,6 +21,9 @@ from networking_generic_switch import exceptions as gsw_exc
 
 GENERIC_SWITCH_NAMESPACE = 'generic_switch.devices'
 LOG = logging.getLogger(__name__)
+#logging.basicConfig(format="%(threadName)s:%(message)s")
+#logging.basicConfig(format='%(levelname)s:%(threadName)s:%(message)s', level=logging.DEBUG)
+
 
 # Internal ngs options will not be passed to driver.
 NGS_INTERNAL_OPTS = [

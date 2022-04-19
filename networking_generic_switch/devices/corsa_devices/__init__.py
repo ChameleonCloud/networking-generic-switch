@@ -93,7 +93,7 @@ class CorsaSwitch(devices.GenericSwitchDevice):
         token = self.config['token']
         headers = {'Authorization': token}
 
-        logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+         #logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
         protocol = 'https://'
         sw_ip_addr = self.config['switchIP']
@@ -184,7 +184,7 @@ class CorsaSwitch(devices.GenericSwitchDevice):
         token = self.config['token']
         headers = {'Authorization': token}
 
-        logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+         #logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
         protocol = 'https://'
         sw_ip_addr = self.config['switchIP']
@@ -245,7 +245,7 @@ class CorsaSwitch(devices.GenericSwitchDevice):
         token = self.config['token']
         headers = {'Authorization': token}
 
-        logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+         #logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
         protocol = 'https://'
         sw_ip_addr = self.config['switchIP']
@@ -286,7 +286,7 @@ class CorsaSwitch(devices.GenericSwitchDevice):
         token = self.config['token']
         headers = {'Authorization': token}
 
-        logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+         #logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
         protocol = 'https://'
         sw_ip_addr = self.config['switchIP']
@@ -307,7 +307,7 @@ class CorsaSwitch(devices.GenericSwitchDevice):
         token = self.config['token']
         headers = {'Authorization': token}
 
-        logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+         #logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
         protocol = 'https://'
         sw_ip_addr = self.config['switchIP']
@@ -335,7 +335,7 @@ class CorsaSwitch(devices.GenericSwitchDevice):
         token = self.config['token']
         headers = {'Authorization': token}
 
-        logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+         #logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
         protocol = 'https://'
         sw_ip_addr = self.config['switchIP']
@@ -531,7 +531,7 @@ class CorsaSwitch(devices.GenericSwitchDevice):
         token = self.config['token']
         headers = {'Authorization': token}
 
-        logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+         #logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
         protocol = 'https://'
         sw_ip_addr = self.config['switchIP']
@@ -562,7 +562,7 @@ class CorsaSwitch(devices.GenericSwitchDevice):
         token = self.config['token']
         headers = {'Authorization': token}
 
-        logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+         #logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
         protocol = 'https://'
         sw_ip_addr = self.config['switchIP']
@@ -639,7 +639,7 @@ class CorsaSwitch(devices.GenericSwitchDevice):
         token = self.config['token']
         headers = {'Authorization': token}
 
-        logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+         #logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
         protocol = 'https://'
         sw_ip_addr = self.config['switchIP']
@@ -678,7 +678,7 @@ class CorsaSwitch(devices.GenericSwitchDevice):
         token = self.config['token']
         headers = {'Authorization': token}
 
-        logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+         #logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
         protocol = 'https://'
         sw_ip_addr = self.config['switchIP']

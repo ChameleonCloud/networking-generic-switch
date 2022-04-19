@@ -32,6 +32,8 @@ from neutron_lib import context as lib_context
 
 
 LOG = logging.getLogger(__name__)
+logging.basicConfig(format='%(levelname)s:%(threadName)s:%(message)s', level=logging.DEBUG)
+
 
 GENERIC_SWITCH_ENTITY = 'GENERICSWITCH'
 
@@ -627,7 +629,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         self.__get_patchpanel_switch()
         patch_vlan = self.patch_vlans_available.pop(0)
 
-        LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX__get_available_patch_vlan, returning patch_vlan: " + str(patch_vlan) + "thread: " + str(threading.get_ident()))
+        LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX__get_available_patch_vlan, returning patch_vlan: " + str(patch_vlan))
 
         return patch_vlan
 
