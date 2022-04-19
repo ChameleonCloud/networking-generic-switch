@@ -28,7 +28,7 @@ from networking_generic_switch import devices
 from networking_generic_switch import exceptions as exc
 from networking_generic_switch import locking as ngs_lock
 
-import logging
+#import logging
 import corsavfc
 import requests
 import json
