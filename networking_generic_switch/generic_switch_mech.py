@@ -738,7 +738,8 @@ class GenericSwitchDriver(api.MechanismDriver):
                 port2_vlan = segmentation_id
                 patch_vlan = self.__get_available_patch_vlan()
                 LOG.info('Adding patch: ' + str(self.patchpanel_switch) +
-                          ', port1_name: ' + str(port1_name) +
+                         ', patch_vlan: ' + str(patch_vlan) +
+                         ', port1_name: ' + str(port1_name) +
                           ', port1_vlan: ' + str(port1_vlan) +
                           ', port2_name: ' + str(port2_name) +
                           ', port2_vlan: ' + str(port2_vlan)
