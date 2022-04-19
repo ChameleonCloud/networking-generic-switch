@@ -605,15 +605,14 @@ class GenericSwitchDriver(api.MechanismDriver):
 
     def __get_shadow_network(self):
         admin_context = lib_context.get_admin_context()
-        LOG.debug("XXXXXX Networks")
-        #nets = network_obj.Network.get_objects(admin_context, name=self.stitching_shadow_network_name)
+        LOG.debug("Networks")
         nets = network_obj.Network.get_objects(admin_context, name=self.stitching_shadow_network_name)
-        LOG.debug("XXXXXX###############  Nets: " + str(nets))
+        LOG.debug("Nets: " + str(nets))
         if len(nets) == 1:
             net = nets[0]
-            LOG.debug("XXXXXX Net: " + str(net))
+            LOG.debug("Net: " + str(net))
             if str(net['name']) == self.stitching_shadow_network_name:
-                LOG.debug("XXXXXX FOUND SHADOW STITCH NETWORK: " + str(net['name']) + ", " + str(net))
+                LOG.debug("FOUND SHADOW STITCH NETWORK: " + str(net['name']) + ", " + str(net))
                 self.stitching_shadow_network = net
         elif len(nets) < 1:
             LOG.debug("No shadow network ")
