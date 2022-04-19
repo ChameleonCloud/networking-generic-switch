@@ -623,10 +623,15 @@ class GenericSwitchDriver(api.MechanismDriver):
         return self.stitching_shadow_network
 
     def __get_available_patch_vlan(self):
+        import threading
         self.__get_patchpanel_switch()
-        return self.patch_vlans_available.pop(0)
+        patch_vlan = self.patch_vlans_available.pop(0)
 
-    #def __return_available_patch_vlan(self, patch_vlan):
+        LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX__get_available_patch_vlan, returning patch_vlan: " + str(patch_vlan) + "thread: " + str(threading.get_ident()))
+
+        return patch_vlan
+
+        #def __return_available_patch_vlan(self, patch_vlan):
     #    self.__get_patchpanel_switch()
     #    self.patch_vlans_available.append(patch_vlan)
 
