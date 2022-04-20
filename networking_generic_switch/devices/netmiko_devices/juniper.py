@@ -26,7 +26,7 @@ JUNIPER_INTERNAL_OPTS = [
     # Timeout (seconds) for committing configuration changes.
     {'name': 'ngs_commit_timeout', 'default': 60},
     # Interval (seconds) between attempts to commit configuration changes.
-    {'name': 'ngs_commit_interval', 'default': 5},
+    {'name': 'ngs_commit_interval', 'default': 30},
 ]
 
 
@@ -132,7 +132,7 @@ class Juniper(netmiko_devices.NetmikoSwitch):
                 int(self.ngs_config['ngs_commit_timeout'])),
             # Wait for the configured interval between attempts.
             wait=tenacity.wait_fixed(
-                int(self.ngs_config['ngs_commit_interval'])),
+                int(random.choice(range(self.ngs_config['ngs_commit_interval'])))+1,
         )
         def commit():
             try:

@@ -912,6 +912,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                           ', port2_name: ' + str(port2_name) +
                           ', port2_vlan: ' + str(port2_vlan)
                           )
+
                 self.__get_patchpanel_switch().remove_patch(patch_id=patch_vlan)
 
                 shadow_port_binding = shadow_port['bindings'][0]
