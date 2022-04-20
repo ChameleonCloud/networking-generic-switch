@@ -19,6 +19,9 @@ from networking_generic_switch.devices import netmiko_devices
 from networking_generic_switch.devices import utils as device_utils
 from networking_generic_switch import exceptions as exc
 
+import random
+
+
 LOG = logging.getLogger(__name__)
 
 # Internal ngs options will not be passed to driver.
