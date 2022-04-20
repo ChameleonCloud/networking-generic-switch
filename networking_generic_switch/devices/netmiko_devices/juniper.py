@@ -132,7 +132,7 @@ class Juniper(netmiko_devices.NetmikoSwitch):
                 int(self.ngs_config['ngs_commit_timeout'])),
             # Wait for the configured interval between attempts.
             wait=tenacity.wait_fixed(
-                int(random.choice(range(self.ngs_config['ngs_commit_interval'])))+1,
+                int(random.choice(range(self.ngs_config['ngs_commit_interval'])))+1,)
         )
         def commit():
             try:
