@@ -32,8 +32,6 @@ from neutron_lib import context as lib_context
 
 
 LOG = logging.getLogger(__name__)
-#logging.basicConfig(format='%(levelname)s:%(threadName)s:%(message)s', level=logging.DEBUG)
-
 
 GENERIC_SWITCH_ENTITY = 'GENERICSWITCH'
 
