@@ -410,12 +410,12 @@ class CorsaSwitch(devices.GenericSwitchDevice):
             )
             raise e
 
-    def find_named_vfc(self, vfc_name):
+    def find_named_vfc(self, vfc_name, vfc_host):
         token = self.config["token"]
         headers = {"Authorization": token}
 
         protocol = "https://"
-        sw_ip_addr = self.config["switchIP"]
+        sw_ip_addr = vfc_host.config["switchIP"]
         url_switch = protocol + sw_ip_addr
 
         bridge = None
@@ -463,12 +463,12 @@ class CorsaSwitch(devices.GenericSwitchDevice):
         ofcontroller_ip = ofcontroller_details.json().get("ip")
         return ofcontroller_ip
 
-    def del_network(self, segmentation_id, project_id):
+    def del_network(self, segmentation_id, project_id, vfc_host):
         token = self.config["token"]
         headers = {"Authorization": token}
 
         protocol = "https://"
-        sw_ip_addr = self.config["switchIP"]
+        sw_ip_addr = vfc_host.config["switchIP"]
         url_switch = protocol + sw_ip_addr
 
         sharedNonByocVFC = self.config["sharedNonByocVFC"]

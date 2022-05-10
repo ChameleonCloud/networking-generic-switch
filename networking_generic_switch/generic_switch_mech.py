@@ -121,7 +121,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                         if is_byoc_network:
                             if vfc_name:
                                 named_vfc_bridge = switch.find_named_vfc(
-                                    vfc_name)
+                                    vfc_name, vfc_host=self.vfcHost)
                                 if named_vfc_bridge:
                                     # LOG.info("PRUTH: --- corsa-namedvfc -
                                     # VFC exists - add_network_to_existing_vfc
@@ -322,7 +322,8 @@ class GenericSwitchDriver(api.MechanismDriver):
             for switch_name, switch in self._get_devices_by_physnet(physnet):
                 try:
                     if self.switch_is_corsadp2100(switch):
-                        switch.del_network(segmentation_id, project_id)
+                        switch.del_network(segmentation_id, project_id, 
+                            vfc_host=self.vfcHost)
                     else:
                         switch.del_network(segmentation_id, network['id'])
                 except Exception as e:
