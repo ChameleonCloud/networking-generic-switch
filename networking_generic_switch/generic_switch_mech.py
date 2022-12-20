@@ -117,6 +117,22 @@ class GenericSwitchDriver(api.MechanismDriver):
             LOG.error('No devices have been loaded')
         self.warned_del_network = False
 
+    def __is_shadow_network(self, context):
+        network = context.current
+        network_id = network['id']
+        LOG.debug("network: " + str(network) + ", network_id: " + str(network_id))
+
+        if self.stitching_shadow_network_name and self.stitching_shadow_network_name == network['name']:
+            LOG.debug("Setting new stitching_shadow_network")
+            self.stitching_shadow_network = network
+
+        if self.stitching_shadow_network and network['id'] == self.stitching_shadow_network['id']:
+            LOG.debug('adding to shadow network. no physical config required')
+            return True
+        else:
+            return False
+
+
     def create_network_precommit(self, context):
         """Allocate resources for a new network.
 
@@ -174,17 +190,12 @@ class GenericSwitchDriver(api.MechanismDriver):
         provider_type = network['provider:network_type']
         segmentation_id = network['provider:segmentation_id']
         physnet = network['provider:physical_network']
-        description = network['description']
+
+        if self.__is_shadow_network(context):
+            LOG.info("Creating shadow network: " + str(network))
+            return
 
         LOG.debug("network: " + str(network) + ", network_id: " + str(network_id))
-
-        if self.stitching_shadow_network_name and self.stitching_shadow_network_name == network['name']:
-            LOG.debug("Setting new stitching_shadow_network")
-            self.stitching_shadow_network = network
-
-        if self.stitching_shadow_network and network['id'] == self.stitching_shadow_network['id']:
-            LOG.debug('adding to shadow network. no physical config required')
-            return
 
         if provider_type == 'vlan' and segmentation_id:
             # Create vlan on all switches from this driver
@@ -201,7 +212,6 @@ class GenericSwitchDriver(api.MechanismDriver):
                     if hasattr(devices, 'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
                         LOG.info("Creating corsa vfc network")
                         switch.add_network(segmentation_id, network_id, project_id, of_controller, vfc_name)
-
                     continue
 
                 # Create standard network
