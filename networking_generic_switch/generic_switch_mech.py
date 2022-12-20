@@ -171,9 +171,10 @@ class GenericSwitchDriver(api.MechanismDriver):
         provider_type = network['provider:network_type']
         segmentation_id = network['provider:segmentation_id']
         physnet = network['provider:physical_network']
+        description = network['description']
 
-        of_controller = self.__get_of_controller(network)
-        vfc_name = self.__get_vfc_name(network, project_id)
+
+
 
         LOG.debug("network: " + str(network) + ", network_id: " + str(network_id))
 
@@ -190,35 +191,19 @@ class GenericSwitchDriver(api.MechanismDriver):
             for switch_name, switch in self._get_devices_by_physnet(physnet):
                 # Skip configuring the patchpanel for regular networks
                 if hasattr(self, 'patchpanel_switch_name') and switch_name == self.patchpanel_switch_name:
-                    LOG.debug("Skipping patchpanel switch config for vlan network")
+                    LOG.debug("Skipping patchpanel switch config for new networks")
                     continue
 
                 try:
-                    is_byoc_network = False
-                    if hasattr(devices,'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
-                        if of_controller or vfc_name:
-                            is_byoc_network = True
-                        if is_byoc_network:
-                            if vfc_name:
-                                named_vfc_bridge = switch.find_named_vfc(vfc_name)
-                                if named_vfc_bridge:
-                                    LOG.debug("corsa-namedvfc - VFC exists - add_network_to_existing_vfc = " + str(named_vfc_bridge) )
-                                    switch.add_network_to_existing_vfc(segmentation_id, network_id, named_vfc_bridge, vfc_name, of_controller)
-                                else:
-                                    LOG.debug("corsa-namedvfc - VFC does not exist - add_network = " + str(named_vfc_bridge) )
-                                    switch.add_network(segmentation_id, network_id, project_id, of_controller, vfc_name)
-                            else:
-                                LOG.debug("corsa-unnamedvfc - custom ofcontroller - add_network " )
-                                switch.add_network(segmentation_id, network_id, project_id, of_controller)
-                        else:
-                            if physnet == self.sharedNonByocProvider:
-                                LOG.debug("corsa-unnamedvfc - sharedBYOC - add_network " )
-                                switch.add_network_to_sharedNonByoc_vfc(segmentation_id, network_id)
-                            else:
-                                LOG.debug("corsa-unnamedvfc - BYOC - add_network " )
-                                switch.add_network(segmentation_id, network_id, project_id)
+
+                    if physnet == 'user':
+                        of_controller = self.__get_of_controller(network)
+                        vfc_name = self.__get_vfc_name(network, project_id)
+                        if hasattr(devices, 'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
+                            LOG.info("Creating corsa vfc network")
+                            switch.add_network(segmentation_id, network_id, project_id, of_controller, vfc_name)
                     else:
-                        LOG.debug("dell-unnamedvfc - noofcontroller - add_network " )
+                        LOG.info("Creating standard network" )
                         switch.add_network(segmentation_id, network_id)
 
                 except Exception as e:
@@ -228,10 +213,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                                'switch': switch_name,
                                'exc': e})
 
-                else:
-                    LOG.info('Network %(net_id)s has been added on device '
-                         '%(device)s', {'net_id': network['id'],
-                                        'device': switch_name})
+                
 
 
 
