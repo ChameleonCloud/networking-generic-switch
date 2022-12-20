@@ -135,8 +135,8 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         #return
 
-        #network = context.currents
-        network = context
+        network = context.currents
+        #network = context
 
         network_id = network['id']
         project_id = network['project_id'].strip()
