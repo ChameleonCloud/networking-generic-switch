@@ -132,6 +132,8 @@ class GenericSwitchDriver(api.MechanismDriver):
         LOG.debug("create_network_precommit")
         LOG.debug("context: " + str(context))
 
+        return
+
         network = context.currents
         network_id = network['id']
         project_id = network['project_id'].strip()
@@ -165,6 +167,8 @@ class GenericSwitchDriver(api.MechanismDriver):
         """
 
         LOG.debug("create_network_postcommit")
+
+
 
         network = context.current
         network_id = network['id']
