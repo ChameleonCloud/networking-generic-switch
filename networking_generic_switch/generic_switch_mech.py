@@ -132,7 +132,8 @@ class GenericSwitchDriver(api.MechanismDriver):
         LOG.debug("create_network_precommit")
         LOG.debug("context: " + str(context))
 
-        return
+
+        #return
 
         network = context.currents
         network_id = network['id']
@@ -148,7 +149,8 @@ class GenericSwitchDriver(api.MechanismDriver):
         # Add authorization of SDN network creation (i.e. corsa vfcs).
         # Reject early if not authorization.
         if provider == 'user':
-            LOG.info("Authorizing user controlled network: provider: " + str(provider) + ", description: " + str(description) )
+            LOG.info("Authorizing user controlled network: provider: " + str(provider) +
+                     ", description: " + str(description))
             LOG.info("Skipping authorizatino...")
 
 
