@@ -152,13 +152,15 @@ class GenericSwitchDriver(api.MechanismDriver):
         provider = network['provider:physical_network']
         description = network['description']
 
-
         # Add authorization of SDN network creation (i.e. corsa vfcs).
         # Reject early if not authorization.
-        if provider == 'user' and self.__is_authorized(context):
-            LOG.info("Authorizing user controlled network: provider: " + str(provider) +
+        if provider == 'user':
+            LOG.info("Authorizing create user controlled network: provider: " + str(provider) +
                      ", description: " + str(description))
-            LOG.info("Skipping authorizatino...")
+            LOG.info("Skipping authorization...")
+            if not self.__is_authorized(context):
+                LOG.error("create_network_precommit failed authorization")
+                raise Exception("not authorized to create network")
 
     def create_network_postcommit(self, context):
         """Create a network.
@@ -293,6 +295,22 @@ class GenericSwitchDriver(api.MechanismDriver):
         network state. It is up to the mechanism driver to ignore
         state or state changes that it does not know or care about.
         """
+
+        network = context.current
+        provider = network['provider:physical_network']
+        description = network['description']
+
+        # Add authorization of SDN network creation (i.e. corsa vfcs).
+        # Reject early if not authorization.
+        if provider == 'user':
+            LOG.info("Authorizing update user controlled network: provider: " + str(provider) +
+                     ", description: " + str(description))
+            LOG.info("Skipping authorization...")
+            if not self.__is_authorized(context):
+                LOG.error("update_network_precommit failed authorization")
+                raise Exception("not authorized to update network")
+
+
         pass
 
     def update_network_postcommit(self, context):
@@ -325,7 +343,22 @@ class GenericSwitchDriver(api.MechanismDriver):
         raising an exception will result in rollback of the
         transaction.
         """
-        pass
+
+        network = context.current
+        provider = network['provider:physical_network']
+        description = network['description']
+
+        # Add authorization of SDN network creation (i.e. corsa vfcs).
+        # Reject early if not authorization.
+        if provider == 'user':
+            LOG.info("Authorizing delete user controlled network: provider: " + str(provider) +
+                     ", description: " + str(description))
+            LOG.info("Skipping authorization...")
+            if not self.__is_authorized(context):
+                LOG.error("delete_network_precommit failed authorization")
+                raise Exception("not authorized to delete network")
+
+
 
     def delete_network_postcommit(self, context):
         """Delete a network.
@@ -407,7 +440,16 @@ class GenericSwitchDriver(api.MechanismDriver):
         cannot block.  Raising an exception will result in a rollback
         of the current transaction.
         """
-        pass
+
+        network = context.network.current
+        provider = network['provider:physical_network']
+
+        # Add authorization of SDN network creation (i.e. corsa vfcs).
+        # Reject early if not authorization.
+        if provider == 'user':
+            LOG.error("User controlled networks require manual configuration of subnets and IPs")
+            raise Exception("User controlled networks require manual configuration of subnets and IPs")
+
 
     def create_subnet_postcommit(self, context):
         """Create a subnet.
@@ -438,6 +480,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         subnet state. It is up to the mechanism driver to ignore
         state or state changes that it does not know or care about.
         """
+
         pass
 
     def update_subnet_postcommit(self, context):
@@ -496,7 +539,21 @@ class GenericSwitchDriver(api.MechanismDriver):
         cannot block.  Raising an exception will result in a rollback
         of the current transaction.
         """
-        pass
+
+        network = context.network.current
+        provider = network['provider:physical_network']
+        description = network['description']
+
+        # Add authorization of SDN network creation (i.e. corsa vfcs).
+        # Reject early if not authorization.
+        if provider == 'user':
+            LOG.info("Authorizing create port on user controlled network: provider: " + str(provider) +
+                     ", description: " + str(description))
+            LOG.info("Skipping authorization...")
+            if not self.__is_authorized(context):
+                LOG.error("create_port_precommit failed authorization")
+                raise Exception("not authorized to create port")
+
 
     def __get_shadow_port(self, port):
         from neutron.objects.ports import Port
@@ -797,7 +854,21 @@ class GenericSwitchDriver(api.MechanismDriver):
         state. It is up to the mechanism driver to ignore state or
         state changes that it does not know or care about.
         """
-        pass
+
+        network = context.network.current
+        provider = network['provider:physical_network']
+        description = network['description']
+
+        # Add authorization of SDN network creation (i.e. corsa vfcs).
+        # Reject early if not authorization.
+        if provider == 'user':
+            LOG.info("Authorizing create port on user controlled network: provider: " + str(provider) +
+                     ", description: " + str(description))
+            LOG.info("Skipping authorization...")
+            if not self.__is_authorized(context):
+                LOG.error("update_port_precommit failed authorization")
+                raise Exception("not authorized to update port")
+
 
     def update_port_postcommit(self, context):
         """Update a port.
@@ -849,7 +920,19 @@ class GenericSwitchDriver(api.MechanismDriver):
         are not expected, but raising an exception will result in
         rollback of the transaction.
         """
-        pass
+        network = context.network.current
+        provider = network['provider:physical_network']
+        description = network['description']
+
+        # Add authorization of SDN network creation (i.e. corsa vfcs).
+        # Reject early if not authorization.
+        if provider == 'user':
+            LOG.info("Authorizing delete port on user controlled network: provider: " + str(provider) +
+                     ", description: " + str(description))
+            LOG.info("Skipping authorization...")
+            if not self.__is_authorized(context):
+                LOG.error("delete_port_precommit failed authorization")
+                raise Exception("not authorized to delete port")
 
     def delete_port_postcommit(self, context):
         """Delete a port.
