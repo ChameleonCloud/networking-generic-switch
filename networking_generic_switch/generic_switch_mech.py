@@ -130,6 +130,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         """
 
         LOG.debug("create_network_precommit")
+        LOG.debug("context: " + str(context))
 
         network = context.currents
         network_id = network['id']
@@ -213,7 +214,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                                'switch': switch_name,
                                'exc': e})
 
-                
+
 
 
 
