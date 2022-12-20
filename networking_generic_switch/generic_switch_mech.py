@@ -176,9 +176,6 @@ class GenericSwitchDriver(api.MechanismDriver):
         physnet = network['provider:physical_network']
         description = network['description']
 
-
-
-
         LOG.debug("network: " + str(network) + ", network_id: " + str(network_id))
 
         if self.stitching_shadow_network_name and self.stitching_shadow_network_name == network['name']:
@@ -197,28 +194,19 @@ class GenericSwitchDriver(api.MechanismDriver):
                     LOG.debug("Skipping patchpanel switch config for new networks")
                     continue
 
-                try:
+                if physnet == 'user':
+                    # Create user controlled network
+                    of_controller = self.__get_of_controller(network)
+                    vfc_name = self.__get_vfc_name(network, project_id)
+                    if hasattr(devices, 'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
+                        LOG.info("Creating corsa vfc network")
+                        switch.add_network(segmentation_id, network_id, project_id, of_controller, vfc_name)
 
-                    if physnet == 'user':
-                        of_controller = self.__get_of_controller(network)
-                        vfc_name = self.__get_vfc_name(network, project_id)
-                        if hasattr(devices, 'corsa_devices') and isinstance(switch, devices.corsa_devices.corsa2100.CorsaDP2100):
-                            LOG.info("Creating corsa vfc network")
-                            switch.add_network(segmentation_id, network_id, project_id, of_controller, vfc_name)
-                    else:
-                        LOG.info("Creating standard network" )
-                        switch.add_network(segmentation_id, network_id)
+                    continue
 
-                except Exception as e:
-                    LOG.error("Failed to create network %(net_id)s "
-                              "on device: %(switch)s, reason: %(exc)s",
-                              {'net_id': network_id,
-                               'switch': switch_name,
-                               'exc': e})
-
-
-
-
+                # Create standard network
+                LOG.info("Creating standard network" )
+                switch.add_network(segmentation_id, network_id)
 
     def __get_of_controller(self, network):
         if 'description' in network.keys():
