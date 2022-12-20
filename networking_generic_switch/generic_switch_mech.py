@@ -133,6 +133,10 @@ class GenericSwitchDriver(api.MechanismDriver):
             return False
 
 
+    def __is_authorized(self, context):
+        # TODO: Write authorization check
+        return True
+
     def create_network_precommit(self, context):
         """Allocate resources for a new network.
 
@@ -162,7 +166,7 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         # Add authorization of SDN network creation (i.e. corsa vfcs).
         # Reject early if not authorization.
-        if provider == 'user':
+        if provider == 'user' and self.__is_authorized(context):
             LOG.info("Authorizing user controlled network: provider: " + str(provider) +
                      ", description: " + str(description))
             LOG.info("Skipping authorizatino...")
