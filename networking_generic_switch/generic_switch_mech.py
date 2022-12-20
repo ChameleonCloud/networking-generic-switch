@@ -129,9 +129,9 @@ class GenericSwitchDriver(api.MechanismDriver):
         of the current transaction.
         """
 
-        LOG.debug("create_network_postcommit")
+        LOG.debug("create_network_precommit")
 
-        network = context.current
+        network = context.currents
         network_id = network['id']
         project_id = network['project_id'].strip()
         provider_type = network['provider:network_type']
