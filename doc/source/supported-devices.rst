@@ -16,6 +16,7 @@ The following devices are supported by this plugin:
 * Juniper Junos OS switches
 * OpenVSwitch
 * Ruijie switches
+* SONiC switches
 
 This Mechanism Driver architecture allows easily to add more devices
 of any type.
