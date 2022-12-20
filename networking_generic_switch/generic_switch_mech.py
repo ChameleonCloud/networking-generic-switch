@@ -132,11 +132,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         LOG.debug("create_network_precommit")
         LOG.debug("context: " + str(context))
 
-
-        #return
-
-        network = context.currents
-        #network = context
+        network = context.current
 
         network_id = network['id']
         project_id = network['project_id'].strip()
@@ -172,8 +168,6 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         LOG.debug("create_network_postcommit")
 
-
-
         network = context.current
         network_id = network['id']
         project_id = network['project_id'].strip()
@@ -187,11 +181,11 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         LOG.debug("network: " + str(network) + ", network_id: " + str(network_id))
 
-        if self.stitching_shadow_network_name != None and self.stitching_shadow_network_name == network['name']:
+        if self.stitching_shadow_network_name and self.stitching_shadow_network_name == network['name']:
             LOG.debug("Setting new stitching_shadow_network")
             self.stitching_shadow_network = network
 
-        if self.stitching_shadow_network != None and network['id'] == self.stitching_shadow_network['id']:
+        if self.stitching_shadow_network and network['id'] == self.stitching_shadow_network['id']:
             LOG.debug('adding to shadow network. no physical config required')
             return
 
