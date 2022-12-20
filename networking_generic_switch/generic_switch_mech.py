@@ -128,6 +128,27 @@ class GenericSwitchDriver(api.MechanismDriver):
         cannot block.  Raising an exception will result in a rollback
         of the current transaction.
         """
+
+        LOG.debug("create_network_postcommit")
+
+        network = context.current
+        network_id = network['id']
+        project_id = network['project_id'].strip()
+        provider_type = network['provider:network_type']
+        segmentation_id = network['provider:segmentation_id']
+        provider = network['provider:physical_network']
+        description = network['description']
+
+        LOG.debug("network: " + str(network) + ", network_id: " + str(network_id))
+
+
+        # Add authorization of SDN network creation (i.e. corsa vfcs).
+        # Reject early if not authorization.
+        if provider == 'user':
+            LOG.info("Authorizing user controlled network: provider: " + str(provider) + ", description: " + str(description) )
+            LOG.info("Skipping authorizatino...")
+
+
         pass
 
     def create_network_postcommit(self, context):
