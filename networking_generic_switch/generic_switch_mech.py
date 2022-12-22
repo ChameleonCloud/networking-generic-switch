@@ -20,6 +20,8 @@ from oslo_log import log as logging
 from oslo_config import cfg
 import socket
 import traceback
+import pprint
+
 #import res
 
 from networking_generic_switch import config as gsw_conf
@@ -610,6 +612,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         # admin_context = lib_context.get_admin_context()
         # network = network_obj.Network.get_objects(admin_context,id=network_id)[0]
 
+        LOG.debug("Port \n" + pprint.pformat(port, indent=4) + "\n")
 
 
         port_type = None
@@ -661,7 +664,7 @@ class GenericSwitchDriver(api.MechanismDriver):
 
     def __get_shadow_network(self):
         admin_context = lib_context.get_admin_context()
-        LOG.debug("Networks")
+        LOG.debug("__get_shadow_network: name: " + self.stitching_shadow_network_name)
         nets = network_obj.Network.get_objects(admin_context, name=self.stitching_shadow_network_name)
         LOG.debug("Nets: " + str(nets))
         if len(nets) == 1:
@@ -752,16 +755,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         drastically affect performance.  Raising an exception will
         result in the deletion of the resource.
         """
-        import json
-
-        import pprint
-        format = lambda x: pprint.pformat(dict(x), indent=4)
-
-        #LOG.debug(json.dumps(str(context.__dict__), indent=2))
-        #LOG.debug(json.dumps(str(context.current), indent=2))
-        #LOG.debug("\n" + format(context.current) + "\n")
         LOG.debug("\n" + pprint.pformat(context.current, indent=4) + "\n")
-
 
         port = context.current
         shadow_port = self.__get_shadow_port(port)
