@@ -761,7 +761,7 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         #LOG.debug(json.dumps(str(context.__dict__), indent=2))
         #LOG.debug(json.dumps(str(context.current), indent=2))
-        LOG.debug("\n" + format(context.current))
+        LOG.debug("\n" + format(context.current) + "\n")
 
         port = context.current
         shadow_port = self.__get_shadow_port(port)
