@@ -755,13 +755,13 @@ class GenericSwitchDriver(api.MechanismDriver):
         import json
 
         import pprint
-        format = lambda versions: pprint.pformat(dict(versions), indent=4)
-        #debug_dict = {'pushed_versions': format(self._versions),
-        #              'consumer_versions': format(self._versions_by_consumer)}
+        format = lambda x: pprint.pformat(dict(x), indent=4)
 
         #LOG.debug(json.dumps(str(context.__dict__), indent=2))
         #LOG.debug(json.dumps(str(context.current), indent=2))
-        LOG.debug("\n" + format(context.current) + "\n")
+        #LOG.debug("\n" + format(context.current) + "\n")
+        LOG.debug("\n" + pprint.pformat(context.current, indent=4) + "\n")
+
 
         port = context.current
         shadow_port = self.__get_shadow_port(port)
