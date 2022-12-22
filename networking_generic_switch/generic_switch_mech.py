@@ -613,6 +613,11 @@ class GenericSwitchDriver(api.MechanismDriver):
         # network = network_obj.Network.get_objects(admin_context,id=network_id)[0]
 
         LOG.debug("Port \n" + pprint.pformat(port, indent=4) + "\n")
+        LOG.debug("port[binding:profile] \n" + pprint.pformat(port['binding:profile'], indent=4) + "\n")
+
+        for k,v in port['binding:profile'].items():
+            LOG.debug("key: " + str(k) + ", val: " + str(s))
+
 
 
         port_type = None
@@ -622,6 +627,8 @@ class GenericSwitchDriver(api.MechanismDriver):
             project_id = port['project_id']
             if 'reservation_id' in port['binding:profile']:
                 reservation_id = port['binding:profile']['reservation_id']
+
+
 
             if port_type == 'stitchport':
                 LOG.debug('Adding stitch port: port_type: ' + str(port_type))
