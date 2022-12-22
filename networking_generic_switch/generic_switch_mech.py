@@ -754,10 +754,13 @@ class GenericSwitchDriver(api.MechanismDriver):
         """
         import json
         LOG.debug("" + json.dumps(str(context.__dict__), indent=2))
-        LOG.debug("" + str(context.current))
+        LOG.debug("" + json.dumps(str(context.current), indent=2))
 
         port = context.current
         shadow_port = self.__get_shadow_port(port)
+
+        LOG.debug("shadow_port: " + str(shadow_port))
+
 
 
         network = context.network.current
