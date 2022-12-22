@@ -616,7 +616,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         LOG.debug("port[binding:profile] \n" + pprint.pformat(port['binding:profile'], indent=4) + "\n")
 
         for k,v in port['binding:profile'].items():
-            LOG.debug("key: " + str(k) + ", val: " + str(s))
+            LOG.debug("key: " + str(k) + ", val: " + str(v))
 
 
 
