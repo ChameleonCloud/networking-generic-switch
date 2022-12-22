@@ -753,8 +753,15 @@ class GenericSwitchDriver(api.MechanismDriver):
         result in the deletion of the resource.
         """
         import json
-        LOG.debug(json.dumps(str(context.__dict__), indent=2))
-        LOG.debug(json.dumps(str(context.current), indent=2))
+
+        import pprint
+        format = lambda versions: pprint.pformat(dict(versions), indent=4)
+        #debug_dict = {'pushed_versions': format(self._versions),
+        #              'consumer_versions': format(self._versions_by_consumer)}
+
+        #LOG.debug(json.dumps(str(context.__dict__), indent=2))
+        #LOG.debug(json.dumps(str(context.current), indent=2))
+        LOG.debug(format(context.current))
 
         port = context.current
         shadow_port = self.__get_shadow_port(port)
