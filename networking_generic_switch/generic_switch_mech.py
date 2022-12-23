@@ -658,7 +658,11 @@ class GenericSwitchDriver(api.MechanismDriver):
                     if shadow_port_candidate['project_id'] == project_id and \
                        shadow_port_candidate_binding_profile['reservation_id'] == reservation_id:
                         shadow_port = shadow_port_candidate
-                        LOG.debug("Found shadow stitchport: \n" + pprint.pformat(shadow_port, indent=4) + "\n")
+                        #LOG.debug("Found shadow stitchport: \n" + pprint.pformat(shadow_port, indent=4) + "\n")
+                        #json.dumps(str(context.__dict__
+                        LOG.debug("Found shadow stitchport: \n" + pprint.pformat(shadow_port.__dict__, indent=4) + "\n")
+
+
 
                         break
                 except Exception as e:
