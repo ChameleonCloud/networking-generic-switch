@@ -773,19 +773,10 @@ class GenericSwitchDriver(api.MechanismDriver):
         shadow_port = self.__get_shadow_port(port)
 
         LOG.debug("shadow_port: " + str(shadow_port))
-
-        #[PortBinding(host='', port_id=f67a9682 - 07ad - 4d7a - ac9d - e1443ced7860, profile = {"stitchport": "fabric",
-        #                                                                                       "project_id": "24eb8b9c9d5c47b19a395e5ef8272376",
-        #                                                                                       "reservation_id": "abcdefg1",
-        #                                                                                       "vlan": "2001",
-        #                                                                                       "type": "shadow"}, status = 'ACTIVE', vif_details = None, vif_type = 'unbound', vnic_type = 'normal')]
         LOG.debug("bindings: " + str(shadow_port.bindings))
         LOG.debug("profile: " + str(shadow_port.bindings[0]['profile']))
         for k,v in shadow_port.bindings[0]['profile'].items():
             LOG.debug(""+str(k)+", "+str(v))
-
-
-
 
         network = context.network.current
         provider_type = network['provider:network_type']
