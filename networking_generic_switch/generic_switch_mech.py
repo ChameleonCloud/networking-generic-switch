@@ -782,7 +782,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         LOG.debug("bindings: " + str(shadow_port.bindings))
         LOG.debug("profile: " + str(shadow_port.bindings[0]['profile']))
         for k,v in shadow_port.bindings[0]['profile'].items():
-            LOG.debug(""+str(key)+", "+str(val))
+            LOG.debug(""+str(k)+", "+str(v))
 
 
 
