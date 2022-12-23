@@ -780,8 +780,8 @@ class GenericSwitchDriver(api.MechanismDriver):
         #                                                                                       "vlan": "2001",
         #                                                                                       "type": "shadow"}, status = 'ACTIVE', vif_details = None, vif_type = 'unbound', vnic_type = 'normal')]
         LOG.debug("bindings: " + str(shadow_port.bindings))
-        LOG.debug("profile: " + str(shadow_port.bindings['profile']))
-        for k,v in shadow_port.bindings['profile']:
+        LOG.debug("profile: " + str(shadow_port.bindings[0].profile))
+        for k,v in shadow_port.bindings[0].profile:
             LOG.debug(""+str(key)+", "+str(val))
 
 
