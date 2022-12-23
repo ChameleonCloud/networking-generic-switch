@@ -744,7 +744,7 @@ class GenericSwitchDriver(api.MechanismDriver):
             for port in port_obj.Port.get_objects(admin_context, network_id=self.stitching_shadow_network['id']):
                 LOG.debug("Port: " + str(port))
                 try:
-                    patch_vlan = port['bindings'][0]['profile']['patch_panel_vlan']
+                    patch_vlan = port['bindings'][0]['profile']['vlan']
                     LOG.debug('Removing patch vlan: ' + str(patch_vlan))
                     self.patch_vlans_available.remove(patch_vlan)
                 except:
@@ -780,8 +780,8 @@ class GenericSwitchDriver(api.MechanismDriver):
         #                                                                                       "vlan": "2001",
         #                                                                                       "type": "shadow"}, status = 'ACTIVE', vif_details = None, vif_type = 'unbound', vnic_type = 'normal')]
         LOG.debug("bindings: " + str(shadow_port.bindings))
-        LOG.debug("profile: " + str(shadow_port.bindings[0].profile))
-        for k,v in shadow_port.bindings[0].profile:
+        LOG.debug("profile: " + str(shadow_port.bindings[0]['profile']))
+        for k,v in shadow_port.bindings[0]['profile']:
             LOG.debug(""+str(key)+", "+str(val))
 
 
@@ -827,7 +827,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 new_binding_profile = {}
                 for k, v in shadow_port_binding_profile.items():
                     new_binding_profile[k] = v
-                new_binding_profile['patch_panel_vlan'] = patch_vlan
+                new_binding_profile['vlan'] = patch_vlan
                 new_binding_profile['patch_port_id'] = port['id']
                 shadow_port_binding.profile = new_binding_profile
                 shadow_port_binding.update()
@@ -1009,7 +1009,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 port2_vlan = segmentation_id
 
                 #patch = self.patch_vlans_allocated.pop(port['id']) #TODO: roll back on failure. This might leak patch vlans
-                patch_vlan = shadow_port_binding_profile['patch_panel_vlan']
+                patch_vlan = shadow_port_binding_profile['vlan']
                 LOG.debug('Deleting patch: ' + str(self.patchpanel_switch) +
                           ', port1_name: ' + str(port1_name) +
                           ', port1_vlan: ' + str(port1_vlan) +
@@ -1023,7 +1023,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 new_binding_profile = {}
                 for k, v in shadow_port_binding_profile.items():
                     new_binding_profile[k] = v
-                new_binding_profile.pop('patch_panel_vlan')
+                new_binding_profile.pop('vlan')
                 new_binding_profile.pop('patch_port_id')
                 shadow_port_binding.profile = new_binding_profile
                 shadow_port_binding.update()
