@@ -774,6 +774,9 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         LOG.debug("shadow_port: " + str(shadow_port))
 
+        LOG.debug("bindings: " + str(shadow_port.bindings))
+
+
 
 
         network = context.network.current
