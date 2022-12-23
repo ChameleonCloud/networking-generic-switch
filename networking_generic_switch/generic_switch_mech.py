@@ -657,7 +657,7 @@ class GenericSwitchDriver(api.MechanismDriver):
 
                     if shadow_port_candidate['project_id'] == project_id and \
                        shadow_port_candidate_binding_profile['reservation_id'] == reservation_id:
-                        LOG.debug("XXXXXX FOUND SHADOW STITCH Port: " + str(port))
+                        LOG.debug("Founf shadow stitchport: \n" + pprint.pformat(port, indent=4) + "\n")
                         shadow_port = shadow_port_candidate
                         break
                 except Exception as e:
@@ -665,7 +665,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                     continue
 
         if shadow_port == None:
-            LOG.debug("XXXXXX SHADOW STITCH NOT FOUND!")
+            LOG.debug("shadow stitchport not found!")
 
         return shadow_port
 
