@@ -774,7 +774,14 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         LOG.debug("shadow_port: " + str(shadow_port))
 
-        LOG.debug("bindings: " + str(shadow_port.bindings))
+        #[PortBinding(host='', port_id=f67a9682 - 07ad - 4d7a - ac9d - e1443ced7860, profile = {"stitchport": "fabric",
+        #                                                                                       "project_id": "24eb8b9c9d5c47b19a395e5ef8272376",
+        #                                                                                       "reservation_id": "abcdefg1",
+        #                                                                                       "vlan": "2001",
+        #                                                                                       "type": "shadow"}, status = 'ACTIVE', vif_details = None, vif_type = 'unbound', vnic_type = 'normal')]
+        LOG.debug("bindings: " + str(shadow_port.bindings.profile))
+        for k,v in shadow_port.bindings.profile:
+            LOG.debug(""+str(key)+", "+str(val))
 
 
 
