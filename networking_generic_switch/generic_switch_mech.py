@@ -1019,7 +1019,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 port2_vlan = segmentation_id
 
                 #patch = self.patch_vlans_allocated.pop(port['id']) #TODO: roll back on failure. This might leak patch vlans
-                patch_vlan = shadow_port_binding_profile['stitch_vlan']
+                patch_vlan = shadow_port_binding_profile['patch_id']
                 LOG.debug('Deleting patch: ' + str(self.patchpanel_switch) +
                           ', port1_name: ' + str(port1_name) +
                           ', port1_vlan: ' + str(port1_vlan) +
