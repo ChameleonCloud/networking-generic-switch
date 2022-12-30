@@ -767,13 +767,13 @@ class GenericSwitchDriver(api.MechanismDriver):
         drastically affect performance.  Raising an exception will
         result in the deletion of the resource.
         """
-        LOG.debug("\n" + pprint.pformat(context.current, indent=4) + "\n")
+        LOG.debug("create_port_postcommit \n" + pprint.pformat(context.current, indent=4) + "\n")
 
         port = context.current
         shadow_port = self.__get_shadow_port(port)
 
         LOG.debug("shadow_port: " + str(shadow_port))
-        if shadow_port.bindings:
+        if shadow_port and shadow_port.bindings:
             LOG.debug("bindings: " + str(shadow_port.bindings))
             LOG.debug("profile: \n" + pprint.pformat(shadow_port.bindings[0]['profile']) + "/n")
             for k, v in shadow_port.bindings[0]['profile'].items():
