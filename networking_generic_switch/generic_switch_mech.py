@@ -773,10 +773,15 @@ class GenericSwitchDriver(api.MechanismDriver):
         shadow_port = self.__get_shadow_port(port)
 
         LOG.debug("shadow_port: " + str(shadow_port))
-        LOG.debug("bindings: " + str(shadow_port.bindings))
-        LOG.debug("profile: \n" + pprint.pformat(shadow_port.bindings[0]['profile']) + "/n")
-        for k,v in shadow_port.bindings[0]['profile'].items():
-            LOG.debug(""+str(k)+", "+str(v))
+        if shadow_port.bindings:
+            LOG.debug("bindings: " + str(shadow_port.bindings))
+            LOG.debug("profile: \n" + pprint.pformat(shadow_port.bindings[0]['profile']) + "/n")
+            for k, v in shadow_port.bindings[0]['profile'].items():
+                LOG.debug("" + str(k) + ", " + str(v))
+        else:
+            LOG.debug("bindings: NO binding profile")
+
+
 
         network = context.network.current
         provider_type = network['provider:network_type']
