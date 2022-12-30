@@ -774,7 +774,7 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         LOG.debug("shadow_port: " + str(shadow_port))
         LOG.debug("bindings: " + str(shadow_port.bindings))
-        LOG.debug("profile: " + str(shadow_port.bindings[0]['profile']))
+        LOG.debug("profile: \n" + pprint.pformat(shadow_port.bindings[0]['profile']) + "/n")
         for k,v in shadow_port.bindings[0]['profile'].items():
             LOG.debug(""+str(k)+", "+str(v))
 
@@ -810,10 +810,10 @@ class GenericSwitchDriver(api.MechanismDriver):
                 LOG.info('Adding patch: ' + str(self.patchpanel_switch) +
                          ', patch_vlan: ' + str(patch_vlan) +
                          ', port1_name: ' + str(port1_name) +
-                          ', port1_vlan: ' + str(port1_vlan) +
-                          ', port2_name: ' + str(port2_name) +
-                          ', port2_vlan: ' + str(port2_vlan)
-                          )
+                         ', port1_vlan: ' + str(port1_vlan) +
+                         ', port2_name: ' + str(port2_name) +
+                         ', port2_vlan: ' + str(port2_vlan)
+                         )
                 shadow_port_binding = shadow_port['bindings'][0]
                 new_binding_profile = {}
                 for k, v in shadow_port_binding_profile.items():
