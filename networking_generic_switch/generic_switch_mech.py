@@ -801,7 +801,7 @@ class GenericSwitchDriver(api.MechanismDriver):
 
             #get shadow vlan and stitchport from shadow port
             stichport_name = shadow_port_binding_profile['stitchport']
-            stichport_vlan = shadow_port_binding_profile['vlan']
+            stichport_vlan = shadow_port_binding_profile['stitch_vlan']
             LOG.debug('stichport_name: ' + str(stichport_name) + ", stichport_vlan: " + str(stichport_vlan))
 
             # Add patch
@@ -819,15 +819,28 @@ class GenericSwitchDriver(api.MechanismDriver):
                          ', port2_name: ' + str(port2_name) +
                          ', port2_vlan: ' + str(port2_vlan)
                          )
-                shadow_port_binding = shadow_port['bindings'][0]
-                new_binding_profile = {}
-                for k, v in shadow_port_binding_profile.items():
-                    new_binding_profile[k] = v
 
-                new_binding_profile['patch_id'] = patch_vlan
-                new_binding_profile['user_port_id'] = port['id']
-                shadow_port_binding.profile = new_binding_profile
+                # Update shadow port binding profile
+                shadow_port_binding = shadow_port['bindings'][0]
+                new_shadow_binding_profile = {}
+                for k, v in shadow_port_binding_profile.items():
+                    new_shadow_binding_profile[k] = v
+
+                new_shadow_binding_profile['patch_id'] = patch_vlan
+                new_shadow_binding_profile['user_port_id'] = port['id']
+                shadow_port_binding.profile = new_shadow_binding_profile
                 shadow_port_binding.update()
+
+                # Update user port binding profile
+                user_port_binding = port['bindings'][0]
+                new_user_port_binding_profile = {}
+                for k, v in user_port_binding.items():
+                    new_user_port_binding_profile[k] = v
+
+                new_user_port_binding_profile['stitchport'] = new_shadow_binding_profile['stitchport']
+                new_user_port_binding_profile['stitch_vlan'] = new_shadow_binding_profile['stitch_vlan']
+                user_port_binding.profile = new_user_port_binding_profile
+                user_port_binding.update()
 
                 self.__get_patchpanel_switch().add_patch(patch_id=patch_vlan,
                                  port1_name=port1_name,
