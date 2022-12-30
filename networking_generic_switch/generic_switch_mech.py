@@ -823,8 +823,9 @@ class GenericSwitchDriver(api.MechanismDriver):
                 new_binding_profile = {}
                 for k, v in shadow_port_binding_profile.items():
                     new_binding_profile[k] = v
-                new_binding_profile['vlan'] = patch_vlan
-                new_binding_profile['patch_port_id'] = port['id']
+
+                new_binding_profile['patch_id'] = patch_vlan
+                new_binding_profile['user_port_id'] = port['id']
                 shadow_port_binding.profile = new_binding_profile
                 shadow_port_binding.update()
 
