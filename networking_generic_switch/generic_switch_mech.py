@@ -832,15 +832,15 @@ class GenericSwitchDriver(api.MechanismDriver):
                 shadow_port_binding.update()
 
                 # Update user port binding profile
-                user_port_binding = port['binding:profile']
-                new_user_port_binding_profile = {}
-                for k, v in user_port_binding.items():
-                    new_user_port_binding_profile[k] = v
+                #user_port_binding = port['binding:profile']
+                #new_user_port_binding_profile = {}
+                #for k, v in user_port_binding.items():
+                #    new_user_port_binding_profile[k] = v
 
-                new_user_port_binding_profile['stitchport'] = new_shadow_binding_profile['stitchport']
-                new_user_port_binding_profile['stitch_vlan'] = new_shadow_binding_profile['stitch_vlan']
-                user_port_binding.port['binding:profile'] = new_user_port_binding_profile
-                user_port_binding.update()
+                #new_user_port_binding_profile['stitchport'] = new_shadow_binding_profile['stitchport']
+                #new_user_port_binding_profile['stitch_vlan'] = new_shadow_binding_profile['stitch_vlan']
+                #user_port_binding.port['binding:profile'] = new_user_port_binding_profile
+                #user_port_binding.update()
 
                 self.__get_patchpanel_switch().add_patch(patch_id=patch_vlan,
                                  port1_name=port1_name,
