@@ -72,13 +72,8 @@ class GenericSwitchDriver(api.MechanismDriver):
             LOG.info("patchpanel_switch: " + str(CONF.ngs_coordination.patchpanel_switch))
             self.patchpanel_switch_name = CONF.ngs_coordination.patchpanel_switch
 
-            # for switch_name, switch in self.switches.items():
-            #     LOG.debug("Searching for patchpanel switch (" + self.patchpanel_switch_name + ". candidate: " + str(
-            #         switch_name))
-            #     if switch_name == self.patchpanel_switch_name:
-            #         self.patchpanel_switch = switch
-            #         break
-            #
+            self.__get_patchpanel_switch()
+
             LOG.info("port_map: " + str(CONF.ngs_coordination.patchpanel_port_map))
             self.patchpanel_port_map = {}
             for port_str in CONF.ngs_coordination.patchpanel_port_map.split(','):
@@ -87,12 +82,6 @@ class GenericSwitchDriver(api.MechanismDriver):
                 self.patchpanel_port_map[port_name] = port_id
 
             LOG.info("port_map built: " + str(self.patchpanel_port_map ))
-            #
-            # LOG.info("patch_vlans_available: " + str(CONF.ngs_coordination.patch_vlans))
-            # [patch_vlan_low,patch_vlan_high] = CONF.ngs_coordination.patch_vlans.split(':')
-            # for vlan in range(int(patch_vlan_low),int(patch_vlan_high)+1):
-            #     self.patch_vlans_available.append(vlan)
-            # LOG.debug('Patch VLANs: ' + str(self.patch_vlans_available))
         except Exception as e:
             import traceback
             LOG.info("patchpanel_switch undefined" + str(traceback.format_exc()))
@@ -693,19 +682,54 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         return self.stitching_shadow_network
 
-    def __get_available_patch_vlan(self):
-        import threading
-        self.__get_patchpanel_switch()
-        patch_vlan = self.patch_vlans_available.pop(0)
+    def __init_patch_vlans(self):
+        admin_context = lib_context.get_admin_context()
 
-        thread_id = threading.current_thread().name
-        LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX__get_available_patch_vlan, returning patch_vlan: " + str(patch_vlan) + ", thread_id: " + str(thread_id))
+        # Create the list of available patch panel VLANs from the config file
+        LOG.info("Initiating patch_vlans:  patch vlans: " + str(CONF.ngs_coordination.patch_vlans))
+        self.patch_vlans_available = []
+        [patch_vlan_low, patch_vlan_high] = CONF.ngs_coordination.patch_vlans.split(':')
+        for vlan in range(int(patch_vlan_low), int(patch_vlan_high) + 1):
+            self.patch_vlans_available.append(vlan)
+
+        for port in port_obj.Port.get_objects(admin_context, network_id=self.stitching_shadow_network['id']):
+        #for port in port_obj.Port.get_objects(admin_context):
+            try:
+                #if self.stitching_shadow_network != None and port['network_id'] != \
+                #        self.stitching_shadow_network['id']:
+                #    LOG.debug("Skipping non-shadow network port")
+                #    continue
+
+                LOG.debug("Stitching port: " + str(port))
+
+                port_binding_profile = port['bindings'][0]['profile']
+
+                LOG.debug("\n Stitchport vlan: " + str(port_binding_profile['stitch_vlan']) + "\n")
+
+                if 'patch_vlan' in port:
+                    patch_vlan = port['patch_vlan']
+                    self.patch_vlans_available.remove(patch_vlan)
+
+            except Exception as e:
+                LOG.debug("Exception initiating patch_vlan: " + str(e) + ", " + str(
+                    traceback.format_exc()) + ", patch_vlan: " + str(patch_vlan))
+                continue
+
+
+
+    def __release_patch_vlan(self, vlan=None):
+        LOG.info("Releasing patch vlan " + str(vlan))
+        if vlan:
+            self.patch_vlans_available.append()
+        else:
+            LOG.warning("Cannot release patch vlan: " + str(vlan))
+
+    def __allocate_patch_vlan(self):
+        #self.__get_patchpanel_switch()
+        patch_vlan = self.patch_vlans_available.pop(0)
+        LOG.info("Allocated patch vlan " + str(patch_vlan))
 
         return patch_vlan
-
-        #def __return_available_patch_vlan(self, patch_vlan):
-    #    self.__get_patchpanel_switch()
-    #    self.patch_vlans_available.append(patch_vlan)
 
     def __get_patchpanel_switch(self):
         admin_context = lib_context.get_admin_context()
@@ -729,26 +753,23 @@ class GenericSwitchDriver(api.MechanismDriver):
                 self.patchpanel_port_map[port_name] = port_id
             LOG.info("port_map built: " + str(self.patchpanel_port_map ))
 
-            # Create the list of available patch panel VLANs from the config file
-            LOG.info("patch_vlans_available: " + str(CONF.ngs_coordination.patch_vlans))
-            self.patch_vlans_available = []
-            [patch_vlan_low,patch_vlan_high] = CONF.ngs_coordination.patch_vlans.split(':')
-            for vlan in range(int(patch_vlan_low),int(patch_vlan_high)+1):
-                self.patch_vlans_available.append(vlan)
+
+            self.__init_patch_vlans()
+
 
             # Remove the allocated VLANs
-            admin_context = lib_context.get_admin_context()
-            LOG.debug("admin_context, " + str(admin_context))
+            #admin_context = lib_context.get_admin_context()
+            #LOG.debug("admin_context, " + str(admin_context))
 
-            LOG.debug("Ports, ")
-            for port in port_obj.Port.get_objects(admin_context, network_id=self.stitching_shadow_network['id']):
-                LOG.debug("Port: " + str(port))
-                try:
-                    patch_vlan = port['bindings'][0]['profile']['vlan']
-                    LOG.debug('Removing patch vlan: ' + str(patch_vlan))
-                    self.patch_vlans_available.remove(patch_vlan)
-                except:
-                    LOG.debug('No patch VLAN')
+            #LOG.debug("Ports, ")
+            #for port in port_obj.Port.get_objects(admin_context, network_id=self.stitching_shadow_network['id']):
+            #    LOG.debug("Port: " + str(port))
+            #    try:
+            #        patch_vlan = port['bindings'][0]['profile']['vlan']
+            #        LOG.debug('Removing patch vlan: ' + str(patch_vlan))
+            #        self.patch_vlans_available.remove(patch_vlan)
+            #    except:
+            #        LOG.debug('No patch VLAN')
 
             LOG.debug('Patch VLANs: ' + str(self.patch_vlans_available))
         except Exception as e:
@@ -810,7 +831,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 port1_vlan = stichport_vlan
                 port2_name = self.patchpanel_port_map[physnet]
                 port2_vlan = segmentation_id
-                patch_vlan = self.__get_available_patch_vlan()
+                patch_vlan = self.__allocate_patch_vlan()
 
                 LOG.info('Adding patch: ' + str(self.patchpanel_switch) +
                          ', patch_vlan: ' + str(patch_vlan) +
@@ -826,20 +847,20 @@ class GenericSwitchDriver(api.MechanismDriver):
                 for k, v in shadow_port_binding_profile.items():
                     new_shadow_binding_profile[k] = v
 
-                new_shadow_binding_profile['patch_id'] = patch_vlan
+                new_shadow_binding_profile['patch_vlan'] = patch_vlan
                 new_shadow_binding_profile['user_port_id'] = port['id']
                 shadow_port_binding.profile = new_shadow_binding_profile
                 shadow_port_binding.update()
 
                 # Update user port binding profile
-                #user_port_binding = port['binding:profile']
+                #user_port_binding = port['bindings'][0]
                 #new_user_port_binding_profile = {}
                 #for k, v in user_port_binding.items():
                 #    new_user_port_binding_profile[k] = v
 
                 #new_user_port_binding_profile['stitchport'] = new_shadow_binding_profile['stitchport']
                 #new_user_port_binding_profile['stitch_vlan'] = new_shadow_binding_profile['stitch_vlan']
-                #user_port_binding.port['binding:profile'] = new_user_port_binding_profile
+                #user_port_binding.profile = new_user_port_binding_profile
                 #user_port_binding.update()
 
                 self.__get_patchpanel_switch().add_patch(patch_id=patch_vlan,
@@ -1019,7 +1040,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 port2_vlan = segmentation_id
 
                 #patch = self.patch_vlans_allocated.pop(port['id']) #TODO: roll back on failure. This might leak patch vlans
-                patch_vlan = shadow_port_binding_profile['patch_id']
+                patch_vlan = shadow_port_binding_profile['patch_vlan']
                 LOG.debug('Deleting patch: ' + str(self.patchpanel_switch) +
                           ', port1_name: ' + str(port1_name) +
                           ', port1_vlan: ' + str(port1_vlan) +
@@ -1034,7 +1055,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 new_binding_profile = {}
                 for k, v in shadow_port_binding_profile.items():
                     new_binding_profile[k] = v
-                new_binding_profile.pop('patch_id')
+                new_binding_profile.pop('patch_vlan')
                 new_binding_profile.pop('user_port_id')
                 shadow_port_binding.profile = new_binding_profile
                 shadow_port_binding.update()
