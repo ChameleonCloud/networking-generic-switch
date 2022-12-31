@@ -691,7 +691,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         self.patch_vlans_available = []
         [patch_vlan_low, patch_vlan_high] = CONF.ngs_coordination.patch_vlans.split(':')
         for vlan in range(int(patch_vlan_low), int(patch_vlan_high) + 1):
-            self.patch_vlans_available.append(vlan)
+            self.patch_vlans_available.append(str(vlan))
 
         for port in port_obj.Port.get_objects(admin_context, network_id=self.stitching_shadow_network['id']):
         #for port in port_obj.Port.get_objects(admin_context):
@@ -709,7 +709,7 @@ class GenericSwitchDriver(api.MechanismDriver):
 
                 if 'patch_vlan' in port_binding_profile:
                     patch_vlan = port_binding_profile['patch_vlan']
-                    self.patch_vlans_available.remove(patch_vlan)
+                    self.patch_vlans_available.remove(str(patch_vlan))
 
             except Exception as e:
                 LOG.debug("Exception initiating patch_vlan: " + str(e) + ", " + str(
