@@ -72,6 +72,7 @@ class GenericSwitchDriver(api.MechanismDriver):
             LOG.info("patchpanel_switch: " + str(CONF.ngs_coordination.patchpanel_switch))
             self.patchpanel_switch_name = CONF.ngs_coordination.patchpanel_switch
 
+            self._get_shadow_network()
             self.__get_patchpanel_switch()
 
             LOG.info("port_map: " + str(CONF.ngs_coordination.patchpanel_port_map))
