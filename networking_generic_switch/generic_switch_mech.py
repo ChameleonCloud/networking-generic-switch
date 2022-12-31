@@ -732,6 +732,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         return patch_vlan
 
     def __get_patchpanel_switch(self):
+        LOG.info("Getting patchpanel")
         admin_context = lib_context.get_admin_context()
         LOG.debug("admin_context, " + str(admin_context))
 
