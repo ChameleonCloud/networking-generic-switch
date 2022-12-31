@@ -1076,7 +1076,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 shadow_port_binding.profile = new_binding_profile
                 shadow_port_binding.update()
 
-                self.__release_patch_vlan(self, vlan=patch_vlan):
+                self.__release_patch_vlan(self, vlan=patch_vlan)
 
             except Exception as e:
                 import traceback
