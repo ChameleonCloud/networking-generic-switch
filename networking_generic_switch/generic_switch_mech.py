@@ -714,7 +714,8 @@ class GenericSwitchDriver(api.MechanismDriver):
             except Exception as e:
                 LOG.debug("Exception initiating patch_vlan: " + str(e) + ", " + str(
                     traceback.format_exc()) + ", patch_vlan: " + str(patch_vlan))
-                continue
+                raise e
+                #continue
 
 
 
