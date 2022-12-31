@@ -985,6 +985,19 @@ class GenericSwitchDriver(api.MechanismDriver):
         provider = network['provider:physical_network']
         description = network['description']
 
+        port = context.current
+        shadow_port = self.__get_shadow_port(port)
+
+        LOG.debug("shadow_port: " + str(shadow_port))
+        if shadow_port and shadow_port.bindings:
+            LOG.debug("bindings: " + str(shadow_port.bindings))
+            LOG.debug("profile: \n" + pprint.pformat(shadow_port.bindings[0]['profile']) + "/n")
+            for k, v in shadow_port.bindings[0]['profile'].items():
+                LOG.debug("" + str(k) + ", " + str(v))
+        else:
+            LOG.debug("bindings: NO binding profile")
+
+
         # Add authorization of SDN network creation (i.e. corsa vfcs).
         # Reject early if not authorization.
         if provider == 'user':
@@ -1063,6 +1076,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 shadow_port_binding.profile = new_binding_profile
                 shadow_port_binding.update()
 
+                self.__release_patch_vlan(self, vlan=patch_vlan):
 
             except Exception as e:
                 import traceback
