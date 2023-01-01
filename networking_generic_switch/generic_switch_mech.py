@@ -58,6 +58,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         self.haswellNodeRange=(201,299)
 
         self.stitching_shadow_network_name = None
+        self.stitching_shadow_network_id = None
         self.stitching_shadow_network = None
         self.patchpanel_switch = None
         self.patchpanel_port_map = {}
