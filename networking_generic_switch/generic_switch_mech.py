@@ -788,25 +788,6 @@ class GenericSwitchDriver(api.MechanismDriver):
                 LOG.info("port_map adding: " + str(port_name) + ", " + str(port_id))
                 self.patchpanel_port_map[port_name] = port_id
             LOG.info("port_map built: " + str(self.patchpanel_port_map ))
-
-
-            #self.__init_patch_vlans()
-
-
-            # Remove the allocated VLANs
-            #admin_context = lib_context.get_admin_context()
-            #LOG.debug("admin_context, " + str(admin_context))
-
-            #LOG.debug("Ports, ")
-            #for port in port_obj.Port.get_objects(admin_context, network_id=self.stitching_shadow_network['id']):
-            #    LOG.debug("Port: " + str(port))
-            #    try:
-            #        patch_vlan = port['bindings'][0]['profile']['vlan']
-            #        LOG.debug('Removing patch vlan: ' + str(patch_vlan))
-            #        self.patch_vlans_available.remove(patch_vlan)
-            #    except:
-            #        LOG.debug('No patch VLAN')
-
             LOG.debug('Patch VLANs: ' + str(self.patch_vlans_available))
         except Exception as e:
             import traceback
@@ -899,7 +880,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 #user_port_binding.profile = new_user_port_binding_profile
                 #user_port_binding.update()
 
-                self.__get_patchpanel_switch().add_patch(patch_id=patch_vlan,
+                self.patchpanel_switch.add_patch(patch_id=patch_vlan,
                                  port1_name=port1_name,
                                  port1_vlan=port1_vlan,
                                  port2_name=port2_name,
@@ -1097,7 +1078,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                           ', port2_vlan: ' + str(port2_vlan)
                           )
 
-                self.__get_patchpanel_switch().remove_patch(patch_id=patch_vlan)
+                self.patchpanel_switch.remove_patch(patch_id=patch_vlan)
 
                 # Upade shadow port binding info
                 shadow_port_binding = shadow_port['bindings'][0]
