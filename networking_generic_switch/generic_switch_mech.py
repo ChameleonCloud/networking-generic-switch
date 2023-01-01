@@ -709,6 +709,7 @@ class GenericSwitchDriver(api.MechanismDriver):
 
                 if 'patch_vlan' in port_binding_profile:
                     patch_vlan = port_binding_profile['patch_vlan']
+                    LOG.debug("Patch vlan: " + str(patch_vlan))
                     self.patch_vlans_available.remove(str(patch_vlan))
 
             except Exception as e:
