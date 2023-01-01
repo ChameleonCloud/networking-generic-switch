@@ -75,6 +75,7 @@ class GenericSwitchDriver(api.MechanismDriver):
 
             self.__get_shadow_network()
             self.__get_patchpanel_switch()
+            self.__init_patch_vlans()
 
             LOG.info("port_map: " + str(CONF.ngs_coordination.patchpanel_port_map))
             self.patchpanel_port_map = {}
@@ -733,7 +734,14 @@ class GenericSwitchDriver(api.MechanismDriver):
                 if 'patch_vlan' in port_binding_profile:
                     patch_vlan = port_binding_profile['patch_vlan']
                     LOG.debug("Patch vlan: " + str(patch_vlan))
-                    self.patch_vlans_available.remove(str(patch_vlan))
+                    try:
+                        self.patch_vlans_available.remove(str(patch_vlan))
+                    except Exception as e:
+                        LOG.warning("Failed to remove patch vlan from init list. " +
+                                    "Likely reason is duplicate patch vlan assignment. " +
+                                    "patch_vlan: " + str(patch_vlan) + "\n" +
+                                    "Exception: " + str(traceback.format_exc()))
+
 
             except Exception as e:
                 LOG.debug("Exception initiating patch_vlan: " + str(e) + ", " + str(
@@ -781,7 +789,7 @@ class GenericSwitchDriver(api.MechanismDriver):
             LOG.info("port_map built: " + str(self.patchpanel_port_map ))
 
 
-            self.__init_patch_vlans()
+            #self.__init_patch_vlans()
 
 
             # Remove the allocated VLANs
