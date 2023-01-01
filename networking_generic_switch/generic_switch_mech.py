@@ -683,6 +683,15 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         return self.stitching_shadow_network
 
+
+    def __get_shadow_network_id(self):
+        admin_context = lib_context.get_admin_context()
+
+        for network in network_obj.Network.get_objects(admin_context):
+            if network['name'] == self.stitching_shadow_network_name:
+                return network
+        return None
+
     def __init_patch_vlans(self):
         admin_context = lib_context.get_admin_context()
 
@@ -693,8 +702,13 @@ class GenericSwitchDriver(api.MechanismDriver):
         for vlan in range(int(patch_vlan_low), int(patch_vlan_high) + 1):
             self.patch_vlans_available.append(str(vlan))
 
+        if not self.stitching_shadow_network_id:
+            self.stitching_shadow_network_id == self.__get_shadow_network_id()
+
+        LOG.debug("stitching_shadow_network_id: " + str(self.stitching_shadow_network_id))
+
         #for port in port_obj.Port.get_objects(admin_context, network_id=self.stitching_shadow_network['id']):
-        for port in port_obj.Port.get_objects(admin_context, network_name=self.stitching_shadow_network_name):
+        for port in port_obj.Port.get_objects(admin_context, network_id=self.stitching_shadow_network_id:
         #for port in port_obj.Port.get_objects(admin_context):
             try:
                 #if self.stitching_shadow_network != None and port['network_id'] != \
