@@ -686,11 +686,17 @@ class GenericSwitchDriver(api.MechanismDriver):
 
 
     def __get_shadow_network_id(self):
+
+        LOG.debug("__get_shadow_network_id: self.stitching_shadow_network_name: " + str(self.stitching_shadow_network_name))
         admin_context = lib_context.get_admin_context()
 
         for network in network_obj.Network.get_objects(admin_context):
+            LOG.debug("network: " + str(network))
             if network['name'] == self.stitching_shadow_network_name:
+                LOG.debug("FOUND: stitching_shadow_network: " + str(network))
                 return network
+
+        LOG.debug("NOT FOUND: stitching_shadow_network: returning None")
         return None
 
     def __init_patch_vlans(self):
