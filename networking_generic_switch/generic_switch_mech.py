@@ -693,7 +693,8 @@ class GenericSwitchDriver(api.MechanismDriver):
         for vlan in range(int(patch_vlan_low), int(patch_vlan_high) + 1):
             self.patch_vlans_available.append(str(vlan))
 
-        for port in port_obj.Port.get_objects(admin_context, network_id=self.stitching_shadow_network['id']):
+        #for port in port_obj.Port.get_objects(admin_context, network_id=self.stitching_shadow_network['id']):
+        for port in port_obj.Port.get_objects(admin_context, network_name=self.stitching_shadow_network_name):
         #for port in port_obj.Port.get_objects(admin_context):
             try:
                 #if self.stitching_shadow_network != None and port['network_id'] != \
