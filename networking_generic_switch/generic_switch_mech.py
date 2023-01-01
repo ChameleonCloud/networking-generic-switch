@@ -819,6 +819,8 @@ class GenericSwitchDriver(api.MechanismDriver):
         else:
             LOG.debug("bindings: NO binding profile")
 
+        self.__get_patchpanel_switch()
+
 
 
         network = context.network.current
@@ -1041,6 +1043,8 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         port = context.current
         shadow_port = self.__get_shadow_port(port)
+
+        self.__get_patchpanel_switch()
 
 
         network = context.network.current
