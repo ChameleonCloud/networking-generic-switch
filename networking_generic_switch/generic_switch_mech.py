@@ -708,7 +708,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         LOG.debug("stitching_shadow_network_id: " + str(self.stitching_shadow_network_id))
 
         #for port in port_obj.Port.get_objects(admin_context, network_id=self.stitching_shadow_network['id']):
-        for port in port_obj.Port.get_objects(admin_context, network_id=self.stitching_shadow_network_id:
+        for port in port_obj.Port.get_objects(admin_context, network_id=self.stitching_shadow_network_id):
         #for port in port_obj.Port.get_objects(admin_context):
             try:
                 #if self.stitching_shadow_network != None and port['network_id'] != \
