@@ -746,7 +746,7 @@ class GenericSwitchDriver(api.MechanismDriver):
     def __release_patch_vlan(self, vlan=None):
         LOG.info("Releasing patch vlan " + str(vlan))
         if vlan:
-            self.patch_vlans_available.append()
+            self.patch_vlans_available.append(str(vlan))
         else:
             LOG.warning("Cannot release patch vlan: " + str(vlan))
 
