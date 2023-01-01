@@ -765,6 +765,8 @@ class GenericSwitchDriver(api.MechanismDriver):
             if patch_vlan not in avoid_vlans:
                 self.patch_vlans_available.remove(patch_vlan)
                 break
+            else:
+                LOG.info("Allocated patch vlan conflict... retry:  " + str(patch_vlan))
 
         LOG.info("Allocated patch vlan " + str(patch_vlan))
 
