@@ -758,10 +758,14 @@ class GenericSwitchDriver(api.MechanismDriver):
         else:
             LOG.warning("Cannot release patch vlan: " + str(vlan))
 
-    def __allocate_patch_vlan(self):
+    def __allocate_patch_vlan(self, avoid_vlans=[]):
         self.__init_patch_vlans()
-        #self.__get_patchpanel_switch()
-        patch_vlan = self.patch_vlans_available.pop(0)
+
+        for patch_vlan in self.patch_vlans_available:
+            if patch_vlan not in avoid_vlans:
+                self.patch_vlans_available.remove(patch_vlan)
+                break
+
         LOG.info("Allocated patch vlan " + str(patch_vlan))
 
         return patch_vlan
@@ -850,7 +854,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 port1_vlan = stichport_vlan
                 port2_name = self.patchpanel_port_map[physnet]
                 port2_vlan = segmentation_id
-                patch_vlan = self.__allocate_patch_vlan()
+                patch_vlan = self.__allocate_patch_vlan(avoid_vlans=[str(port1_vlan),str(port2_vlan)])
 
                 LOG.info('Adding patch: ' + str(self.patchpanel_switch) + "\n" +
                          ', patch_vlan: ' + str(patch_vlan) + "\n" +
