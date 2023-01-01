@@ -694,7 +694,8 @@ class GenericSwitchDriver(api.MechanismDriver):
             LOG.debug("network: " + str(network))
             if network['name'] == self.stitching_shadow_network_name:
                 LOG.debug("FOUND: stitching_shadow_network: " + str(network))
-                return network
+                self.stitching_shadow_network_id = network['id']
+                return self.stitching_shadow_network_id
 
         LOG.debug("NOT FOUND: stitching_shadow_network: returning None")
         return None
