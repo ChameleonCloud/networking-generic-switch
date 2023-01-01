@@ -75,7 +75,7 @@ class GenericSwitchDriver(api.MechanismDriver):
 
             self.__get_shadow_network()
             self.__get_patchpanel_switch()
-            self.__init_patch_vlans()
+            #self.__init_patch_vlans()
 
             LOG.info("port_map: " + str(CONF.ngs_coordination.patchpanel_port_map))
             self.patchpanel_port_map = {}
@@ -759,6 +759,7 @@ class GenericSwitchDriver(api.MechanismDriver):
             LOG.warning("Cannot release patch vlan: " + str(vlan))
 
     def __allocate_patch_vlan(self):
+        self.__init_patch_vlans()
         #self.__get_patchpanel_switch()
         patch_vlan = self.patch_vlans_available.pop(0)
         LOG.info("Allocated patch vlan " + str(patch_vlan))
@@ -868,12 +869,12 @@ class GenericSwitchDriver(api.MechanismDriver):
                 port2_vlan = segmentation_id
                 patch_vlan = self.__allocate_patch_vlan()
 
-                LOG.info('Adding patch: ' + str(self.patchpanel_switch) +
-                         ', patch_vlan: ' + str(patch_vlan) +
-                         ', port1_name: ' + str(port1_name) +
-                         ', port1_vlan: ' + str(port1_vlan) +
-                         ', port2_name: ' + str(port2_name) +
-                         ', port2_vlan: ' + str(port2_vlan)
+                LOG.info('Adding patch: ' + str(self.patchpanel_switch) + "\n" +
+                         ', patch_vlan: ' + str(patch_vlan) + "\n" +
+                         ', port1_name: ' + str(port1_name) + "\n" +
+                         ', port1_vlan: ' + str(port1_vlan) + "\n" +
+                         ', port2_name: ' + str(port2_name) + "\n" +
+                         ', port2_vlan: ' + str(port2_vlan) + "\n"
                          )
 
                 # Update shadow port binding profile
