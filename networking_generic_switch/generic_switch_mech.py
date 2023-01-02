@@ -66,7 +66,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         #TEST
         LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXX PRINTIGN SWITCHES  XXXXXXXXXXXXXX")
 
-        for switch_name, switch in self.switches.items():
+        for switch_name, switch in gsw_devices.items():
             LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXX SWITCH " + str(switch_name) + " XXXXXXXXXXXXXX")
             LOG.debug(str(switch))
 
