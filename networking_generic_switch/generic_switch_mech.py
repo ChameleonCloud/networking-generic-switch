@@ -805,7 +805,10 @@ class GenericSwitchDriver(api.MechanismDriver):
         avoid_vlans.extend(self.patch_vlans.keys())
         avoid_vlans = [str(i) for i in avoid_vlans]
 
-        patch_vlan = set(vlan_list).difference(avoid_vlans).pop()
+        final_vlan_list = set(vlan_list).difference(avoid_vlans)
+        patch_vlan = final_vlan_list.pop()
+
+        LOG.debug("final_vlan_list: " + str(final_vlan_list) + ", patch_vlan: " + str(patch_vlan) )
 
         self.patch_vlans[str(patch_vlan)] = {'name': 'p' + str(patch_vlan),
                                              'ports': [port_id]}
