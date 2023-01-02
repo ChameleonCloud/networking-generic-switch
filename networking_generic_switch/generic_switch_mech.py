@@ -728,21 +728,20 @@ class GenericSwitchDriver(api.MechanismDriver):
         LOG.debug("stitching_shadow_network_id: " + str(self.stitching_shadow_network_id))
 
         for port in port_obj.Port.get_objects(admin_context):
-            try:
-                LOG.debug("port: " + str(port))
+            LOG.debug("port: " + str(port))
 
-                port_binding_profile = port['bindings'][0]['profile']
+            port_binding_profile = port['bindings'][0]['profile']
 
-                LOG.debug("\n Stitchport vlan: " + str(port_binding_profile['stitch_vlan']) + "\n")
+            LOG.debug("\n Stitchport vlan: " + str(port_binding_profile['stitch_vlan']) + "\n")
 
-                if 'patch_vlan' in port_binding_profile:
-                    patch_vlan = port_binding_profile['patch_vlan']
-                    LOG.debug("Patch vlan: " + str(patch_vlan))
-                    if 'patch_vlan' in self.patch_vlans:
-                        self.patch_vlans[str(patch_vlan)]['ports'].append(port['id'])
-                    else:
-                        self.patch_vlans[str(patch_vlan)] = { 'name': 'p'+str(patch_vlan),
-                                                              'ports': [ port['id'] ] }
+            if 'patch_vlan' in port_binding_profile:
+                patch_vlan = port_binding_profile['patch_vlan']
+                LOG.debug("Patch vlan: " + str(patch_vlan))
+                if 'patch_vlan' in self.patch_vlans:
+                    self.patch_vlans[str(patch_vlan)]['ports'].append(port['id'])
+                else:
+                    self.patch_vlans[str(patch_vlan)] = { 'name': 'p'+str(patch_vlan),
+                                                          'ports': [ port['id'] ] }
 
 
         LOG.debug("patch_vlans: \n" + pprint.pformat(self.patch_vlans, indent=4) + "\n" )
