@@ -718,10 +718,8 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         # Create the list of available patch panel VLANs from the config file
         LOG.info("Initiating patch_vlans:  patch vlans: " + str(CONF.ngs_coordination.patch_vlans))
-        self.patch_vlans_available = []
+        self.patch_vlans = {}
         [self.patch_vlan_low, self.patch_vlan_high] = CONF.ngs_coordination.patch_vlans.split(':')
-        for vlan in range(int(self.patch_vlan_low), int(self.patch_vlan_high) + 1):
-            self.patch_vlans_available.append(str(vlan))
 
         # Remove vlans allocated to networks
         if not self.stitching_shadow_network_id:
