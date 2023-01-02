@@ -798,7 +798,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         self.__init_patch_vlans()
 
         # Create a list of all possible patch vlans as strings
-        vlan_list = list(range(self.patch_vlan_low, self.patch_vlan_high))
+        vlan_list = list(range(int(self.patch_vlan_low), int(self.patch_vlan_high)))
         vlan_list = [str(i) for i in vlan_list]
 
         # Remove all allocated vlans and avoid_vlans passed in.
