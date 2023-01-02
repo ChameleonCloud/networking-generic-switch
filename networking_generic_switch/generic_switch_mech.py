@@ -920,7 +920,7 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         self.__get_patchpanel_switch()
 
-
+        port.update({'binding:profile': {'stuff2': 'XYZ'}})
 
         network = context.network.current
         provider_type = network['provider:network_type']
@@ -988,7 +988,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 #port['binding:profile'] = new_user_port_binding_profile
                 port['binding:profile'].update()
 
-                port.update({'binding:profile': {'stuff2': 'XYZå'}})
+                port.update({'binding:profile': {'stuff2': 'XYZ'}})
 
                 #port.update({'binding:profile': new_user_port_binding_profile})
 
