@@ -551,6 +551,15 @@ class GenericSwitchDriver(api.MechanismDriver):
         provider = network['provider:physical_network']
         description = network['description']
 
+
+        port = context.current
+        port['binding:profile']['shadow_port_id'] = 'my_shadow_port_id'
+        port['binding:profile']['type'] = 'my_stitchport'
+        port['binding:profile']['stitchport'] = 'my_stitchport'
+        port['binding:profile']['patch_vlan'] = 'my_vlan'
+
+        port['binding:profile'].update()
+
         #port = context.current
         # admin_context = lib_context.get_admin_context()
         # port_test = port_obj.Port.get_objects(admin_context, name=port['name'])
