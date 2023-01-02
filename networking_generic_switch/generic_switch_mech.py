@@ -740,21 +740,11 @@ class GenericSwitchDriver(api.MechanismDriver):
                 if 'patch_vlan' in port_binding_profile:
                     patch_vlan = port_binding_profile['patch_vlan']
                     LOG.debug("Patch vlan: " + str(patch_vlan))
-                    try:
-                        if str(patch_vlan) in self.patch_vlans:
-                            self.patch_vlans[str(patch_vlan)]['ports'].append(port['id'])
-                        else:
-                            self.patch_vlans[str(patch_vlan)] = { 'name': 'p'+str(patch_vlan),
-                                                                  'ports': [ port['id'] ] }
-                    except Exception as e:
-                        LOG.warning("Failed to remove patch vlan from init list. " +
-                                    "Likely reason is duplicate patch vlan assignment. " +
-                                    "patch_vlan: " + str(patch_vlan) + "\n" +
-                                    "Exception: " + str(traceback.format_exc()))
-            except Exception as e:
-                LOG.debug("Exception initiating patch_vlan: " + str(e) + ", " + str(
-                    traceback.format_exc()) + ", patch_vlan: " + str(patch_vlan))
-                raise e
+                    if 'patch_vlan' in self.patch_vlans:
+                        self.patch_vlans[str(patch_vlan)]['ports'].append(port['id'])
+                    else:
+                        self.patch_vlans[str(patch_vlan)] = { 'name': 'p'+str(patch_vlan),
+                                                              'ports': [ port['id'] ] }
 
 
         LOG.debug("patch_vlans: \n" + pprint.pformat(self.patch_vlans, indent=4) + "\n" )
