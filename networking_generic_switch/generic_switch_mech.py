@@ -728,7 +728,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         LOG.debug("stitching_shadow_network_id: " + str(self.stitching_shadow_network_id))
 
         for port in port_obj.Port.get_objects(admin_context):
-            LOG.debug("port: " + str(port))
+            LOG.debug("port: {0}".format(str(port)))
 
             port_binding_profile = port['bindings'][0]['profile']
 
