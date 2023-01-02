@@ -16,6 +16,10 @@ from neutron.db import provisioning_blocks
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import resources
 from neutron_lib.plugins.ml2 import api
+
+#from neutron.db import api as db_api
+from neutron.db.models import ml2_port_bindings
+
 from oslo_log import log as logging
 from oslo_config import cfg
 import socket
@@ -957,21 +961,28 @@ class GenericSwitchDriver(api.MechanismDriver):
                 shadow_port_binding.update()
 
                 # Update user port binding profile
-                #user_port_binding = port['binding:profile']
-                #new_user_port_binding_profile = {}
-                #for k, v in port['binding:profile'].items():
-                #    new_user_port_binding_profile[k] = v
+                user_port_binding = port['binding:profile']
+                new_user_port_binding_profile = {}
+                for k, v in port['binding:profile'].items():
+                    new_user_port_binding_profile[k] = v
 
                 #port['binding:profile']['shadow_port_id'] = shadow_port['id']
                 #port['binding:profile']['type'] = 'stitchport'
                 #port['binding:profile']['stitchport'] = new_shadow_binding_profile['stitchport']
-                port['binding:profile']['patch_vlan'] = str(patch_vlan)
+                ####port['binding:profile']['patch_vlan'] = str(patch_vlan)
+                new_user_port_binding_profile['patch_vlan'] = str(patch_vlan)
+
                 #port['binding:profile']['stitichport_vlan'] = str(stichport_vlan)
 
                 #port['binding:profile']['patch_vlan'] = str(patch_vlan)
                 #port['binding:profile'] = new_user_port_binding_profile
-                port['binding:profile'].update()
+                ###port['binding:profile'].update()
                 #port.update({'binding:profile': new_user_port_binding_profile})
+
+                context.session.query(ml2_port_bindings).filter_by(port_id=context.current['id']).update(
+                    {"binding:profile": new_user_port_binding_profile}
+                )
+
 
                 # admin_context = lib_context.get_admin_context()
                 # port_test = port_obj.Port.get_objects(admin_context, id=port['id'])[0]
