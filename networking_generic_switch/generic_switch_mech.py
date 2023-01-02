@@ -965,29 +965,29 @@ class GenericSwitchDriver(api.MechanismDriver):
                 #port['binding:profile']['shadow_port_id'] = shadow_port['id']
                 #port['binding:profile']['type'] = 'stitchport'
                 #port['binding:profile']['stitchport'] = new_shadow_binding_profile['stitchport']
-                #####port['binding:profile']['patch_vlan'] = str(patch_vlan)
+                port['binding:profile']['patch_vlan'] = str(patch_vlan)
                 #port['binding:profile']['stitichport_vlan'] = str(stichport_vlan)
 
                 #port['binding:profile']['patch_vlan'] = str(patch_vlan)
                 #port['binding:profile'] = new_user_port_binding_profile
-                #####port.update()
+                port['binding:profile'].update()
                 #port.update({'binding:profile': new_user_port_binding_profile})
 
-                admin_context = lib_context.get_admin_context()
-                port_test = port_obj.Port.get_objects(admin_context, id=port['id'])[0]
-
-                # Update shadow port binding profile
-                port_binding = port_test['bindings'][0]
-                port_binding_profile = port_binding['profile']
-
-                new_binding_profile = {}
-                for k, v in port_binding_profile.items():
-                    new_binding_profile[k] = v
-
-                new_binding_profile['patch_vlan'] = '1234'
-                new_binding_profile['the_other_thing'] = 'ABCD'
-                port_binding.profile = new_binding_profile
-                port_binding.update()
+                # admin_context = lib_context.get_admin_context()
+                # port_test = port_obj.Port.get_objects(admin_context, id=port['id'])[0]
+                #
+                # # Update shadow port binding profile
+                # port_binding = port_test['bindings'][0]
+                # port_binding_profile = port_binding['profile']
+                #
+                # new_binding_profile = {}
+                # for k, v in port_binding_profile.items():
+                #     new_binding_profile[k] = v
+                #
+                # new_binding_profile['patch_vlan'] = '1234'
+                # new_binding_profile['the_other_thing'] = 'ABCD'
+                # port_binding.profile = new_binding_profile
+                # port_binding.update()
 
 
                 self.patchpanel_switch.add_patch(patch_id=patch_vlan,
