@@ -711,20 +711,14 @@ class GenericSwitchDriver(api.MechanismDriver):
         for vlan in range(int(patch_vlan_low), int(patch_vlan_high) + 1):
             self.patch_vlans_available.append(str(vlan))
 
+        # Remove vlans allocated to networks
         if not self.stitching_shadow_network_id:
             self.stitching_shadow_network_id == self.__get_shadow_network_id()
 
         LOG.debug("stitching_shadow_network_id: " + str(self.stitching_shadow_network_id))
 
-        #for port in port_obj.Port.get_objects(admin_context, network_id=self.stitching_shadow_network['id']):
         for port in port_obj.Port.get_objects(admin_context, network_id=self.stitching_shadow_network_id):
-        #for port in port_obj.Port.get_objects(admin_context):
             try:
-                #if self.stitching_shadow_network != None and port['network_id'] != \
-                #        self.stitching_shadow_network['id']:
-                #    LOG.debug("Skipping non-shadow network port")
-                #    continue
-
                 LOG.debug("Stitching port: " + str(port))
 
                 port_binding_profile = port['bindings'][0]['profile']
@@ -741,15 +735,10 @@ class GenericSwitchDriver(api.MechanismDriver):
                                     "Likely reason is duplicate patch vlan assignment. " +
                                     "patch_vlan: " + str(patch_vlan) + "\n" +
                                     "Exception: " + str(traceback.format_exc()))
-
-
             except Exception as e:
                 LOG.debug("Exception initiating patch_vlan: " + str(e) + ", " + str(
                     traceback.format_exc()) + ", patch_vlan: " + str(patch_vlan))
                 raise e
-                #continue
-
-
 
     def __release_patch_vlan(self, vlan=None):
         LOG.info("Releasing patch vlan " + str(vlan))
