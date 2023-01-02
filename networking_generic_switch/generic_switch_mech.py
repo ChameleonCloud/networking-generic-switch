@@ -32,7 +32,6 @@ from neutron.objects import ports as port_obj
 from neutron.objects import network as network_obj
 from neutron_lib import context as lib_context
 
-
 LOG = logging.getLogger(__name__)
 
 GENERIC_SWITCH_ENTITY = 'GENERICSWITCH'
@@ -63,6 +62,14 @@ class GenericSwitchDriver(api.MechanismDriver):
         self.patchpanel_switch = None
         self.patchpanel_port_map = {}
         self.patch_vlans_available = []
+
+        #TEST
+        for switch_name, switch in self.switches.items():
+            LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXX SWITCH " + str(switch_name) + " XXXXXXXXXXXXXX")
+            LOG.debug(str(switch))
+
+
+
         try:
             LOG.info("stitching_shadow_network: " + str(CONF.ngs_coordination.stitching_shadow_network))
             self.stitching_shadow_network_name = CONF.ngs_coordination.stitching_shadow_network
