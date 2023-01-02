@@ -550,6 +550,12 @@ class GenericSwitchDriver(api.MechanismDriver):
         provider = network['provider:physical_network']
         description = network['description']
 
+        port = context.current
+        port['binding:profile']['patch_vlan'] = '1234'
+        port['binding:profile']['the_other_thing'] = 'ABCD'
+
+        port.update()
+
         # Add authorization of SDN network creation (i.e. corsa vfcs).
         # Reject early if not authorization.
         if provider == 'user':
