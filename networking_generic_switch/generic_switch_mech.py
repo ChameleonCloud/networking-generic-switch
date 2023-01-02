@@ -551,10 +551,23 @@ class GenericSwitchDriver(api.MechanismDriver):
         description = network['description']
 
         port = context.current
-        port['binding:profile']['patch_vlan'] = '1234'
-        port['binding:profile']['the_other_thing'] = 'ABCD'
 
-        port.update()
+        admin_context = lib_context.get_admin_context()
+        port_test = port_obj.Port.get_objects(admin_context, port_id=port['id'])
+
+        # Update shadow port binding profile
+        port_binding = port['bindings'][0]
+        port_binding_profile = port_binding['profile']
+
+        new_binding_profile = {}
+        for k, v in port_binding_profile.items():
+            new_binding_profile[k] = v
+
+        new_binding_profile['patch_vlan'] = '1234'
+        new_binding_profile['the_other_thing'] = 'ABCD'
+        port_binding.profile = new_binding_profile
+        port_binding.update()
+
 
         # Add authorization of SDN network creation (i.e. corsa vfcs).
         # Reject early if not authorization.
