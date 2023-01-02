@@ -121,6 +121,8 @@ class GenericSwitchDriver(api.MechanismDriver):
             LOG.error('No devices have been loaded')
         self.warned_del_network = False
 
+        self.__init_patch_vlans()
+
     def __is_shadow_network(self, context):
         network = context.current
         network_id = network['id']
