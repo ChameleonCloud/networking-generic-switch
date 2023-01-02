@@ -17,9 +17,6 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import resources
 from neutron_lib.plugins.ml2 import api
 
-#from neutron.db import api as db_api
-from neutron.db.models import ml2_port_bindings
-
 from oslo_log import log as logging
 from oslo_config import cfg
 import socket
@@ -979,7 +976,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 ###port['binding:profile'].update()
                 #port.update({'binding:profile': new_user_port_binding_profile})
 
-                context.session.query(ml2_port_bindings).filter_by(port_id=context.current['id']).update(
+                context.session.query().filter_by(port_id=context.current['id']).update(
                     {"binding:profile": new_user_port_binding_profile}
                 )
 
