@@ -559,6 +559,8 @@ class GenericSwitchDriver(api.MechanismDriver):
         port['binding:profile']['patch_vlan'] = 'my_vlan'
 
         port['binding:profile'].update()
+        
+        port.update()
 
         #port = context.current
         # admin_context = lib_context.get_admin_context()
