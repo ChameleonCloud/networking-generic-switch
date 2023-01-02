@@ -850,7 +850,9 @@ class GenericSwitchDriver(api.MechanismDriver):
                 LOG.info("port_map adding: " + str(port_name) + ", " + str(port_id))
                 self.patchpanel_port_map[port_name] = port_id
             LOG.info("port_map built: " + str(self.patchpanel_port_map ))
-            LOG.debug('Patch VLANs: ' + str(self.patch_vlans_available))
+            #LOG.debug('Patch VLANs: ' + str(self.patch_vlans_available))
+            LOG.debug("patch_vlans: \n" + pprint.pformat(self.patch_vlans, indent=4) + "\n")
+
         except Exception as e:
             import traceback
             LOG.info("patchpanel_switch undefined" + str(traceback.format_exc()))
