@@ -64,6 +64,8 @@ class GenericSwitchDriver(api.MechanismDriver):
         self.patch_vlans_available = []
 
         #TEST
+        LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXX PRINTIGN SWITCHES  XXXXXXXXXXXXXX")
+
         for switch_name, switch in self.switches.items():
             LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXX SWITCH " + str(switch_name) + " XXXXXXXXXXXXXX")
             LOG.debug(str(switch))
