@@ -941,7 +941,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 # Update user port binding profile
                 #user_port_binding = port['binding:profile']
                 new_user_port_binding_profile = {}
-                for k, v in new_user_port_binding_profile.items():
+                for k, v in port['binding:profile'].items():
                     new_user_port_binding_profile[k] = v
 
                 #new_user_port_binding_profile['stitchport'] = new_shadow_binding_profile['stitchport']
