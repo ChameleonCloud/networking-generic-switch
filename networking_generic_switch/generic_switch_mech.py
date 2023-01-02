@@ -732,7 +732,7 @@ class GenericSwitchDriver(api.MechanismDriver):
 
             port_binding_profile = port['bindings'][0]['profile']
 
-            LOG.debug("\n Stitchport vlan: " + str(port_binding_profile['stitch_vlan']) + "\n")
+            #LOG.debug("\n Stitchport vlan: " + str(port_binding_profile['stitch_vlan']) + "\n")
 
             if 'patch_vlan' in port_binding_profile:
                 patch_vlan = port_binding_profile['patch_vlan']
