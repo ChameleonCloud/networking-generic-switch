@@ -978,7 +978,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 ###port['binding:profile'].update()
                 #port.update({'binding:profile': new_user_port_binding_profile})
 
-                port_obj.Port.get_objects(admin_context, id=context.current['id']).update(
+                port_obj.Port.get_objects(admin_context, id=context.current['id'])[0].update(
                     {"binding:profile": new_user_port_binding_profile}
                 )
                 #.filter_by(port_id=context.current['id']).update(
