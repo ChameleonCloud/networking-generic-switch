@@ -811,7 +811,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         drastically affect performance.  Raising an exception will
         result in the deletion of the resource.
         """
-        LOG.debug("create_port_postcommit \n" + pprint.pformat(context.current, indent=4) + "\n")
+        LOG.debug("create_port_postcommit  \n" + pprint.pformat(context.current, indent=4) + "\n")
 
         port = context.current
         shadow_port = self.__get_shadow_port(port)
