@@ -939,26 +939,26 @@ class GenericSwitchDriver(api.MechanismDriver):
                 shadow_port_binding.update()
 
                 # Update user port binding profile
-                port_test =port_obj.Port.get_objects(admin_context, id=port['id'])[0]
-                port_test_binding = port_test['bindings'][0]
-                new_port_test_binding_profile = {}
-                for k, v in port_test_binding.items():
-                    new_port_test_binding_profile[k] = v
+                #port_test =port_obj.Port.get_objects(admin_context, id=port['id'])[0]
+                #port_test_binding = port_test['bindings'][0]
+                #new_port_test_binding_profile = {}
+                #for k, v in port_test_binding.items():
+                #    new_port_test_binding_profile[k] = v
 
-                new_port_test_binding_profile['patch_vlan'] = str(patch_vlan)
-                port_test_binding.profile = new_port_test_binding_profile
-                port_test_binding.update()
+                #new_port_test_binding_profile['patch_vlan'] = str(patch_vlan)
+                #port_test_binding.profile = new_port_test_binding_profile
+                #port_test_binding.update()
 
                 #user_port_binding = port['binding:profile']
-                #new_user_port_binding_profile = {}
-                #for k, v in port['binding:profile'].items():
-                #    new_user_port_binding_profile[k] = v
+                new_user_port_binding_profile = {}
+                for k, v in port['binding:profile'].items():
+                    new_user_port_binding_profile[k] = v
 
                 #new_user_port_binding_profile['stitchport'] = new_shadow_binding_profile['stitchport']
-                #new_user_port_binding_profile['patch_vlan'] = str(patch_vlan)
-                ####port['binding:profile']['patch_vlan'] = str(patch_vlan)
+                new_user_port_binding_profile['patch_vlan'] = str(patch_vlan)
+                #port['binding:profile']['patch_vlan'] = str(patch_vlan)
                 #port['binding:profile'] = new_user_port_binding_profile
-                ####port.update()
+                port.update({'binding:profile', new_user_port_binding_profile})
 
 
 
