@@ -958,6 +958,8 @@ class GenericSwitchDriver(api.MechanismDriver):
                 new_user_port_binding_profile['type'] = 'stitchport'
                 new_user_port_binding_profile['stitchport'] = new_shadow_binding_profile['stitchport']
                 new_user_port_binding_profile['patch_vlan'] = str(patch_vlan)
+                new_user_port_binding_profile['stitichport_vlan'] = str(stichport_vlan)
+
                 #port['binding:profile']['patch_vlan'] = str(patch_vlan)
                 #port['binding:profile'] = new_user_port_binding_profile
                 port.update({'binding:profile': new_user_port_binding_profile})
