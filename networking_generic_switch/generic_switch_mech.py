@@ -940,19 +940,20 @@ class GenericSwitchDriver(api.MechanismDriver):
 
                 # Update user port binding profile
                 #user_port_binding = port['binding:profile']
-                new_user_port_binding_profile = {}
-                for k, v in port['binding:profile'].items():
-                    new_user_port_binding_profile[k] = v
+                #new_user_port_binding_profile = {}
+                #for k, v in port['binding:profile'].items():
+                #    new_user_port_binding_profile[k] = v
 
-                new_user_port_binding_profile['shadow_port_id'] = shadow_port['id']
-                new_user_port_binding_profile['type'] = 'stitchport'
-                new_user_port_binding_profile['stitchport'] = new_shadow_binding_profile['stitchport']
-                new_user_port_binding_profile['patch_vlan'] = str(patch_vlan)
-                new_user_port_binding_profile['stitichport_vlan'] = str(stichport_vlan)
+                port['binding:profile']['shadow_port_id'] = shadow_port['id']
+                port['binding:profile']['type'] = 'stitchport'
+                port['binding:profile']['stitchport'] = new_shadow_binding_profile['stitchport']
+                port['binding:profile']['patch_vlan'] = str(patch_vlan)
+                port['binding:profile']['stitichport_vlan'] = str(stichport_vlan)
 
                 #port['binding:profile']['patch_vlan'] = str(patch_vlan)
                 #port['binding:profile'] = new_user_port_binding_profile
-                port.update({'binding:profile': new_user_port_binding_profile})
+                port.update()
+                #port.update({'binding:profile': new_user_port_binding_profile})
 
 
 
