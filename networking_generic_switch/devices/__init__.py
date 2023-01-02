@@ -37,7 +37,6 @@ NGS_INTERNAL_OPTS = [
     {'name': 'ngs_switchport_mode', 'default': 'access'}
 ]
 
-
 def device_manager(device_cfg):
     device_type = device_cfg.get('device_type', '')
     try:

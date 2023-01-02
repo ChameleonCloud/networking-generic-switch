@@ -61,7 +61,8 @@ class GenericSwitchDriver(api.MechanismDriver):
         self.stitching_shadow_network = None
         self.patchpanel_switch = None
         self.patchpanel_port_map = {}
-        self.patch_vlans_available = []
+        #self.patch_vlans_available = []
+        self.patch_vlans = {}
 
         #TEST
         LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXX PRINTIGN SWITCHES  XXXXXXXXXXXXXX")
@@ -716,8 +717,8 @@ class GenericSwitchDriver(api.MechanismDriver):
         # Create the list of available patch panel VLANs from the config file
         LOG.info("Initiating patch_vlans:  patch vlans: " + str(CONF.ngs_coordination.patch_vlans))
         self.patch_vlans_available = []
-        [patch_vlan_low, patch_vlan_high] = CONF.ngs_coordination.patch_vlans.split(':')
-        for vlan in range(int(patch_vlan_low), int(patch_vlan_high) + 1):
+        [self.patch_vlan_low, self.patch_vlan_high] = CONF.ngs_coordination.patch_vlans.split(':')
+        for vlan in range(int(self.patch_vlan_low), int(self.patch_vlan_high) + 1):
             self.patch_vlans_available.append(str(vlan))
 
         # Remove vlans allocated to networks
@@ -726,9 +727,9 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         LOG.debug("stitching_shadow_network_id: " + str(self.stitching_shadow_network_id))
 
-        for port in port_obj.Port.get_objects(admin_context, network_id=self.stitching_shadow_network_id):
+        for port in port_obj.Port.get_objects(admin_context):
             try:
-                LOG.debug("Stitching port: " + str(port))
+                LOG.debug("port: " + str(port))
 
                 port_binding_profile = port['bindings'][0]['profile']
 
@@ -738,7 +739,11 @@ class GenericSwitchDriver(api.MechanismDriver):
                     patch_vlan = port_binding_profile['patch_vlan']
                     LOG.debug("Patch vlan: " + str(patch_vlan))
                     try:
-                        self.patch_vlans_available.remove(str(patch_vlan))
+                        if str(patch_vlan) in self.patch_vlans:
+                            self.patch_vlans[str(patch_vlan)]['ports'].append(port['id'])
+                        else:
+                            self.patch_vlans[str(patch_vlan)] = { 'name': 'p'+str(patch_vlan),
+                                                                  'ports': [ port['id'] ] }
                     except Exception as e:
                         LOG.warning("Failed to remove patch vlan from init list. " +
                                     "Likely reason is duplicate patch vlan assignment. " +
@@ -748,6 +753,48 @@ class GenericSwitchDriver(api.MechanismDriver):
                 LOG.debug("Exception initiating patch_vlan: " + str(e) + ", " + str(
                     traceback.format_exc()) + ", patch_vlan: " + str(patch_vlan))
                 raise e
+
+
+        LOG.debug("patch_vlans: \n" + pprint.pformat(self.patch_vlans, indent=4) + "\n" )
+
+    # def __init_patch_vlans(self):
+    #     admin_context = lib_context.get_admin_context()
+    #
+    #     # Create the list of available patch panel VLANs from the config file
+    #     LOG.info("Initiating patch_vlans:  patch vlans: " + str(CONF.ngs_coordination.patch_vlans))
+    #     self.patch_vlans_available = []
+    #     [patch_vlan_low, patch_vlan_high] = CONF.ngs_coordination.patch_vlans.split(':')
+    #     for vlan in range(int(patch_vlan_low), int(patch_vlan_high) + 1):
+    #         self.patch_vlans_available.append(str(vlan))
+    #
+    #     # Remove vlans allocated to networks
+    #     if not self.stitching_shadow_network_id:
+    #         self.stitching_shadow_network_id == self.__get_shadow_network_id()
+    #
+    #     LOG.debug("stitching_shadow_network_id: " + str(self.stitching_shadow_network_id))
+    #
+    #     for port in port_obj.Port.get_objects(admin_context, network_id=self.stitching_shadow_network_id):
+    #         try:
+    #             LOG.debug("Stitching port: " + str(port))
+    #
+    #             port_binding_profile = port['bindings'][0]['profile']
+    #
+    #             LOG.debug("\n Stitchport vlan: " + str(port_binding_profile['stitch_vlan']) + "\n")
+    #
+    #             if 'patch_vlan' in port_binding_profile:
+    #                 patch_vlan = port_binding_profile['patch_vlan']
+    #                 LOG.debug("Patch vlan: " + str(patch_vlan))
+    #                 try:
+    #                     self.patch_vlans_available.remove(str(patch_vlan))
+    #                 except Exception as e:
+    #                     LOG.warning("Failed to remove patch vlan from init list. " +
+    #                                 "Likely reason is duplicate patch vlan assignment. " +
+    #                                 "patch_vlan: " + str(patch_vlan) + "\n" +
+    #                                 "Exception: " + str(traceback.format_exc()))
+    #         except Exception as e:
+    #             LOG.debug("Exception initiating patch_vlan: " + str(e) + ", " + str(
+    #                 traceback.format_exc()) + ", patch_vlan: " + str(patch_vlan))
+    #             raise e
 
     def __release_patch_vlan(self, vlan=None):
         LOG.info("Releasing patch vlan " + str(vlan))
