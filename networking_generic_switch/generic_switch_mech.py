@@ -786,25 +786,47 @@ class GenericSwitchDriver(api.MechanismDriver):
     #             raise e
 
     def __release_patch_vlan(self, vlan=None):
+        #TODO: If we can create a data structure that is shared across all threads,
+        # then we can create the patch_vlans dict once and maintain it with allocate/release.
+        # For now this does nothing.
         LOG.info("Releasing patch vlan " + str(vlan))
-        if vlan:
-            self.patch_vlans_available.append(str(vlan))
-        else:
-            LOG.warning("Cannot release patch vlan: " + str(vlan))
+        pass
 
-    def __allocate_patch_vlan(self, avoid_vlans=[]):
+    def __allocate_patch_vlan(self, port_id, avoid_vlans=[]):
+        #TODO: TODO: If we can create a data structure that is shared across all threads,
+        # then we can create the patch_vlans dict once.  For now, recreate each time.
         self.__init_patch_vlans()
 
-        for patch_vlan in self.patch_vlans_available:
-            if patch_vlan not in avoid_vlans:
-                self.patch_vlans_available.remove(patch_vlan)
-                break
-            else:
-                LOG.info("Allocated patch vlan conflict... retry:  " + str(patch_vlan))
+        # Create a list of all possible patch vlans as strings
+        vlan_list = list(range(self.patch_vlan_low, self.patch_vlan_high))
+        vlan_list = [str(i) for i in vlan_list]
+
+        # Remove all allocated vlans and avoid_vlans passed in.
+        avoid_vlans.extend(self.patch_vlans.keys())
+        avoid_vlans = [str(i) for i in avoid_vlans]
+
+        patch_vlan = set(vlan_list).difference(avoid_vlans).pop()
+
+        self.patch_vlans[str(patch_vlan)] = {'name': 'p' + str(patch_vlan),
+                                             'ports': [port_id]}
 
         LOG.info("Allocated patch vlan " + str(patch_vlan))
 
         return patch_vlan
+
+    # def __allocate_patch_vlan(self, avoid_vlans=[]):
+    #     self.__init_patch_vlans()
+    #
+    #     for patch_vlan in self.patch_vlans_available:
+    #         if patch_vlan not in avoid_vlans:
+    #             self.patch_vlans_available.remove(patch_vlan)
+    #             break
+    #         else:
+    #             LOG.info("Allocated patch vlan conflict... retry:  " + str(patch_vlan))
+    #
+    #     LOG.info("Allocated patch vlan " + str(patch_vlan))
+    #
+    #     return patch_vlan
 
     def __get_patchpanel_switch(self):
         LOG.info("Getting patchpanel")
@@ -890,7 +912,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 port1_vlan = stichport_vlan
                 port2_name = self.patchpanel_port_map[physnet]
                 port2_vlan = segmentation_id
-                patch_vlan = self.__allocate_patch_vlan(avoid_vlans=[str(port1_vlan),str(port2_vlan)])
+                patch_vlan = self.__allocate_patch_vlan(port['id'], avoid_vlans=[str(port1_vlan),str(port2_vlan)])
 
                 LOG.info('Adding patch: ' + str(self.patchpanel_switch) + "\n" +
                          ', patch_vlan: ' + str(patch_vlan) + "\n" +
