@@ -954,7 +954,9 @@ class GenericSwitchDriver(api.MechanismDriver):
                 for k, v in port['binding:profile'].items():
                     new_user_port_binding_profile[k] = v
 
-                #new_user_port_binding_profile['stitchport'] = new_shadow_binding_profile['stitchport']
+                new_user_port_binding_profile['shadow_port_id'] = shadow_port['id']
+                new_user_port_binding_profile['type'] = 'stitchport'
+                new_user_port_binding_profile['stitchport'] = new_shadow_binding_profile['stitchport']
                 new_user_port_binding_profile['patch_vlan'] = str(patch_vlan)
                 #port['binding:profile']['patch_vlan'] = str(patch_vlan)
                 #port['binding:profile'] = new_user_port_binding_profile
