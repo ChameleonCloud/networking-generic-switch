@@ -94,10 +94,15 @@ class Juniper(netmiko_devices.NetmikoSwitch):
         #self.counter = 1
 
     def counter_test(self):
-        LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  counter_test: " + str(Juniper.counter))
 
-        #self.counter += 1
-        Juniper.counter += 1
+        LOG.debug(
+            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  START counter_test: ")
+
+        with ngs_lock.PoolLock(self.locker, **self.lock_kwargs):
+            LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  counter_test: " + str(Juniper.counter))
+
+            #self.counter += 1
+            Juniper.counter += 1
 
     def send_config_set(self, net_connect, cmd_set):
         """Send a set of configuration lines to the device.
