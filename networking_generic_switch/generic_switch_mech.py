@@ -723,8 +723,10 @@ class GenericSwitchDriver(api.MechanismDriver):
         LOG.debug("stitching_shadow_network_id: " + str(self.stitching_shadow_network_id))
 
         #for port in port_obj.Port.get_objects(admin_context):
-        filters = {'bindings': { 'profile': {'type': 'stitchport'}}}
-        for port in port_obj.Port.get_objects(admin_context, **filters):
+        from neutron.db import models_v2
+
+        filters = {'binding:profile': {'type': 'stitchport'}}
+        for port in models_v2.Port.get_objects(admin_context, **filters):
             LOG.debug("port: {0}".format(str(port)))
 
             port_binding_profile = port['bindings'][0]['profile']
