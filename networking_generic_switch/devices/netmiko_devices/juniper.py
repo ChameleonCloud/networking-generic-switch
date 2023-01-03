@@ -80,8 +80,7 @@ class Juniper(netmiko_devices.NetmikoSwitch):
         'delete vlans p{patch_id}',
     )
 
-    counter = 1
-    counter_pool_lock = threading.Lock()
+
 
     def __init__(self, device_cfg):
         super(Juniper, self).__init__(device_cfg)
@@ -94,14 +93,13 @@ class Juniper(netmiko_devices.NetmikoSwitch):
             elif 'default' in opt:
                 self.ngs_config[opt_name] = opt['default']
 
-        #self.counter = 1
-
     def counter_test(self):
-
         LOG.debug(
             "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  START counter_test: ")
 
-        with Juniper.counter_pool_lock:
+        with ngs_lock.PoolLock(self.locker, **self.lock_kwargs):
+            if not hasattr(Juniper, 'counter'):
+                Juniper.counter = 1
             LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  counter_test: " + str(Juniper.counter))
 
             #self.counter += 1
