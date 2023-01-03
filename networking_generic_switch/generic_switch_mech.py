@@ -590,12 +590,12 @@ class GenericSwitchDriver(api.MechanismDriver):
                 LOG.error("create_port_precommit failed authorization")
                 raise Exception("not authorized to create port")
 
-    def __get_port_from_objects(self, port):
+    def __get_port_admin_context(self, port_id):
         admin_context = lib_context.get_admin_context()
 
 
         for port_candidate in port_obj.Port.get_objects(admin_context):
-            if port_candidate['id'] == port['id']:
+            if port_candidate['id'] == port_id:
                 LOG.debug("Found port")
                 return port_candidate
 
@@ -975,7 +975,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 shadow_port_binding.update()
 
                 # Update user port binding profile
-                port_to_update=self.__get_port_from_objects(port)
+                port_to_update=self.__get_port_admin_context(port['id'])
                 port_to_update_binding = port_to_update['bindings'][0]
                 new_port_to_update_binding_profile = {}
                 port_to_update_binding_profile = port_to_update_binding['profile']
@@ -984,9 +984,12 @@ class GenericSwitchDriver(api.MechanismDriver):
                     new_port_to_update_binding_profile[k] = v
 
                 new_port_to_update_binding_profile['patch_vlan'] = patch_vlan
-                #new_port_to_update_binding_profile['user_port_id'] = port['id']
+                new_port_to_update_binding_profile['shadow_port_id'] =  shadow_port['id']
+                new_port_to_update_binding_profile['type'] = 'stitchport'
+                new_port_to_update_binding_profile['stitchport'] = new_shadow_binding_profile['stitchport']
+                new_port_to_update_binding_profile['patch_vlan'] = str(patch_vlan)
 
-                port_to_update_binding.profile = new_shadow_binding_profile
+                port_to_update_binding.profile = new_port_to_update_binding_profile
                 port_to_update_binding.update()
 
                 #user_port_binding = port['binding:profile']
