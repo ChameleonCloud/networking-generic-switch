@@ -612,54 +612,27 @@ class GenericSwitchDriver(api.MechanismDriver):
             self.stitching_shadow_network = self.__get_shadow_network()
 
         if self.stitching_shadow_network == None:
-            LOG.debug("No shadow network, skipping")
+            LOG.debug("Shadow network not found, skipping")
             return None
 
         if port['network_id'] == self.stitching_shadow_network['id']:
             LOG.debug("Port is shadow port, skipping")
             return None
 
-        LOG.debug("XXXXXX self.stitching_shadow_network: " + str(self.stitching_shadow_network))
-        LOG.debug("XXXXXX self.stitching_shadow_network['id']: " + str(self.stitching_shadow_network['id']))
-        LOG.debug("XXXXXX port['network_id']: " + str(port['network_id']))
-
-
         admin_context = lib_context.get_admin_context()
-        LOG.debug("XXXXXX admin_context, " + str(admin_context))
 
-        LOG.debug("XXXXXX Networks")
         for net in network_obj.Network.get_objects(admin_context, name=self.stitching_shadow_network_name):
-            LOG.debug("XXXXXX Net: " + str(net))
+            LOG.debug("shadow network: " + str(net))
             if str(net['name']) == self.stitching_shadow_network_name:
                 LOG.debug("XXXXXX FOUND SHADOW STITCH NETWORK: " + str(net['name']) + ", " + str(net))
                 stitching_shadow_network = net
                 stitching_shadow_network_id = net['id']
 
-        #LOG.debug("XXXXXX Ports, ")
-        #for port in port_obj.Port.get_objects(admin_context):
-        #    LOG.debug("XXXXXX Port: " + str(port))
-        #    if port['network_id'] == stitching_shadow_network_id:
-        #        shadow_port = port
-        #        LOG.debug("XXXXXX FOUND SHADOW STITCH Port: " + str(port))
-
-        #port = context.current  # NOW passed in
-        port_id = port['id']
-
-        LOG.debug("port: " + str(port))
         # network_id = port['network_id']
-
-        # LOG.debug("create_port_postcommit: port_id: " + str(port_id) + ", network_id: " + str(network_id))
-
-        # admin_context = lib_context.get_admin_context()
-        # network = network_obj.Network.get_objects(admin_context,id=network_id)[0]
 
         LOG.debug("Port \n" + pprint.pformat(port, indent=4) + "\n")
         LOG.debug("port[binding:profile] \n" + pprint.pformat(port['binding:profile'], indent=4) + "\n")
 
-        for k,v in port['binding:profile'].items():
-            LOG.debug("key: " + str(k) + ", val: " + str(v))
-
-        port_type = None
         shadow_port = None
         if 'type' in port['binding:profile']:
             port_type = port['binding:profile']['type']
@@ -667,14 +640,10 @@ class GenericSwitchDriver(api.MechanismDriver):
             if 'reservation_id' in port['binding:profile']:
                 reservation_id = port['binding:profile']['reservation_id']
 
+            if port_type != 'stitchport':
+                LOG.debug('Port is not stitchport, cannot get shadow port.  port_id: ' + str(port['id']))
 
-
-            if port_type == 'stitchport':
-                LOG.debug('Adding stitch port: port_type: ' + str(port_type))
-                LOG.debug('patchpanel_port_map:  ' + str(self.patchpanel_port_map))
-
-            LOG.debug("Searching for shadow port, ")
-            for shadow_port_candidate in port_obj.Port.get_objects(admin_context):
+            for shadow_port_candidate in port_obj.Port.get_objects(admin_context, network_id=self.stitching_shadow_network['id']):
                 try:
                     if self.stitching_shadow_network != None and shadow_port_candidate['network_id'] != self.stitching_shadow_network['id']:
                         LOG.debug("Skipping non-shadow network port")
