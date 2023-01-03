@@ -93,7 +93,7 @@ class Juniper(netmiko_devices.NetmikoSwitch):
     def counter_test(self):
         LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  counter_test: " + str(self.counter))
 
-        self.counter++
+        self.counter += 1
 
     def send_config_set(self, net_connect, cmd_set):
         """Send a set of configuration lines to the device.
