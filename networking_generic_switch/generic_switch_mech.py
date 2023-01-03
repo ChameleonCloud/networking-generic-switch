@@ -590,6 +590,14 @@ class GenericSwitchDriver(api.MechanismDriver):
                 LOG.error("create_port_precommit failed authorization")
                 raise Exception("not authorized to create port")
 
+    def __get_port_from_objects(self, port):
+        for port_candidate in port_obj.Port.get_objects(admin_context):
+            if port_candidate['id'] == port['id]']:
+                LOG.debug("Found port")
+                return port_candidate
+
+        return None
+
 
     def __get_shadow_port(self, port):
         from neutron.objects.ports import Port
@@ -677,11 +685,6 @@ class GenericSwitchDriver(api.MechanismDriver):
 
                     LOG.debug("Candidate shadow_port: " + str(shadow_port_candidate))
 
-                    binding = None
-                    for binding_candidate in shadow_port_candidate['bindings']:
-                        LOG.debug("shadow_port_candidate['bindings'] type: " + str(type(binding_candidate)))
-                        LOG.debug("shadow_port_candidate['bindings'] binding: " + str(binding_candidate))
-
                     shadow_port_candidate_binding_profile = shadow_port_candidate['bindings'][0]['profile']
 
                     LOG.debug("\n" + "project_id " + str(project_id) + "\n" +
@@ -695,8 +698,6 @@ class GenericSwitchDriver(api.MechanismDriver):
                         #LOG.debug("Found shadow stitchport: \n" + pprint.pformat(shadow_port, indent=4) + "\n")
                         #json.dumps(str(context.__dict__
                         LOG.debug("Found shadow stitchport: \n" + pprint.pformat(shadow_port.__dict__, indent=4) + "\n")
-
-
 
                         break
                 except Exception as e:
@@ -971,22 +972,36 @@ class GenericSwitchDriver(api.MechanismDriver):
                 shadow_port_binding.update()
 
                 # Update user port binding profile
+                port_to_update=self.__get_port_from_objects(port)
+                port_to_update_binding = port_to_update['bindings'][0]
+                new_port_to_update_binding_profile = {}
+                port_to_update_binding_profile = port_to_update_binding['profile']
+
+                for k, v in port_to_update_binding_profile.items():
+                    new_port_to_update_binding_profile[k] = v
+
+                new_port_to_update_binding_profile['patch_vlan'] = patch_vlan
+                #new_port_to_update_binding_profile['user_port_id'] = port['id']
+
+                port_to_update_binding.profile = new_shadow_binding_profile
+                port_to_update_binding.update()
+
                 #user_port_binding = port['binding:profile']
                 #new_user_port_binding_profile = {}
                 #for k, v in port['binding:profile'].items():
                 #    new_user_port_binding_profile[k] = v
 
-                port['binding:profile']['shadow_port_id'] =  shadow_port['id']
-                port['binding:profile']['type'] = 'stitchport'
-                port['binding:profile']['stitchport'] = new_shadow_binding_profile['stitchport']
-                port['binding:profile']['patch_vlan'] = str(patch_vlan)
+                ###port['binding:profile']['shadow_port_id'] =  shadow_port['id']
+                ###port['binding:profile']['type'] = 'stitchport'
+                ###port['binding:profile']['stitchport'] = new_shadow_binding_profile['stitchport']
+                ###port['binding:profile']['patch_vlan'] = str(patch_vlan)
                 #new_user_port_binding_profile['patch_vlan'] = str(patch_vlan)
 
                 #port['binding:profile']['stitichport_vlan'] = str(stichport_vlan)
 
                 #port['binding:profile']['patch_vlan'] = str(patch_vlan)
                 #port['binding:profile'] = new_user_port_binding_profile
-                port['binding:profile'].update()
+                ###port['binding:profile'].update()
 
 
 
