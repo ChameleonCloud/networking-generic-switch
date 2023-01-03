@@ -41,6 +41,8 @@ CONF = cfg.CONF
 
 class GenericSwitchDriver(api.MechanismDriver):
 
+    #patch_vlans = {}
+
     def initialize(self):
         """Perform driver initialization.
 
@@ -55,14 +57,11 @@ class GenericSwitchDriver(api.MechanismDriver):
         gsw_devices = gsw_conf.get_devices()
         self.switches = {}
 
-        self.haswellNodeRange=(201,299)
-
         self.stitching_shadow_network_name = None
         self.stitching_shadow_network_id = None
         self.stitching_shadow_network = None
         self.patchpanel_switch = None
         self.patchpanel_port_map = {}
-        #self.patch_vlans_available = []
         self.patch_vlans = {}
 
         #TEST
@@ -802,6 +801,7 @@ class GenericSwitchDriver(api.MechanismDriver):
             import traceback
             LOG.info("patchpanel_switch undefined" + str(traceback.format_exc()))
 
+        self.patchpanel_switch.counter_test()
         return self.patchpanel_switch
 
     def create_port_postcommit(self, context):
