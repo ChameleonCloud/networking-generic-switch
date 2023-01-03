@@ -1052,6 +1052,8 @@ class GenericSwitchDriver(api.MechanismDriver):
                                'switch': switch_name,
                                'exc': e})
 
+        port.binding.update({'profile': {'stuff33333': 'XYZ123'}})
+
     def update_port_precommit(self, context):
         """Update resources of a port.
 
