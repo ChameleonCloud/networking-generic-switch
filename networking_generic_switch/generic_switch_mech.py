@@ -976,7 +976,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 #for k, v in port['binding:profile'].items():
                 #    new_user_port_binding_profile[k] = v
 
-                port['binding:profile']['shadow_port_id'] = shadow_port['id']
+                port['binding:profile']['shadow_port_id'] =  shadow_port['id']
                 port['binding:profile']['type'] = 'stitchport'
                 port['binding:profile']['stitchport'] = new_shadow_binding_profile['stitchport']
                 port['binding:profile']['patch_vlan'] = str(patch_vlan)
