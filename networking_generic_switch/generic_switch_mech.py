@@ -987,8 +987,11 @@ class GenericSwitchDriver(api.MechanismDriver):
                 #port['binding:profile']['patch_vlan'] = str(patch_vlan)
                 #port['binding:profile'] = new_user_port_binding_profile
                 port['binding:profile'].update()
+                port.update()
+                context.update()
 
-                port.binding.update({'profile': {'stuff3': 'XYZ123'}}  )
+
+                #port.binding.update({'profile': {'stuff3': 'XYZ123'}}  )
                 #port.update({'binding:profile': {'stuff2': 'XYZ'}})
 
                 #port.update({'binding:profile': new_user_port_binding_profile})
@@ -1051,8 +1054,6 @@ class GenericSwitchDriver(api.MechanismDriver):
                               {'port_id': port['id'],
                                'switch': switch_name,
                                'exc': e})
-
-        port.update({'binding:profile': {'stuff33333': 'XYZ123'}})
 
     def update_port_precommit(self, context):
         """Update resources of a port.
@@ -1222,7 +1223,7 @@ class GenericSwitchDriver(api.MechanismDriver):
 
                 self.patchpanel_switch.remove_patch(patch_id=patch_vlan)
 
-                # Upade shadow port binding info
+                # Update shadow port binding info
                 shadow_port_binding = shadow_port['bindings'][0]
                 new_binding_profile = {}
                 for k, v in shadow_port_binding_profile.items():
