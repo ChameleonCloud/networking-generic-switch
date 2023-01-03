@@ -80,8 +80,6 @@ class Juniper(netmiko_devices.NetmikoSwitch):
         'delete vlans p{patch_id}',
     )
 
-    #from networking_generic_switch import locking as ngs_lock
-    #from ngs_lock import PoolLock
     counter = 1
     counter_pool_lock = threading.Lock()
 
