@@ -19,6 +19,9 @@ from networking_generic_switch.devices import netmiko_devices
 from networking_generic_switch.devices import utils as device_utils
 from networking_generic_switch import exceptions as exc
 
+from networking_generic_switch import locking as ngs_lock
+
+
 import random
 
 
