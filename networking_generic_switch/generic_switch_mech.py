@@ -590,7 +590,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 LOG.error("create_port_precommit failed authorization")
                 raise Exception("not authorized to create port")
 
-    def __get_port_admin_context(self, port_id):
+    def __get_port_from_admin_context(self, port_id):
         admin_context = lib_context.get_admin_context()
 
 
@@ -975,7 +975,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 shadow_port_binding.update()
 
                 # Update user port binding profile
-                port_to_update=self.__get_port_admin_context(port['id'])
+                port_to_update=self.__get_port_from_admin_context(port['id'])
                 port_to_update_binding = port_to_update['bindings'][0]
                 new_port_to_update_binding_profile = {}
                 port_to_update_binding_profile = port_to_update_binding['profile']
