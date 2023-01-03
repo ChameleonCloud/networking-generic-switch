@@ -905,7 +905,7 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         LOG.debug("create_port_postcommit \n" + pprint.pformat(context.current, indent=4) + "\n")
 
-        port.update({'binding:profile': {'stuff111': 'XYZ'}})
+        context.current.update({'binding:profile': {'stuff111': 'XYZ'}})
 
         return
 
