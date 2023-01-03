@@ -593,20 +593,16 @@ class GenericSwitchDriver(api.MechanismDriver):
     def __get_port_from_admin_context(self, port_id):
         admin_context = lib_context.get_admin_context()
 
-
         for port_candidate in port_obj.Port.get_objects(admin_context, id=port_id):
             if port_candidate['id'] == port_id:
                 LOG.debug("Found port")
                 return port_candidate
 
+        LOG.debug("Port not found")
         return None
 
 
     def __get_shadow_port(self, port):
-        from neutron.objects.ports import Port
-
-        from neutron.objects import tag as tag_obj
-        from neutron_lib.plugins import directory
 
         if self.stitching_shadow_network_name == None:
             LOG.debug("Shadow port not set, skipping")
@@ -632,7 +628,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         LOG.debug("XXXXXX admin_context, " + str(admin_context))
 
         LOG.debug("XXXXXX Networks")
-        for net in network_obj.Network.get_objects(admin_context):
+        for net in network_obj.Network.get_objects(admin_context, name=self.stitching_shadow_network_name):
             LOG.debug("XXXXXX Net: " + str(net))
             if str(net['name']) == self.stitching_shadow_network_name:
                 LOG.debug("XXXXXX FOUND SHADOW STITCH NETWORK: " + str(net['name']) + ", " + str(net))
@@ -662,8 +658,6 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         for k,v in port['binding:profile'].items():
             LOG.debug("key: " + str(k) + ", val: " + str(v))
-
-
 
         port_type = None
         shadow_port = None
@@ -779,45 +773,6 @@ class GenericSwitchDriver(api.MechanismDriver):
 
 
         LOG.debug("patch_vlans: \n" + pprint.pformat(self.patch_vlans, indent=4) + "\n" )
-
-    # def __init_patch_vlans(self):
-    #     admin_context = lib_context.get_admin_context()
-    #
-    #     # Create the list of available patch panel VLANs from the config file
-    #     LOG.info("Initiating patch_vlans:  patch vlans: " + str(CONF.ngs_coordination.patch_vlans))
-    #     self.patch_vlans_available = []
-    #     [patch_vlan_low, patch_vlan_high] = CONF.ngs_coordination.patch_vlans.split(':')
-    #     for vlan in range(int(patch_vlan_low), int(patch_vlan_high) + 1):
-    #         self.patch_vlans_available.append(str(vlan))
-    #
-    #     # Remove vlans allocated to networks
-    #     if not self.stitching_shadow_network_id:
-    #         self.stitching_shadow_network_id == self.__get_shadow_network_id()
-    #
-    #     LOG.debug("stitching_shadow_network_id: " + str(self.stitching_shadow_network_id))
-    #
-    #     for port in port_obj.Port.get_objects(admin_context, network_id=self.stitching_shadow_network_id):
-    #         try:
-    #             LOG.debug("Stitching port: " + str(port))
-    #
-    #             port_binding_profile = port['bindings'][0]['profile']
-    #
-    #             LOG.debug("\n Stitchport vlan: " + str(port_binding_profile['stitch_vlan']) + "\n")
-    #
-    #             if 'patch_vlan' in port_binding_profile:
-    #                 patch_vlan = port_binding_profile['patch_vlan']
-    #                 LOG.debug("Patch vlan: " + str(patch_vlan))
-    #                 try:
-    #                     self.patch_vlans_available.remove(str(patch_vlan))
-    #                 except Exception as e:
-    #                     LOG.warning("Failed to remove patch vlan from init list. " +
-    #                                 "Likely reason is duplicate patch vlan assignment. " +
-    #                                 "patch_vlan: " + str(patch_vlan) + "\n" +
-    #                                 "Exception: " + str(traceback.format_exc()))
-    #         except Exception as e:
-    #             LOG.debug("Exception initiating patch_vlan: " + str(e) + ", " + str(
-    #                 traceback.format_exc()) + ", patch_vlan: " + str(patch_vlan))
-    #             raise e
 
     def __release_patch_vlan(self, vlan=None):
         #TODO: If we can create a data structure that is shared across all threads,
