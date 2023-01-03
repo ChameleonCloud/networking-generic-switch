@@ -905,12 +905,7 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         LOG.debug("create_port_postcommit \n" + pprint.pformat(context.current, indent=4) + "\n")
 
-        context.current.update({'binding:profile': {'stuff111': 'XYZ'}})
-
-        return
-
         admin_context = lib_context.get_admin_context()
-
 
         port = context.current
         shadow_port = self.__get_shadow_port(port)
