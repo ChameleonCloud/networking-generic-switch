@@ -594,7 +594,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         admin_context = lib_context.get_admin_context()
 
 
-        for port_candidate in port_obj.Port.get_objects(admin_context):
+        for port_candidate in port_obj.Port.get_objects(admin_context, id=port_id):
             if port_candidate['id'] == port_id:
                 LOG.debug("Found port")
                 return port_candidate
