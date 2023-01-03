@@ -563,7 +563,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         port.update({'binding:profile': {'stuff': 'ABCD' }})
 
         #port = context.current
-        # admin_context = lib_context.get_admin_context()
+        # admin_context =  lib_context.get_admin_context()
         # port_test = port_obj.Port.get_objects(admin_context, name=port['name'])
         #
         # # Update shadow port binding profile
