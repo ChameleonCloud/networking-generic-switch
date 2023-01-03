@@ -92,14 +92,16 @@ class Juniper(netmiko_devices.NetmikoSwitch):
             elif 'default' in opt:
                 self.ngs_config[opt_name] = opt['default']
 
+        Juniper.counter = 1
+
     def counter_test(self):
         LOG.debug(
             "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  START counter_test: ")
 
         with ngs_lock.PoolLock(self.locker, **self.lock_kwargs):
-            if not hasattr(Juniper, 'counter'):
-                LOG.debug("counter_test: coutner set")
-                Juniper.counter = 1
+            #if not hasattr(Juniper, 'counter'):
+            #    LOG.debug("counter_test: coutner set")
+            #    Juniper.counter = 1
             LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  counter_test: " + str(Juniper.counter))
 
             #self.counter += 1
