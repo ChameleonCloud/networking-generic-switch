@@ -700,7 +700,7 @@ class GenericSwitchDriver(api.MechanismDriver):
         LOG.debug("__get_shadow_network_id: self.stitching_shadow_network_name: " + str(self.stitching_shadow_network_name))
         admin_context = lib_context.get_admin_context()
 
-        for network in network_obj.Network.get_objects(admin_context):
+        for network in network_obj.Network.get_objects(admin_context, name=self.stitching_shadow_network_name):
             LOG.debug("network: " + str(network))
             if network['name'] == self.stitching_shadow_network_name:
                 LOG.debug("FOUND: stitching_shadow_network: " + str(network))
