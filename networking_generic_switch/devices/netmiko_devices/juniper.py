@@ -19,10 +19,7 @@ from networking_generic_switch.devices import netmiko_devices
 from networking_generic_switch.devices import utils as device_utils
 from networking_generic_switch import exceptions as exc
 
-import threading
-
-
-import random
+from networking_generic_switch import locking as ngs_lock
 
 
 LOG = logging.getLogger(__name__)
