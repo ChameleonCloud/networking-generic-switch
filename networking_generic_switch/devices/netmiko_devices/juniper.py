@@ -94,7 +94,7 @@ class Juniper(netmiko_devices.NetmikoSwitch):
         #self.counter = 1
 
     def counter_test(self):
-        LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  counter_test: " + str(self.counter))
+        LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  counter_test: " + str(Juniper.counter))
 
         #self.counter += 1
         Juniper.counter += 1
