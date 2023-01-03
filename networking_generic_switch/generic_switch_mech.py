@@ -987,8 +987,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 #port['binding:profile']['patch_vlan'] = str(patch_vlan)
                 #port['binding:profile'] = new_user_port_binding_profile
                 port['binding:profile'].update()
-                port.update()
-                context.update()
+
 
 
                 #port.binding.update({'profile': {'stuff3': 'XYZ123'}}  )
