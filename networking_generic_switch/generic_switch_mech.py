@@ -122,8 +122,6 @@ class GenericSwitchDriver(api.MechanismDriver):
             LOG.error('No devices have been loaded')
         self.warned_del_network = False
 
-        self.__init_patch_vlans()
-
     def __is_shadow_network(self, context):
         network = context.current
         network_id = network['id']
@@ -724,7 +722,9 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         LOG.debug("stitching_shadow_network_id: " + str(self.stitching_shadow_network_id))
 
-        for port in port_obj.Port.get_objects(admin_context):
+        #for port in port_obj.Port.get_objects(admin_context):
+        filters = {'binding:profile': {'type': 'stitchport'}}
+        for port in port_obj.Port.get_objects(admin_context, **filters):
             LOG.debug("port: {0}".format(str(port)))
 
             port_binding_profile = port['bindings'][0]['profile']
@@ -774,20 +774,6 @@ class GenericSwitchDriver(api.MechanismDriver):
         LOG.info("Allocated patch vlan " + str(patch_vlan))
 
         return patch_vlan
-
-    # def __allocate_patch_vlan(self, avoid_vlans=[]):
-    #     self.__init_patch_vlans()
-    #
-    #     for patch_vlan in self.patch_vlans_available:
-    #         if patch_vlan not in avoid_vlans:
-    #             self.patch_vlans_available.remove(patch_vlan)
-    #             break
-    #         else:
-    #             LOG.info("Allocated patch vlan conflict... retry:  " + str(patch_vlan))
-    #
-    #     LOG.info("Allocated patch vlan " + str(patch_vlan))
-    #
-    #     return patch_vlan
 
     def __get_patchpanel_switch(self):
         LOG.info("Getting patchpanel")
