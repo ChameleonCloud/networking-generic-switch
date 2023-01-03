@@ -591,6 +591,9 @@ class GenericSwitchDriver(api.MechanismDriver):
                 raise Exception("not authorized to create port")
 
     def __get_port_from_objects(self, port):
+        admin_context = lib_context.get_admin_context()
+
+
         for port_candidate in port_obj.Port.get_objects(admin_context):
             if port_candidate['id'] == port['id]']:
                 LOG.debug("Found port")
