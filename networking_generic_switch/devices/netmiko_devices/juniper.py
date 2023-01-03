@@ -80,8 +80,9 @@ class Juniper(netmiko_devices.NetmikoSwitch):
         'delete vlans p{patch_id}',
     )
 
-
+    from ngs_lock import PoolLock
     counter = 1
+    counter_pool_lock = PoolLock(1)
 
     def __init__(self, device_cfg):
         super(Juniper, self).__init__(device_cfg)
@@ -101,7 +102,7 @@ class Juniper(netmiko_devices.NetmikoSwitch):
         LOG.debug(
             "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  START counter_test: ")
 
-        with ngs_lock.PoolLock(self.locker, **self.lock_kwargs):
+        with Juniper.counter_pool_lock.acquire(timeout=120):
             LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  counter_test: " + str(Juniper.counter))
 
             #self.counter += 1
