@@ -82,6 +82,8 @@ class Juniper(netmiko_devices.NetmikoSwitch):
     def __init__(self, device_cfg):
         super(Juniper, self).__init__(device_cfg)
 
+        LOG.debug("counter_test: juniper init")
+
         # Do not expose Juniper internal options to device config.
         for opt in JUNIPER_INTERNAL_OPTS:
             opt_name = opt['name']
@@ -96,6 +98,7 @@ class Juniper(netmiko_devices.NetmikoSwitch):
 
         with ngs_lock.PoolLock(self.locker, **self.lock_kwargs):
             if not hasattr(Juniper, 'counter'):
+                LOG.debug("counter_test: coutner set")
                 Juniper.counter = 1
             LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  counter_test: " + str(Juniper.counter))
 
