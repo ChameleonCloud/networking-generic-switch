@@ -988,7 +988,8 @@ class GenericSwitchDriver(api.MechanismDriver):
                 #port['binding:profile'] = new_user_port_binding_profile
                 port['binding:profile'].update()
 
-                port.update({'binding:profile': {'stuff2': 'XYZ'}})
+                port.binding.update({'profile': {'stuff3': 'XYZ123'}}  )
+                #port.update({'binding:profile': {'stuff2': 'XYZ'}})
 
                 #port.update({'binding:profile': new_user_port_binding_profile})
 
