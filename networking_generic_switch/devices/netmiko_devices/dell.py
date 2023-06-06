@@ -83,6 +83,17 @@ class DellOS10(netmiko_devices.NetmikoSwitch):
 class DellNos(netmiko_devices.NetmikoSwitch):
     """Netmiko device driver for Dell Force10 switches."""
 
+    ADD_NETWORK = (
+        'interface vlan {segmentation_id}',
+        'name {network_name}',
+        'exit',
+    )
+
+    DELETE_NETWORK = (
+        'no interface vlan {segmentation_id}',
+        'exit',
+    )
+
     PLUG_PORT_TO_NETWORK = (
         'interface vlan {segmentation_id}',
         'untagged {port}',
@@ -165,6 +176,18 @@ class DellPowerConnect(netmiko_devices.NetmikoSwitch):
             )
 
         switchport_mode.get(port_mode.lower(), on_invalid_switchmode)()
+
+    ADD_NETWORK = (
+        'vlan database',
+        'vlan {segmentation_id}',
+        'exit',
+    )
+
+    DELETE_NETWORK = (
+        'vlan database',
+        'no vlan {segmentation_id}',
+        'exit',
+    )
 
     PLUG_PORT_TO_NETWORK_GENERAL = (
         'interface {port}',
