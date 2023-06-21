@@ -31,7 +31,15 @@ coordination_opts = [
 ngs_opts = [
     cfg.StrOpt('session_log_file',
                default=None,
-               help='Netmiko session log file.')
+               help='Netmiko session log file.'),
+    cfg.StrOpt('stitching_shadow_network',
+               help='The shadow network for blazar stitching info.'),
+    cfg.StrOpt('patchpanel_switch',
+               help='The name of the patchpanel switch.'),
+    cfg.StrOpt('patchpanel_port_map',
+               help='The map between the patchpanel switch ports and names.'),
+    cfg.StrOpt('patch_vlans',
+               help='Range of VLANs to use as patches on the patch panel.'),
 ]
 
 CONF.register_opts(coordination_opts, group='ngs_coordination')
