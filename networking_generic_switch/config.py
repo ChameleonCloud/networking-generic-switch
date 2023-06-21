@@ -40,7 +40,6 @@ ngs_opts = [
     cfg.StrOpt('session_log_file',
                default=None,
                help='Netmiko session log file.'),
-
 ]
 
 CONF.register_opts(coordination_opts, group='ngs_coordination')
