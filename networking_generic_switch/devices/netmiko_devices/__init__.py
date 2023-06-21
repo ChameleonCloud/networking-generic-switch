@@ -299,7 +299,7 @@ class NetmikoSwitch(devices.GenericSwitchDevice):
             self.REMOVE_PATCH,
             patch_id=patch_id)
 
-        return self.send_commands_to_device(cmds)q
+        return self.send_commands_to_device(cmds)
 
     @check_output('plug port')
     def plug_port_to_network(self, port, segmentation_id):
