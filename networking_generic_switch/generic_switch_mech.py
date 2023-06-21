@@ -106,8 +106,8 @@ class GenericSwitchDriver(api.MechanismDriver):
         of_controller = self.__get_of_controller(network)
         vfc_name = self.__get_vfc_name(network, project_id)
 
-        LOG.info("create_network: {}, network_id: {}".format(
-            str(network), str(network_id)))
+        LOG.info("create_network: {} ({}), network_id: {}".format(
+            str(network['name']), str(network_id), str(network)))
 
         if provider_type == 'vlan' and segmentation_id:
             # Create vlan on all switches from this driver
