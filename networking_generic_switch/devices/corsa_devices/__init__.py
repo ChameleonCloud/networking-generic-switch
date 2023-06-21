@@ -48,7 +48,7 @@ class CorsaSwitch(devices.GenericSwitchDevice):
 
     SAVE_CONFIGURATION = None
 
-    def __init__(self, device_cfg):
+    def __init__(self, device_cfg, *args, **kwargs):
         super(CorsaSwitch, self).__init__(device_cfg)
         device_type = self.config.get("device_type", "")
         # use part that is after 'netmiko_'
