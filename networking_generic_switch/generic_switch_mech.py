@@ -26,11 +26,16 @@ from networking_generic_switch import config as gsw_conf
 from networking_generic_switch import devices
 from networking_generic_switch.devices import utils as device_utils
 
+# Patch panel imports
+from neutron.objects import ports as port_obj
+from neutron.objects import network as network_obj
+from neutron_lib import context as lib_context
 
 LOG = logging.getLogger(__name__)
 
 GENERIC_SWITCH_ENTITY = 'GENERICSWITCH'
 
+CONF = cfg.CONF
 
 class GenericSwitchDriver(api.MechanismDriver):
 
@@ -48,6 +53,50 @@ class GenericSwitchDriver(api.MechanismDriver):
         self.switches = {}
 
         self.haswellNodeRange=(201,299)
+
+        # Patch panel
+        self.stitching_shadow_network_name = None
+        self.stitching_shadow_network = None
+        self.patchpanel_switch = None
+        self.patchpanel_port_map = {}
+        self.patch_vlans_available = []
+
+        try:
+            LOG.info("stitching_shadow_network: " + str(CONF.ngs_coordination.stitching_shadow_network))
+            self.stitching_shadow_network_name = CONF.ngs_coordination.stitching_shadow_network
+        except:
+            LOG.info("stitching_shadow_network undefined")
+
+        try:
+            LOG.info("patchpanel_switch: " + str(CONF.ngs_coordination.patchpanel_switch))
+            self.patchpanel_switch_name = CONF.ngs_coordination.patchpanel_switch
+
+            # for switch_name, switch in self.switches.items():
+            #     LOG.debug("Searching for patchpanel switch (" + self.patchpanel_switch_name + ". candidate: " + str(
+            #         switch_name))
+            #     if switch_name == self.patchpanel_switch_name:
+            #         self.patchpanel_switch = switch
+            #         break
+            #
+            LOG.info("port_map: " + str(CONF.ngs_coordination.patchpanel_port_map))
+            self.patchpanel_port_map = {}
+            for port_str in CONF.ngs_coordination.patchpanel_port_map.split(','):
+                port_name, port_id = port_str.split(":")
+                LOG.info("port_map adding: " + str(port_name) + ", " + str(port_id))
+                self.patchpanel_port_map[port_name] = port_id
+
+            LOG.info("port_map built: " + str(self.patchpanel_port_map))
+            #
+            # LOG.info("patch_vlans_available: " + str(CONF.ngs_coordination.patch_vlans))
+            # [patch_vlan_low,patch_vlan_high] = CONF.ngs_coordination.patch_vlans.split(':')
+            # for vlan in range(int(patch_vlan_low),int(patch_vlan_high)+1):
+            #     self.patch_vlans_available.append(vlan)
+            # LOG.debug('Patch VLANs: ' + str(self.patch_vlans_available))
+        except Exception as e:
+            import traceback
+            LOG.info("patchpanel_switch undefined" + str(traceback.format_exc()))
+
+
 
         for switch_info, device_cfg in gsw_devices.items():
             switch = devices.device_manager(device_cfg)
