@@ -32,13 +32,33 @@ from neutron.objects import ports as port_obj
 from neutron.objects import network as network_obj
 from neutron_lib import context as lib_context
 
+import traceback
+
 LOG = logging.getLogger(__name__)
 
 GENERIC_SWITCH_ENTITY = 'GENERICSWITCH'
 
 CONF = cfg.CONF
 
+
+
+
+
 class GenericSwitchDriver(api.MechanismDriver):
+
+    def __init__(self):
+        self.sharedNonByocProvider = None
+        self.sharedNonByocVLAN = None
+        self.sharedNonByocVFC = None
+        self.vfcHost = None
+        self.patchpanel_port_map = None
+        self.patchpanel_switch_name = None
+        self.stitching_shadow_network_name = None
+        self.haswellNodeRange = None
+        self.patch_vlans_available = None
+        self.switches = None
+        self.patchpanel_switch = None
+        self.stitching_shadow_network = None
 
     def initialize(self):
         """Perform driver initialization.
@@ -47,13 +67,13 @@ class GenericSwitchDriver(api.MechanismDriver):
         been initialized. No abstract methods defined below will be
         called prior to this method being called.
         """
-        LOG.info("GenericSwitchDriver")
+        LOG.debug("GenericSwitchDriver: start")
         self.vfcHost = None
 
         gsw_devices = gsw_conf.get_devices()
         self.switches = {}
 
-        self.haswellNodeRange=(201,299)
+        self.haswellNodeRange = (201, 299)
 
         # Patch panel
         self.stitching_shadow_network_name = None
@@ -73,20 +93,20 @@ class GenericSwitchDriver(api.MechanismDriver):
             self.patchpanel_switch_name = CONF.ngs_coordination.patchpanel_switch
 
             # for switch_name, switch in self.switches.items():
-            #     LOG.debug("Searching for patchpanel switch (" + self.patchpanel_switch_name + ". candidate: " + str(
+            #     Ltg5 OG.debug("Searching for patchpanel switch (" + self.patchpanel_switch_name + ". candidate: " + str(
             #         switch_name))
             #     if switch_name == self.patchpanel_switch_name:
             #         self.patchpanel_switch = switch
             #         break
             #
-            LOG.info("port_map: " + str(CONF.ngs_coordination.patchpanel_port_map))
+            LOG.debug("patchpanel_switch port_map config: " + str(CONF.ngs_coordination.patchpanel_port_map))
             self.patchpanel_port_map = {}
             for port_str in CONF.ngs_coordination.patchpanel_port_map.split(','):
                 port_name, port_id = port_str.split(":")
-                LOG.info("port_map adding: " + str(port_name) + ", " + str(port_id))
+                LOG.debug("port_map adding: " + str(port_name) + ", " + str(port_id))
                 self.patchpanel_port_map[port_name] = port_id
 
-            LOG.info("port_map built: " + str(self.patchpanel_port_map))
+            LOG.info("patchpanel_switch port_map: " + str(self.patchpanel_port_map))
             #
             # LOG.info("patch_vlans_available: " + str(CONF.ngs_coordination.patch_vlans))
             # [patch_vlan_low,patch_vlan_high] = CONF.ngs_coordination.patch_vlans.split(':')
@@ -96,8 +116,6 @@ class GenericSwitchDriver(api.MechanismDriver):
         except Exception as e:
             import traceback
             LOG.info("patchpanel_switch undefined" + str(traceback.format_exc()))
-
-
 
         for switch_info, device_cfg in gsw_devices.items():
             switch = devices.device_manager(device_cfg)
@@ -113,9 +131,9 @@ class GenericSwitchDriver(api.MechanismDriver):
             if 'sharedNonByocProvider' in device_cfg:
                 self.sharedNonByocProvider = device_cfg[
                     'sharedNonByocProvider']
-            LOG.info('---  Devices - switch %s ', str(switch) )
+            LOG.info('---  Devices - switch %s ', str(switch))
 
-        LOG.info('---  Devices - self.vfcHost %s ', str(self.vfcHost) )
+        # LOG.info('---  Devices - self.vfcHost %s ', str(self.vfcHost) )
         LOG.info('Devices %s have been loaded - keys   ', self.switches.keys())
         LOG.info('Devices %s have been loaded - values ', self.switches.values())
         if not self.switches:
@@ -158,6 +176,15 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         LOG.info("create_network: {} ({}), network_id: {}".format(
             str(network['name']), str(network_id), str(network)))
+
+        # Shadow network has not physical deployment
+        if self.stitching_shadow_network_name is not None and self.stitching_shadow_network_name == network['name']:
+            LOG.debug("Setting new stitching_shadow_network")
+            self.stitching_shadow_network = network
+
+        if self.stitching_shadow_network is not None and network['id'] == self.stitching_shadow_network['id']:
+            LOG.debug('adding to shadow network. no physical config required')
+            return
 
         if provider_type == 'vlan' and segmentation_id:
             # Create vlan on all switches from this driver
@@ -221,36 +248,6 @@ class GenericSwitchDriver(api.MechanismDriver):
                              '%(device)s', {'net_id': network['id'],
                                             'device': switch_name})
 
-    def __get_of_controller(self, network):
-        if 'description' in network.keys():
-            description = network['description'].strip()
-            LOG.info(" --- Description = " + description)
-
-            if description.startswith('OFController='):
-                VFCparameters = description.split(',')
-                key, controller = VFCparameters[0].split('=')
-                cont_ip, cont_port = controller.strip().split(':')
-
-                # Validate controller IP address and port
-                try:
-                    socket.inet_aton(cont_ip)
-                except:
-                    raise Exception(
-                        "The provided controller IP address is invalid: %s",
-                        str(cont_ip))
-                try:
-                    cont_port = int(cont_port)
-                    if cont_port < 0 or cont_port > 65535:
-                        raise ValueError
-                except:
-                    raise Exception(
-                        "The provided controller port is invalid: %s",
-                        str(cont_port))
-
-                return cont_ip, cont_port
-
-        return None
-
     def __get_vfc_name(self, network, project_id=None):
         if 'description' in network.keys():
             description = network['description'].strip()
@@ -292,7 +289,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                             len(v_switch_name) > 25):
                         raise ValueError
                 except:
-                        raise Exception("Invalid VSwitch Name: %s", vfc_name)
+                    raise Exception("Invalid VSwitch Name: %s", vfc_name)
                 return vfc_name
 
         return None
@@ -505,7 +502,278 @@ class GenericSwitchDriver(api.MechanismDriver):
         drastically affect performance.  Raising an exception will
         result in the deletion of the resource.
         """
-        pass
+        import json
+        LOG.debug("create_port_postcommit context.__dict__" + str(context.__dict__))
+        LOG.debug("create_port_postcommit context.current" + str(context.current))
+
+        port = context.current
+        shadow_port = self.__get_shadow_port(port)
+
+        network = context.network.current
+        provider_type = network['provider:network_type']
+        segmentation_id = network['provider:segmentation_id']
+        physnet = network['provider:physical_network']
+
+        if shadow_port:
+            shadow_port_binding = shadow_port['bindings'][0]
+            shadow_port_binding_profile = shadow_port_binding['profile']
+            port_type = port['binding:profile']['type']
+
+            LOG.debug('Adding port with shadowport: port_type: ' + str(port_type))
+            LOG.debug('patchpanel_port_map:  ' + str(self.patchpanel_port_map))
+
+            if 'reservation_id' in port['binding:profile']:
+                reservation_id = port['binding:profile']['reservation_id']
+
+            # get shadow vlan and stitchport from shadow port
+            stichport_name = shadow_port_binding_profile['stitchport']
+            stichport_vlan = shadow_port_binding_profile['stitch_vlan']
+            LOG.debug('stichport_name: ' + str(stichport_name) + ", stichport_vlan: " + str(stichport_vlan))
+
+            # Add patch
+            try:
+                port1_name = self.patchpanel_port_map[stichport_name]
+                port1_vlan = stichport_vlan
+                port2_name = self.patchpanel_port_map[physnet]
+                port2_vlan = segmentation_id
+                patch_vlan = self.__get_available_patch_vlan()
+
+                LOG.info('Adding patch: ' + str(self.patchpanel_switch) +
+                         ', patch_vlan: ' + str(patch_vlan) +
+                         ', port1_name: ' + str(port1_name) +
+                         ', port1_vlan: ' + str(port1_vlan) +
+                         ', port2_name: ' + str(port2_name) +
+                         ', port2_vlan: ' + str(port2_vlan)
+                         )
+                shadow_port_binding = shadow_port['bindings'][0]
+                new_binding_profile = {}
+                for k, v in shadow_port_binding_profile.items():
+                    new_binding_profile[k] = v
+                new_binding_profile['patch_panel_vlan'] = patch_vlan
+                new_binding_profile['patch_port_id'] = port['id']
+                shadow_port_binding.profile = new_binding_profile
+                shadow_port_binding.update()
+
+                self.__get_patchpanel_switch().add_patch(patch_id=patch_vlan,
+                                                         port1_name=port1_name,
+                                                         port1_vlan=port1_vlan,
+                                                         port2_name=port2_name,
+                                                         port2_vlan=port2_vlan)
+
+
+
+            except Exception as e:
+                LOG.error(str(e) + ", traceback: " + str(traceback.format_exc()))
+                raise e
+
+        elif provider_type == 'vlan' and segmentation_id:
+            # if the port is an internal port for connecting a server
+            for switch_name, switch in self._get_devices_by_physnet(physnet):
+                # Skip configuring the patchpanel for regular networks
+                if hasattr(self, 'patchpanel_switch_name') and switch_name == self.patchpanel_switch_name:
+                    LOG.debug("Skipping patchpaned switch config for vlan network")
+                    continue
+
+                try:
+                    if switch_name in self.provisionable_switches and physnet == \
+                            self.provisionable_switches[switch_name]['device_cfg']['chi_provider_net_name']:
+                        if segmentation_id in self.provisionable_switches[switch_name]['switch_map']:
+                            LOG.debug("corsa - custom controller - add_port ")
+                            switch.add_port(port_id, segmentation_id)
+
+                except Exception as e:
+                    LOG.error("Failed to crete port %(port)s "
+                              "on device: %(switch)s, reason: %(exc)s",
+                              {'port_id': port['id'],
+                               'switch': switch_name,
+                               'exc': e})
+
+    def __get_shadow_port(self, port):
+        from neutron.objects.ports import Port
+
+        from neutron.objects import tag as tag_obj
+        from neutron_lib.plugins import directory
+
+        if self.stitching_shadow_network_name == None:
+            LOG.debug("Shadow port not set, skipping")
+            return None
+
+        if self.stitching_shadow_network == None:
+            self.stitching_shadow_network = self.__get_shadow_network()
+
+        if self.stitching_shadow_network == None:
+            LOG.debug("No shadow network, skipping")
+            return None
+
+        if port['network_id'] == self.stitching_shadow_network['id']:
+            LOG.debug("Port is shadow port, skipping")
+            return None
+
+        LOG.debug("XXXXXX self.stitching_shadow_network: " + str(self.stitching_shadow_network))
+        LOG.debug("XXXXXX self.stitching_shadow_network['id']: " + str(self.stitching_shadow_network['id']))
+        LOG.debug("XXXXXX port['network_id']: " + str(port['network_id']))
+
+
+        admin_context = lib_context.get_admin_context()
+        LOG.debug("XXXXXX admin_context, " + str(admin_context))
+
+        LOG.debug("XXXXXX Networks")
+        for net in network_obj.Network.get_objects(admin_context):
+            LOG.debug("XXXXXX Net: " + str(net))
+            if str(net['name']) == self.stitching_shadow_network_name:
+                LOG.debug("XXXXXX FOUND SHADOW STITCH NETWORK: " + str(net['name']) + ", " + str(net))
+                stitching_shadow_network = net
+                stitching_shadow_network_id = net['id']
+
+        #LOG.debug("XXXXXX Ports, ")
+        #for port in port_obj.Port.get_objects(admin_context):
+        #    LOG.debug("XXXXXX Port: " + str(port))
+        #    if port['network_id'] == stitching_shadow_network_id:
+        #        shadow_port = port
+        #        LOG.debug("XXXXXX FOUND SHADOW STITCH Port: " + str(port))
+
+        #port = context.current  # NOW passed in
+        port_id = port['id']
+
+        LOG.debug("port: " + str(port))
+        # network_id = port['network_id']
+
+        # LOG.debug("create_port_postcommit: port_id: " + str(port_id) + ", network_id: " + str(network_id))
+
+        # admin_context = lib_context.get_admin_context()
+        # network = network_obj.Network.get_objects(admin_context,id=network_id)[0]
+
+
+
+        port_type = None
+        shadow_port = None
+        if 'type' in port['binding:profile']:
+            port_type = port['binding:profile']['type']
+            project_id = port['project_id']
+            if 'reservation_id' in port['binding:profile']:
+                reservation_id = port['binding:profile']['reservation_id']
+
+            if port_type == 'stitchport':
+                LOG.debug('Adding stitch port: port_type: ' + str(port_type))
+                LOG.debug('patchpanel_port_map:  ' + str(self.patchpanel_port_map))
+
+            LOG.debug("Searching for shadow port, ")
+            for shadow_port_candidate in port_obj.Port.get_objects(admin_context):
+                try:
+                    if self.stitching_shadow_network != None and shadow_port_candidate['network_id'] != self.stitching_shadow_network['id']:
+                        LOG.debug("Skipping non-shadow network port")
+                        continue
+
+                    LOG.debug("Candidate shadow_port: " + str(shadow_port_candidate))
+
+                    binding = None
+                    for binding_candidate in shadow_port_candidate['bindings']:
+                        LOG.debug("shadow_port_candidate['bindings'] type: " + str(type(binding_candidate)))
+                        LOG.debug("shadow_port_candidate['bindings'] binding: " + str(binding_candidate))
+
+                    shadow_port_candidate_binding_profile = shadow_port_candidate['bindings'][0]['profile']
+
+                    LOG.debug("\n" + "project_id " + str(project_id) + "\n" +
+                              "reservation_id " + str(reservation_id) + "\n" +
+                              "shadow_port_candidate['project_id'] " + str(shadow_port_candidate['project_id']) + "\n" +
+                              "shadow_port_candidate_binding_profile['reservation_id'] " + str(shadow_port_candidate_binding_profile['reservation_id']) + "\n" )
+
+                    if shadow_port_candidate['project_id'] == project_id and \
+                       shadow_port_candidate_binding_profile['reservation_id'] == reservation_id:
+                        LOG.debug("XXXXXX FOUND SHADOW STITCH Port: " + str(port))
+                        shadow_port = shadow_port_candidate
+                        break
+                except Exception as e:
+                    LOG.debug("Exception in testing shadow_port_candidate: " + str(e)  + ", " + str(traceback.format_exc()) + ", shadow_port_candidate: " + str(shadow_port_candidate))
+                    continue
+
+        if shadow_port == None:
+            LOG.debug("XXXXXX SHADOW STITCH NOT FOUND!")
+
+        return shadow_port
+
+    def __get_shadow_network(self):
+        admin_context = lib_context.get_admin_context()
+        LOG.debug("Networks")
+        nets = network_obj.Network.get_objects(admin_context, name=self.stitching_shadow_network_name)
+        LOG.debug("Nets: " + str(nets))
+        if len(nets) == 1:
+            net = nets[0]
+            LOG.debug("Net: " + str(net))
+            if str(net['name']) == self.stitching_shadow_network_name:
+                LOG.debug("FOUND SHADOW STITCH NETWORK: " + str(net['name']) + ", " + str(net))
+                self.stitching_shadow_network = net
+        elif len(nets) < 1:
+            LOG.debug("No shadow network ")
+            self.stitching_shadow_network = None
+        else:
+            raise Exception("More than one network with shadow network name: " + str(nets))
+
+        return self.stitching_shadow_network
+
+    def __get_available_patch_vlan(self):
+        import threading
+        self.__get_patchpanel_switch()
+        patch_vlan = self.patch_vlans_available.pop(0)
+
+        thread_id = threading.current_thread().name
+        LOG.debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX__get_available_patch_vlan, returning patch_vlan: " + str(patch_vlan) + ", thread_id: " + str(thread_id))
+
+        return patch_vlan
+
+        #def __return_available_patch_vlan(self, patch_vlan):
+    #    self.__get_patchpanel_switch()
+    #    self.patch_vlans_available.append(patch_vlan)
+
+    def __get_patchpanel_switch(self):
+        admin_context = lib_context.get_admin_context()
+        LOG.debug("admin_context, " + str(admin_context))
+
+        try:
+            # Find the patch panel switch object
+            for switch_name, switch in self.switches.items():
+                LOG.debug("Searching for patchpanel switch (" + self.patchpanel_switch_name + ". candidate: " + str(
+                    switch_name))
+                if switch_name == self.patchpanel_switch_name:
+                    self.patchpanel_switch = switch
+                    break
+
+            # Create the map of patch panel ports to destinations
+            LOG.info("port_map: " + str(CONF.ngs_coordination.patchpanel_port_map))
+            self.patchpanel_port_map = {}
+            for port_str in CONF.ngs_coordination.patchpanel_port_map.split(','):
+                port_name, port_id = port_str.split(":")
+                LOG.info("port_map adding: " + str(port_name) + ", " + str(port_id))
+                self.patchpanel_port_map[port_name] = port_id
+            LOG.info("port_map built: " + str(self.patchpanel_port_map ))
+
+            # Create the list of available patch panel VLANs from the config file
+            LOG.info("patch_vlans_available: " + str(CONF.ngs_coordination.patch_vlans))
+            self.patch_vlans_available = []
+            [patch_vlan_low,patch_vlan_high] = CONF.ngs_coordination.patch_vlans.split(':')
+            for vlan in range(int(patch_vlan_low),int(patch_vlan_high)+1):
+                self.patch_vlans_available.append(vlan)
+
+            # Remove the allocated VLANs
+            admin_context = lib_context.get_admin_context()
+            LOG.debug("admin_context, " + str(admin_context))
+
+            LOG.debug("Ports, ")
+            for port in port_obj.Port.get_objects(admin_context, network_id=self.stitching_shadow_network['id']):
+                LOG.debug("Port: " + str(port))
+                try:
+                    patch_vlan = port['bindings'][0]['profile']['patch_panel_vlan']
+                    LOG.debug('Removing patch vlan: ' + str(patch_vlan))
+                    self.patch_vlans_available.remove(patch_vlan)
+                except:
+                    LOG.debug('No patch VLAN')
+
+            LOG.debug('Patch VLANs: ' + str(self.patch_vlans_available))
+        except Exception as e:
+            import traceback
+            LOG.info("patchpanel_switch undefined" + str(traceback.format_exc()))
+
+        return self.patchpanel_switch
 
     def update_port_precommit(self, context):
         """Update resources of a port.
@@ -589,9 +857,68 @@ class GenericSwitchDriver(api.MechanismDriver):
         deleted.
         """
 
+        import json
+        LOG.debug("" + json.dumps(str(context.__dict__), indent=2))
+        LOG.debug("" + str(context.current))
+
         port = context.current
-        if self._is_port_bound(port):
-            self._unplug_port_from_network(port, context.network.current)
+        shadow_port = self.__get_shadow_port(port)
+
+
+        network = context.network.current
+        provider_type = network['provider:network_type']
+        segmentation_id = network['provider:segmentation_id']
+        physnet = network['provider:physical_network']
+
+        if shadow_port:
+            shadow_port_binding_profile = shadow_port['bindings'][0]['profile']
+            port_type = port['binding:profile']['type']
+
+            LOG.debug('Deleting port with shadowport: port_type: ' + str(port_type))
+            LOG.debug('patchpanel_port_map:  ' + str(self.patchpanel_port_map))
+
+            if 'reservation_id' in port['binding:profile']:
+                reservation_id = port['binding:profile']['reservation_id']
+
+            #get shadow vlan and stitchport from shadow port
+            stichport_name = shadow_port_binding_profile['stitchport']
+            stichport_vlan = shadow_port_binding_profile['stitch_vlan']
+            LOG.debug('stichport_name: ' + str(stichport_name) + ", stichport_vlan: " + str(stichport_vlan))
+
+            try:
+                port1_name = self.patchpanel_port_map[stichport_name]
+                port1_vlan = stichport_vlan
+                port2_name = self.patchpanel_port_map[physnet]
+                port2_vlan = segmentation_id
+
+                #patch = self.patch_vlans_allocated.pop(port['id']) #TODO: roll back on failure. This might leak patch vlans
+                patch_vlan = shadow_port_binding_profile['patch_panel_vlan']
+                LOG.debug('Deleting patch: ' + str(self.patchpanel_switch) +
+                          ', port1_name: ' + str(port1_name) +
+                          ', port1_vlan: ' + str(port1_vlan) +
+                          ', port2_name: ' + str(port2_name) +
+                          ', port2_vlan: ' + str(port2_vlan)
+                          )
+
+                self.__get_patchpanel_switch().remove_patch(patch_id=patch_vlan)
+
+                shadow_port_binding = shadow_port['bindings'][0]
+                new_binding_profile = {}
+                for k, v in shadow_port_binding_profile.items():
+                    new_binding_profile[k] = v
+                new_binding_profile.pop('patch_panel_vlan')
+                new_binding_profile.pop('patch_port_id')
+                shadow_port_binding.profile = new_binding_profile
+                shadow_port_binding.update()
+
+
+            except Exception as e:
+                import traceback
+                LOG.error(str(e) + ", traceback: " + str(traceback.format_exc()))
+        else:
+            # Non-patch panel
+            if self._is_port_bound(port):
+                self._unplug_port_from_network(port, context.network.current)
 
     def bind_port(self, context):
         """Attempt to bind a port.
@@ -667,7 +994,7 @@ class GenericSwitchDriver(api.MechanismDriver):
                 is_byoc_network = True
             else:
                 is_byoc_network = False
-            LOG.info("---  Bindport: is_byoc_network : " + str(is_byoc_network) )
+            LOG.info("---  Bindport: is_byoc_network : " + str(is_byoc_network))
 
             if switch_physnets and physnet not in switch_physnets:
                 LOG.error("Cannot bind port %(port)s as device %(device)s is "
@@ -684,14 +1011,15 @@ class GenericSwitchDriver(api.MechanismDriver):
                 GENERIC_SWITCH_ENTITY)
             LOG.debug("Putting port {port} on {switch_info} to vlan: "
                       "{segmentation_id}".format(
-                          port=port_id,
-                          switch_info=switch_info,
-                          segmentation_id=segmentation_id))
+                port=port_id,
+                switch_info=switch_info,
+                segmentation_id=segmentation_id))
 
             LOG.info("---  Bindport - haswellNodeRange %s : " + str(self.haswellNodeRange[0]))
             LOG.info("---  Bindport - haswellNodeRange %s : " + str(self.haswellNodeRange[1]))
             ### Determine if the node is a haswell node
-            if is_byoc_network and int(sdn_node_id) in range(int(self.haswellNodeRange[0]),int(self.haswellNodeRange[1])):
+            if is_byoc_network and int(sdn_node_id) in range(int(self.haswellNodeRange[0]),
+                                                             int(self.haswellNodeRange[1])):
                 haswell_sdn = True
 
             LOG.info("---  Bindport - sdn_node_id : " + str(sdn_node_id))
@@ -711,7 +1039,6 @@ class GenericSwitchDriver(api.MechanismDriver):
                         port_id, segmentation_id, sdn_node_id, vfc_host=self.vfcHost)
                 else:
                     switch.plug_port_to_network(port_id, segmentation_id)
-
 
             LOG.info("Successfully bound port %(port_id)s in segment "
                      "%(segment_id)s on device %(device)s",
@@ -778,9 +1105,9 @@ class GenericSwitchDriver(api.MechanismDriver):
         segmentation_id = network.get('provider:segmentation_id') or '1'
         LOG.debug("Unplugging port {port} on {switch_info} from vlan: "
                   "{segmentation_id}".format(
-                      port=port_id,
-                      switch_info=switch_info,
-                      segmentation_id=segmentation_id))
+            port=port_id,
+            switch_info=switch_info,
+            segmentation_id=segmentation_id))
 
         ### Determine if the network is BYOC
         network_id = network['id']
@@ -791,18 +1118,17 @@ class GenericSwitchDriver(api.MechanismDriver):
             is_byoc_network = True
         else:
             is_byoc_network = False
-        LOG.info("---  _unplug_port_from_network: is_byoc_network : " + str(is_byoc_network) )
+        LOG.info("---  _unplug_port_from_network: is_byoc_network : " + str(is_byoc_network))
 
         LOG.info("---  _unplug_port_from_network - haswellNodeRange : " + str(self.haswellNodeRange[0]))
         LOG.info("---  _unplug_port_from_network - haswellNodeRange : " + str(self.haswellNodeRange[1]))
         ### Determine if the node is a haswell node
-        if is_byoc_network and int(sdn_node_id) in range(int(self.haswellNodeRange[0]),int(self.haswellNodeRange[1])):
+        if is_byoc_network and int(sdn_node_id) in range(int(self.haswellNodeRange[0]), int(self.haswellNodeRange[1])):
             haswell_sdn = True
 
         LOG.info("---  _unplug_port_from_network - sdn_node_id : " + str(sdn_node_id))
         LOG.info("---  _unplug_port_from_network - haswell_sdn : " + str(haswell_sdn))
         LOG.info("---  _unplug_port_from_network - segmentation_id : " + str(segmentation_id))
-
 
         try:
             if self.switch_is_corsadp2100(switch):
@@ -842,6 +1168,36 @@ class GenericSwitchDriver(api.MechanismDriver):
             # follow the old behaviour of mapping all networks to it.
             if not physnets or physnet in physnets:
                 yield switch_name, switch
+
+    def __get_of_controller(self, network):
+        if 'description' in network.keys():
+            description = network['description'].strip()
+            LOG.info(" --- Description = " + description)
+
+            if description.startswith('OFController='):
+                VFCparameters = description.split(',')
+                key, controller = VFCparameters[0].split('=')
+                cont_ip, cont_port = controller.strip().split(':')
+
+                # Validate controller IP address and port
+                try:
+                    socket.inet_aton(cont_ip)
+                except:
+                    raise Exception(
+                        "The provided controller IP address is invalid: %s",
+                        str(cont_ip))
+                try:
+                    cont_port = int(cont_port)
+                    if cont_port < 0 or cont_port > 65535:
+                        raise ValueError
+                except:
+                    raise Exception(
+                        "The provided controller port is invalid: %s",
+                        str(cont_port))
+
+                return cont_ip, cont_port
+
+        return None
 
     def switch_is_corsadp2100(self, switch):
 
