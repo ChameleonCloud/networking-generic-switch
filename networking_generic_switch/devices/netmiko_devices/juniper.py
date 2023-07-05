@@ -72,6 +72,16 @@ class Juniper(netmiko_devices.NetmikoSwitch):
         'vlan members {segmentation_id}',
     )
 
+    ADD_PATCH = (
+        'set vlans p{patch_id} vlan-id {patch_id}',
+        'set vlans p{patch_id} interface {port1_name} mapping {port1_vlan} swap',
+        'set vlans p{patch_id} interface {port2_name} mapping {port2_vlan} swap',
+    )
+
+    REMOVE_PATCH = (
+        'delete vlans p{patch_id}',
+    )
+
     def __init__(self, device_cfg):
         super(Juniper, self).__init__(device_cfg)
 
