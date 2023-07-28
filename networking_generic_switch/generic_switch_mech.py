@@ -507,28 +507,43 @@ class GenericSwitchDriver(api.MechanismDriver):
         LOG.debug("create_port_postcommit context.current" + str(context.current))
 
         port = context.current
-        shadow_port = self.__get_shadow_port(port)
 
         network = context.network.current
         provider_type = network['provider:network_type']
         segmentation_id = network['provider:segmentation_id']
         physnet = network['provider:physical_network']
 
+        if self.stitching_shadow_network == None:
+            self.stitching_shadow_network = self.__get_shadow_network()
+
+        LOG.debug("stitching_shadow_network: " + str(self.stitching_shadow_network))
+
+        LOG.debug("port['network_id']: " + str(port['network_id']))
+        LOG.debug("self.stitching_shadow_network['id']: " + str(self.stitching_shadow_network['id']))
+
+        if port['network_id'] == self.stitching_shadow_network['id']:
+            LOG.info("creating shadow port, no action required: " + str(port['network_id']))
+            return
+
+        shadow_port = self.__get_shadow_port(port)
+        LOG.debug("shadow_port: " + str(shadow_port))
+
         if shadow_port:
             shadow_port_binding = shadow_port['bindings'][0]
             shadow_port_binding_profile = shadow_port_binding['profile']
-            port_type = port['binding:profile']['type']
+            #port_type = port['binding:profile']['type']
 
-            LOG.debug('Adding port with shadowport: port_type: ' + str(port_type))
+            #LOG.debug('Adding port with shadowport: port_type: ' + str(port_type))
             LOG.debug('patchpanel_port_map:  ' + str(self.patchpanel_port_map))
 
             if 'reservation_id' in port['binding:profile']:
                 reservation_id = port['binding:profile']['reservation_id']
 
             # get shadow vlan and stitchport from shadow port
-            stichport_name = shadow_port_binding_profile['stitchport']
-            stichport_vlan = shadow_port_binding_profile['stitch_vlan']
-            LOG.debug('stichport_name: ' + str(stichport_name) + ", stichport_vlan: " + str(stichport_vlan))
+            stichport_name = shadow_port_binding_profile['provider']
+            stichport_vlan = shadow_port_binding_profile['vlan_tag']
+            LOG.debug("stichport_name: " + str(stichport_name))
+            LOG.debug("stichport_vlan: " + str(stichport_vlan))
 
             # Add patch
             try:
@@ -647,45 +662,56 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         port_type = None
         shadow_port = None
-        if 'type' in port['binding:profile']:
-            port_type = port['binding:profile']['type']
-            project_id = port['project_id']
-            if 'reservation_id' in port['binding:profile']:
-                reservation_id = port['binding:profile']['reservation_id']
+        #if 'type' in port['binding:profile']:
+        port_type = 'stitchport' #port['binding:profile']['type']
+        project_id = port['project_id']
+        if 'reservation_id' in port['binding:profile']:
+            reservation_id = port['binding:profile']['reservation_id']
 
-            if port_type == 'stitchport':
-                LOG.debug('Adding stitch port: port_type: ' + str(port_type))
-                LOG.debug('patchpanel_port_map:  ' + str(self.patchpanel_port_map))
+        if port_type == 'stitchport':
+            LOG.debug('Adding stitch port: port_type: ' + str(port_type))
+            LOG.debug('patchpanel_port_map:  ' + str(self.patchpanel_port_map))
 
-            LOG.debug("Searching for shadow port, ")
-            for shadow_port_candidate in port_obj.Port.get_objects(admin_context):
-                try:
-                    if self.stitching_shadow_network != None and shadow_port_candidate['network_id'] != self.stitching_shadow_network['id']:
-                        LOG.debug("Skipping non-shadow network port")
-                        continue
+        LOG.debug("Searching for shadow port, ")
+        for shadow_port_candidate in port_obj.Port.get_objects(admin_context):
+            try:
+                if self.stitching_shadow_network != None and shadow_port_candidate['network_id'] != self.stitching_shadow_network['id']:
+                    LOG.debug("Skipping non-shadow network port")
+                    continue
 
-                    LOG.debug("Candidate shadow_port: " + str(shadow_port_candidate))
+                LOG.debug("Candidate shadow_port: " + str(shadow_port_candidate))
 
-                    binding = None
-                    for binding_candidate in shadow_port_candidate['bindings']:
-                        LOG.debug("shadow_port_candidate['bindings'] type: " + str(type(binding_candidate)))
-                        LOG.debug("shadow_port_candidate['bindings'] binding: " + str(binding_candidate))
+                binding = None
+                for binding_candidate in shadow_port_candidate['bindings']:
+                    LOG.debug("shadow_port_candidate['bindings'] type: " + str(type(binding_candidate)))
+                    LOG.debug("shadow_port_candidate['bindings'] binding: " + str(binding_candidate))
 
-                    shadow_port_candidate_binding_profile = shadow_port_candidate['bindings'][0]['profile']
+                shadow_port_candidate_binding_profile = shadow_port_candidate['bindings'][0]['profile']
 
+                LOG.debug("shadow_port_candidate_binding_profile: " + str(shadow_port_candidate_binding_profile))
+
+                if 'reservation_id' in shadow_port_candidate_binding_profile:
                     LOG.debug("\n" + "project_id " + str(project_id) + "\n" +
                               "reservation_id " + str(reservation_id) + "\n" +
                               "shadow_port_candidate['project_id'] " + str(shadow_port_candidate['project_id']) + "\n" +
+                              "shadow_port_candidate_binding_profile['project_id'] " + str(shadow_port_candidate_binding_profile['project_id']) + "\n" +
                               "shadow_port_candidate_binding_profile['reservation_id'] " + str(shadow_port_candidate_binding_profile['reservation_id']) + "\n" )
 
-                    if shadow_port_candidate['project_id'] == project_id and \
-                       shadow_port_candidate_binding_profile['reservation_id'] == reservation_id:
+                    if shadow_port_candidate_binding_profile['project_id'] == project_id and \
+                            shadow_port_candidate_binding_profile['reservation_id'] == reservation_id:
                         LOG.debug("XXXXXX FOUND SHADOW STITCH Port: " + str(port))
                         shadow_port = shadow_port_candidate
                         break
-                except Exception as e:
-                    LOG.debug("Exception in testing shadow_port_candidate: " + str(e)  + ", " + str(traceback.format_exc()) + ", shadow_port_candidate: " + str(shadow_port_candidate))
-                    continue
+
+
+                #if shadow_port_candidate['project_id'] == project_id and \
+                #   shadow_port_candidate_binding_profile['reservation_id'] == reservation_id:
+                #    LOG.debug("XXXXXX FOUND SHADOW STITCH Port: " + str(port))
+                #    shadow_port = shadow_port_candidate
+                #    break
+            except Exception as e:
+                LOG.debug("Exception in testing shadow_port_candidate: " + str(e)  + ", " + str(traceback.format_exc()) + ", shadow_port_candidate: " + str(shadow_port_candidate))
+                continue
 
         if shadow_port == None:
             LOG.debug("XXXXXX SHADOW STITCH NOT FOUND!")
@@ -872,18 +898,19 @@ class GenericSwitchDriver(api.MechanismDriver):
 
         if shadow_port:
             shadow_port_binding_profile = shadow_port['bindings'][0]['profile']
-            port_type = port['binding:profile']['type']
+            #port_type = port['binding:profile']['type']
 
-            LOG.debug('Deleting port with shadowport: port_type: ' + str(port_type))
+            #LOG.debug('Deleting port with shadowport: port_type: ' + str(port_type))
             LOG.debug('patchpanel_port_map:  ' + str(self.patchpanel_port_map))
 
             if 'reservation_id' in port['binding:profile']:
                 reservation_id = port['binding:profile']['reservation_id']
 
             #get shadow vlan and stitchport from shadow port
-            stichport_name = shadow_port_binding_profile['stitchport']
-            stichport_vlan = shadow_port_binding_profile['stitch_vlan']
-            LOG.debug('stichport_name: ' + str(stichport_name) + ", stichport_vlan: " + str(stichport_vlan))
+            stichport_name = shadow_port_binding_profile['provider']
+            stichport_vlan = shadow_port_binding_profile['vlan_tag']
+            LOG.debug("stichport_name: " + str(stichport_name))
+            LOG.debug("stichport_vlan: " + str(stichport_vlan))
 
             try:
                 port1_name = self.patchpanel_port_map[stichport_name]
