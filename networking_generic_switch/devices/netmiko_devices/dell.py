@@ -14,8 +14,8 @@
 
 import re
 
-from networking_generic_switch.devices import netmiko_devices
 from networking_generic_switch import exceptions as exc
+from networking_generic_switch.devices import netmiko_devices
 
 
 class DellOS10(netmiko_devices.NetmikoSwitch):
@@ -198,4 +198,18 @@ class DellPowerConnect(netmiko_devices.NetmikoSwitch):
         re.compile(r'VLAN was not created by user'),
         re.compile(r'Configuration Database locked by another application \- '
                    r'try later'),
+    )
+
+
+class DellFNIOA(netmiko_devices.NetmikoSwitch):
+    """Netmiko device driver for Dell FN I/O Aggregator switches."""
+
+    PLUG_PORT_TO_NETWORK = (
+        'interface {port}',
+        'vlan untagged {segmentation_id}'
+    )
+
+    DELETE_PORT = (
+        'interface {port}',
+        'no vlan untagged'
     )
