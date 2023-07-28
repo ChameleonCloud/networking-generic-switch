@@ -16,15 +16,12 @@ import atexit
 import json
 
 import etcd3gw
-from etcd3gw import exceptions as etcd3gw_exc
-from etcd3gw.utils import _decode
-from etcd3gw.utils import _encode
-from etcd3gw.utils import _increment_last_byte
 import eventlet
-from oslo_log import log as logging
-from oslo_utils import netutils
-from oslo_utils import uuidutils
 import tenacity
+from etcd3gw import exceptions as etcd3gw_exc
+from etcd3gw.utils import _decode, _encode, _increment_last_byte
+from oslo_log import log as logging
+from oslo_utils import netutils, uuidutils
 
 from networking_generic_switch import exceptions as exc
 
@@ -325,7 +322,6 @@ class SwitchBatch(object):
             etcd_client = etcd3gw.client(
                 host=host, port=port, protocol=protocol,
                 ca_cert=ca_cert, cert_key=cert_key, cert_cert=cert_cert,
-                api_path='/' + api_version + '/',
                 timeout=30)
             self.queue = SwitchQueue(switch_name, etcd_client)
         else:
