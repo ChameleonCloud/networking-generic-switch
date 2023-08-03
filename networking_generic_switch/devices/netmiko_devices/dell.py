@@ -70,12 +70,10 @@ class DellOS10(netmiko_devices.NetmikoSwitch):
         "exit",
     )
 
-    ERROR_MSG_PATTERNS = ()
-    """Sequence of error message patterns.
-
-    Sequence of re.RegexObject objects representing patterns to check for in
-    device output that indicate a failure to apply configuration.
-    """
+    ERROR_MSG_PATTERNS = (
+        re.compile(r'Error: Illegal parameter.'),
+        re.compile(r'Error: Unrecognized command.'),
+    )
 
 
 class DellNos(netmiko_devices.NetmikoSwitch):
