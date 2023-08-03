@@ -33,39 +33,39 @@ class DellOS10(netmiko_devices.NetmikoSwitch):
     )
 
     PLUG_PORT_TO_NETWORK = (
-        "interface {port}",
+        "interface ethernet {port}",
         "switchport mode access",
         "switchport access vlan {segmentation_id}",
         "exit",
     )
 
     DELETE_PORT = (
-        "interface {port}",
+        "interface ethernet {port}",
         "no switchport access vlan",
         "exit",
     )
 
     ADD_NETWORK_TO_TRUNK = (
-        "interface {port}",
+        "interface ethernet {port}",
         "switchport mode trunk",
         "switchport trunk allowed vlan {segmentation_id}",
         "exit",
     )
 
     REMOVE_NETWORK_FROM_TRUNK = (
-        "interface {port}",
+        "interface ethernet {port}",
         "no switchport trunk allowed vlan {segmentation_id}",
         "exit",
     )
 
     ENABLE_PORT = (
-        "interface {port}",
+        "interface ethernet {port}",
         "no shutdown",
         "exit",
     )
 
     DISABLE_PORT = (
-        "interface {port}",
+        "interface ethernet {port}",
         "shutdown",
         "exit",
     )
