@@ -16,6 +16,8 @@ import re
 
 from networking_generic_switch import exceptions as exc
 from networking_generic_switch.devices import netmiko_devices
+from oslo_log import log as logging
+LOG = logging.getLogger(__name__)
 
 
 class DellOS10(netmiko_devices.NetmikoSwitch):
@@ -117,6 +119,24 @@ class DellNos(netmiko_devices.NetmikoSwitch):
         'exit',
     )
 
+    SAVE_CONFIGURATION = (
+        "write memory",
+    )
+
+    # override method used in netmiko
+    def save_configuration(self, net_connect):
+        if self.SAVE_CONFIGURATION:
+            for cmd in self.SAVE_CONFIGURATION:
+                net_connect.send_command(cmd)
+        else:
+            LOG.warning("Saving config is not supported for %s,"
+                        " all changes will be lost after switch"
+                        " reboot", self.config['device_type'])
+
+
+    ERROR_MSG_PATTERNS = (
+        re.compile(r'Error: The source file does not exist.'),
+    )
 
 class DellPowerConnect(netmiko_devices.NetmikoSwitch):
     """Netmiko device driver for Dell PowerConnect switches."""
