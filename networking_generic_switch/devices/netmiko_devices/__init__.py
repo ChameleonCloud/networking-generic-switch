@@ -23,6 +23,7 @@ from oslo_log import log as logging
 import paramiko
 import tenacity
 from tooz import coordination
+import json
 
 from networking_generic_switch import batching
 from networking_generic_switch import devices
@@ -32,6 +33,8 @@ from networking_generic_switch import locking as ngs_lock
 
 LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
+
+SWITCH_CONNECTION_DICT={}
 
 
 def check_output(operation):
@@ -119,6 +122,7 @@ class NetmikoSwitch(devices.GenericSwitchDevice):
             self.config['session_log_record_writes'] = True
             self.config['session_log_file_mode'] = 'append'
 
+        self.config['keepalive']=10
         self.lock_kwargs = {
             'locks_pool_size': int(self.ngs_config['ngs_max_connections']),
             'locks_prefix': self.config.get(
@@ -158,7 +162,6 @@ class NetmikoSwitch(devices.GenericSwitchDevice):
                                                       args=kwargs)
         return cmd_set
 
-    @contextlib.contextmanager
     def _get_connection(self):
         """Context manager providing a netmiko SSH connection object.
 
@@ -182,24 +185,45 @@ class NetmikoSwitch(devices.GenericSwitchDevice):
             wait=tenacity.wait_fixed(
                 int(self.ngs_config['ngs_ssh_connect_interval'])),
         )
-        def _create_connection():
+        def _create_connection():               
             return netmiko.ConnectHandler(**self.config)
 
-        # First, create a connection.
-        try:
-            net_connect = _create_connection()
-        except tenacity.RetryError as e:
-            LOG.error("Reached maximum SSH connection attempts, not retrying")
-            raise exc.GenericSwitchNetmikoConnectError(
-                config=device_utils.sanitise_config(self.config), error=e)
-        except Exception as e:
-            LOG.error("Unexpected exception during SSH connection")
-            raise exc.GenericSwitchNetmikoConnectError(
-                config=device_utils.sanitise_config(self.config), error=e)
+        # generate key based on switch name or IP, same as used for batching
+        switch_hash = self.lock_kwargs['locks_prefix']
+
+        net_connect = None
+        cached_connection = SWITCH_CONNECTION_DICT.get(switch_hash, None)
+        if cached_connection:
+            try:
+                if cached_connection.is_alive():
+                    LOG.info(f"reusing cached connection")
+                    net_connect = cached_connection
+                else:
+                    LOG.info(f"cached connection not alive, getting new one")
+            except Exception:
+                LOG.info(f"failed to use cached connection {cached_connection}")
+                pass
+        else:
+            LOG.debug(f"cached connection not initialized")
+        
+
+        if not net_connect:
+            # First, create a connection.
+            try:
+                net_connect = _create_connection()
+                LOG.debug(f"saving cached connection {net_connect}")
+                SWITCH_CONNECTION_DICT[switch_hash] = net_connect
+            except tenacity.RetryError as e:
+                LOG.error("Reached maximum SSH connection attempts, not retrying")
+                raise exc.GenericSwitchNetmikoConnectError(
+                    config=device_utils.sanitise_config(self.config), error=e)
+            except Exception as e:
+                LOG.error("Unexpected exception during SSH connection")
+                raise exc.GenericSwitchNetmikoConnectError(
+                    config=device_utils.sanitise_config(self.config), error=e)
 
         # Now yield the connection to the caller.
-        with net_connect:
-            yield net_connect
+        return net_connect
 
     def send_commands_to_device(self, cmd_set):
         if not cmd_set:
