@@ -70,7 +70,9 @@ class DellOS10(netmiko_devices.NetmikoSwitch):
         "exit",
     )
 
-    ERROR_MSG_PATTERNS = ()
+    ERROR_MSG_PATTERNS = (
+        re.compile(r'Error:'),
+    )
     """Sequence of error message patterns.
 
     Sequence of re.RegexObject objects representing patterns to check for in
@@ -117,6 +119,10 @@ class DellNos(netmiko_devices.NetmikoSwitch):
         'interface vlan {segmentation_id}',
         'no tagged {port}',
         'exit',
+    )
+
+    ERROR_MSG_PATTERNS = (
+        re.compile(r'Error:'),
     )
 
 
