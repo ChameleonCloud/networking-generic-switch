@@ -67,7 +67,23 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
 
     def _wait_for_applied(self, revision):
         # TODO .....
-        pass
+        retries = 20
+        poll_applied = 2
+        url=nvue_end_point + "/revision/" + revision
+
+        while retries > 0:
+            r  = requests.get(
+                url=url,
+                auth=self.auth,
+                verify=False
+            )
+            response = r.json()
+            if response["state"] == "applied":
+                return true
+            retries -= 1
+            time.sleep(poll_applied)
+
+        return False
 
     def send_commands_to_device(self, path, payload):
         # TODO: verify response, add loggging
@@ -83,25 +99,244 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
         result = self._wait_for_applied(revision)
 
     def add_network(self, segmentation_id, network_id):
-        # TODO
-        path = ""
-        payload = ""
-        self.send_commands_to_device(path=path, payload=payload)
+        # TODO -- Add bridge and interface variables either passed in or collected from network_id lookup
+        bridge_name = "br_default"
+        
+        #"nv set bridge domain {bridge_name} vlan {segmentation_id}
+        path = nvue_end_point
 
-    def del_network(self, segmentation_id, network_id):
-        # TODO
-        path = ""
-        payload = ""
-        self.send_commands_to_device(path=path, payload=payload)
+        payload = {
+            "set": {
+                "bridge": {
+                    "domain": {
+                        bridge_name: {
+                            "vlan": {
+                                str(segmentation_id): {}
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
+        self.send_commands_to_device(path=path, payload=payload)
+        
+    def del_network(self, segmentation_id):
+        bridge_name = "br_default"
+        
+        #"nv unset bridge domain {bridge_name} vlan {segmentation_id}
+        path = nvue_end_point
+        payload = {
+            "unset": {
+                "bridge": {
+                    "domain": {
+                        bridge_name: {
+                            "vlan": {
+                                str(segmentation_id): {}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        self.send_commands_to_device(path=path, payload=payload)   
     def plug_port_to_network(self, port_id, segmentation_id):
         # TODO
-        path = ""
-        payload = ""
+        bridge_name = "br_default"
+        
+        #"nv set interface {port_id} link state up"
+        path = nvue_end_point
+        payload = {
+                "set": {
+                        "interface": {
+                                str(port_id): {
+                                        "link": {
+                                        "state": {
+                                                "up": {}
+                                        }
+                                        }
+                                }
+                        }
+                }
+        }
         self.send_commands_to_device(path=path, payload=payload)
 
+
+        #"nv unset interface {port_id} bridge domain {bridge_name} access"
+        path = nvue_end_point
+        payload = {
+                "unset": {
+                        "interface": {
+                                str(port_id): {
+                                        "bridge": {
+                                        "domain": {
+                                                bridge_name: {
+                                                        "access": null
+                                                }
+                                        }
+                                        }
+                                }
+                        }
+                }
+                }
+        self.send_commands_to_device(path=path, payload=payload)
+
+        #"nv unset interface {port_id} bridge domain {bridge_name} untagged"
+        path = nvue_end_point
+        payload = {
+            "unset": {
+                "interface": {
+                    str(port_id): {
+                        "bridge": {
+                            "domain": {
+                                bridge_name: {
+                                    "untagged": null
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        self.send_commands_to_device(path=path, payload=payload)
+
+        #"nv set interface {port_id} bridge domain {bridge_name} vlan {segmentation_id}"
+        path = nvue_end_point
+        payload = {
+            "set": {
+                "interface": {
+                    str(port_id): {
+                        "bridge": {
+                            "domain": {
+                                bridge_name: {
+                                    "vlan": {
+                                                                                str(segmentation_id): {}
+                                                                        }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        self.send_commands_to_device(path=path, payload=payload)
+
+        #"nv set interface {port_id} bridge domain {bridge_name} untagged {segmentation_id}
+        path = nvue_end_point
+        payload = {
+                "set": {
+                        "interface": {
+                                str(port_id): {
+                                        "bridge": {
+                                        "domain": {
+                                                bridge_name: {
+                                                        "untagged": segmentation_id
+                                                }
+                                        }
+                                        }
+                                }
+                        }
+                }
+                }
+        self.send_commands_to_device(path=path, payload=payload)
     def delete_port(self, port_id, segmentation_id):
         # TODO
-        path = ""
-        payload = ""
+        bridge_name = "br_default"
+        
+        #"nv unset interface {port_id} bridge domain {bridge_name} access"
+        path = nvue_end_point
+        payload = {
+            "unset": {
+                "interface": {
+                    str(port_id): {
+                        "bridge": {
+                            "domain": {
+                                bridge_name: {
+                                    "access": null
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        self.send_commands_to_device(path=path, payload=payload)
+
+        #"nv unset interface {port_id} bridge domain {bridge_name} untagged"
+        path = nvue_end_point
+        payload = {
+            "unset": {
+                "interface": {
+                    str(port_id): {
+                        "bridge": {
+                            "domain": {
+                                bridge_name: {
+                                    "untagged": null
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        self.send_commands_to_device(path=path, payload=payload)
+
+        #"nv unset interface {port_id} bridge domain {bridge_name} vlan"
+        path = nvue_end_point
+        payload = {
+            "unset": {
+                "interface": {
+                    str(port_id): {
+                        "bridge": {
+                            "domain": {
+                                bridge_name: {
+                                    "vlan": null
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        self.send_commands_to_device(path=path, payload=payload)
+
+        #"nv set interface {port_id} bridge domain {bridge_name} vlan 1"
+        path = nvue_end_point
+        payload = {
+            "set": {
+                "interface": {
+                    str(port_id): {
+                        "bridge": {
+                            "domain": {
+                                bridge_name: {
+                                    "vlan": {
+                                        "1": {}
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        self.send_commands_to_device(path=path, payload=payload)
+
+        #"nv set interface {port_id} bridge domain {bridge_name} untagged 1"
+        path = nvue_end_point
+        payload = {
+            "set": {
+                "interface": {
+                    str(port_id): {
+                        "bridge": {
+                            "domain": {
+                                bridge_name: {
+                                    "untagged": 1
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
         self.send_commands_to_device(path=path, payload=payload)
