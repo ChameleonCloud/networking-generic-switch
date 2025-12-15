@@ -1,12 +1,30 @@
+import sys
+import ssl
+
+#save the original property
+_original_minimum_version = ssl.SSLContext.minimum_version
+
+#create a fixed property that shouldn't recurse
+def _fixed_minimum_version_getter(self):
+    return self._minimum_version if hasattr(self, '_minimum_version') else ssl.TLSVersion.TLSv1_2
+
+def _fixed_minimum_version_setter(self, value):
+    self._minimum_version = value
+
+ssl.SSLContext.minimum_version = property(_fixed_minimum_version_getter, _fixed_minimum_version_setter)
+
+import json
+import time
 import requests
 from oslo_config import cfg
 from oslo_log import log as logging
 from requests.auth import HTTPBasicAuth
+import urllib3
 
 from networking_generic_switch.devices import restapi_devices
 
-LOG = logging.getLogger(__name__)
-CONF = cfg.CONF
+#disable ssl warnings
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 class CumulusNVUE(restapi_devices.RestAPISwitch):
@@ -54,13 +72,13 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
         return r
 
     def _apply_patch(self, revision):
-        apply_payload = {"state": "apply"}
-        url = self.nvue_end_point + "/revision/" + revision
+        apply_payload = {"state": "apply", "auto-prompt": {"ays": "ays_yes"}}
+        url = self.nvue_end_point + "/revision/" + requests.utils.quote(revision,safe="")
         r = requests.patch(
             url=url,
             auth=self.auth,
             verify=False,
-            data=apply_payload,
+            data=json.dumps(apply_payload),
             headers=self.mime_header,
         )
         return r
@@ -69,7 +87,7 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
         # TODO .....
         retries = 20
         poll_applied = 2
-        url=nvue_end_point + "/revision/" + revision
+        url=self.nvue_end_point + "/revision/" + requests.utils.quote(revision, safe="")
 
         while retries > 0:
             r  = requests.get(
@@ -79,7 +97,7 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
             )
             response = r.json()
             if response["state"] == "applied":
-                return true
+                return True
             retries -= 1
             time.sleep(poll_applied)
 
@@ -103,7 +121,7 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
         bridge_name = "br_default"
         
         #"nv set bridge domain {bridge_name} vlan {segmentation_id}
-        path = nvue_end_point
+        path = self.nvue_end_point
 
         payload = {
             "set": {
@@ -125,7 +143,7 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
         bridge_name = "br_default"
         
         #"nv unset bridge domain {bridge_name} vlan {segmentation_id}
-        path = nvue_end_point
+        path = self.nvue_end_point
         payload = {
             "unset": {
                 "bridge": {
@@ -146,7 +164,7 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
         bridge_name = "br_default"
         
         #"nv set interface {port_id} link state up"
-        path = nvue_end_point
+        path = self.nvue_end_point
         payload = {
                 "set": {
                         "interface": {
@@ -164,7 +182,6 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
 
 
         #"nv unset interface {port_id} bridge domain {bridge_name} access"
-        path = nvue_end_point
         payload = {
                 "unset": {
                         "interface": {
@@ -183,7 +200,6 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
         self.send_commands_to_device(path=path, payload=payload)
 
         #"nv unset interface {port_id} bridge domain {bridge_name} untagged"
-        path = nvue_end_point
         payload = {
             "unset": {
                 "interface": {
@@ -202,7 +218,6 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
         self.send_commands_to_device(path=path, payload=payload)
 
         #"nv set interface {port_id} bridge domain {bridge_name} vlan {segmentation_id}"
-        path = nvue_end_point
         payload = {
             "set": {
                 "interface": {
@@ -211,8 +226,8 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
                             "domain": {
                                 bridge_name: {
                                     "vlan": {
-                                                                                str(segmentation_id): {}
-                                                                        }
+                                        str(segmentation_id): {}
+                                    }
                                 }
                             }
                         }
@@ -223,29 +238,28 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
         self.send_commands_to_device(path=path, payload=payload)
 
         #"nv set interface {port_id} bridge domain {bridge_name} untagged {segmentation_id}
-        path = nvue_end_point
         payload = {
-                "set": {
-                        "interface": {
-                                str(port_id): {
-                                        "bridge": {
-                                        "domain": {
-                                                bridge_name: {
-                                                        "untagged": segmentation_id
-                                                }
-                                        }
-                                        }
+            "set": {
+                "interface": {
+                    str(port_id): {
+                        "bridge": {
+                            "domain": {
+                                bridge_name: {
+                                    "untagged": segmentation_id
                                 }
+                            }
                         }
+                    }
                 }
-                }
+            }
+        }
         self.send_commands_to_device(path=path, payload=payload)
     def delete_port(self, port_id, segmentation_id):
         # TODO
         bridge_name = "br_default"
         
         #"nv unset interface {port_id} bridge domain {bridge_name} access"
-        path = nvue_end_point
+        path = self.nvue_end_point
         payload = {
             "unset": {
                 "interface": {
@@ -264,7 +278,6 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
         self.send_commands_to_device(path=path, payload=payload)
 
         #"nv unset interface {port_id} bridge domain {bridge_name} untagged"
-        path = nvue_end_point
         payload = {
             "unset": {
                 "interface": {
@@ -283,7 +296,6 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
         self.send_commands_to_device(path=path, payload=payload)
 
         #"nv unset interface {port_id} bridge domain {bridge_name} vlan"
-        path = nvue_end_point
         payload = {
             "unset": {
                 "interface": {
@@ -302,7 +314,6 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
         self.send_commands_to_device(path=path, payload=payload)
 
         #"nv set interface {port_id} bridge domain {bridge_name} vlan 1"
-        path = nvue_end_point
         payload = {
             "set": {
                 "interface": {
@@ -323,7 +334,6 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
         self.send_commands_to_device(path=path, payload=payload)
 
         #"nv set interface {port_id} bridge domain {bridge_name} untagged 1"
-        path = nvue_end_point
         payload = {
             "set": {
                 "interface": {
