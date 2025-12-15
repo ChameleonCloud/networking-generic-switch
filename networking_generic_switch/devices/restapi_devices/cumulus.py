@@ -75,7 +75,7 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
 
     def _apply_patch(self, revision):
         apply_payload = {"state": "apply", "auto-prompt": {"ays": "ays_yes"}}
-        url = self.nvue_end_point + "/revision/" + requests.utils.quote(revision,safe="")
+        url = self.nvue_end_point + "/revision/" + revision
         r = requests.patch(
             url=url,
             auth=self.auth,
@@ -89,7 +89,7 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
         # TODO .....
         retries = 20
         poll_applied = 2
-        url=self.nvue_end_point + "/revision/" + requests.utils.quote(revision, safe="")
+        url=self.nvue_end_point + "/revision/" + revision
 
         while retries > 0:
             r  = requests.get(
