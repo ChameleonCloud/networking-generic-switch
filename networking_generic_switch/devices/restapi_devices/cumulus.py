@@ -26,6 +26,8 @@ from networking_generic_switch.devices import restapi_devices
 #disable ssl warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+LOG = logging.getLogger(__name__)
+CONF = cfg.CONF
 
 class CumulusNVUE(restapi_devices.RestAPISwitch):
     """Cumulus Switch NVUE Interface
