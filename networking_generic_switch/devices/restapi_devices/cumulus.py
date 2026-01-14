@@ -47,8 +47,8 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
 
         self.nvue_end_point = "https://10.23.252.7:8765/nvue_v1"
         self.auth = HTTPBasicAuth(
-            username="automation",
-            password="gRapS&appLLes761",
+            username="foo",
+            password="bar",
         )
 
     def _create_revision(self):
