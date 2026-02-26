@@ -16,6 +16,7 @@ import atexit
 import contextlib
 import functools
 import hashlib
+import threading
 import uuid
 
 import netmiko
@@ -63,7 +64,12 @@ def check_output(operation):
                 an error has occurred.
             """
             output = func(self, *args, **kwargs)
-            self.check_output(output, operation)
+            try:
+                self.check_output(output, operation)
+            except exc.GenericSwitchNetmikoConfigError:
+                # Raised if ERROR_MSG_PATTERNS catches an output error
+                self._invalidate_cached_connection()
+                raise
             return output
 
         return wrapper
@@ -242,6 +248,13 @@ class NetmikoSwitch(devices.GenericSwitchDevice):
             self.locker.start()
             atexit.register(self.locker.stop)
 
+        if self._reuse_connection():
+            self._cached_connection = None
+            self._cached_connection_lock = threading.Lock()
+            self._ssh_session_lock = threading.Lock()
+            # we don't clean up per command now, make sure we clean up on exit
+            atexit.register(self._invalidate_cached_connection)
+
     @property
     def support_trunk_on_ports(self):
         return bool(self.ADD_NETWORK_TO_TRUNK)
@@ -290,9 +303,29 @@ class NetmikoSwitch(devices.GenericSwitchDevice):
         def _create_connection():
             return netmiko.ConnectHandler(**self.config)
 
+        def _get_or_create_connection():
+            with self._cached_connection_lock:
+                if self._cached_connection is None:
+                    self._cached_connection = _create_connection()
+                elif not self._cached_connection.is_alive():
+                    try:
+                        self._cached_connection.disconnect()
+                    except Exception:
+                        LOG.debug(
+                            "Failed to close stale SSH connection",
+                            exc_info=True,
+                        )
+                    finally:
+                        self._cached_connection = None
+                    self._cached_connection = _create_connection()
+                return self._cached_connection
+
         # First, create a connection.
         try:
-            net_connect = _create_connection()
+            if self._reuse_connection():
+                net_connect = _get_or_create_connection()
+            else:
+                net_connect = _create_connection()
         except tenacity.RetryError as e:
             LOG.error(
                 _("Reached maximum SSH connection attempts, not retrying "
@@ -309,8 +342,26 @@ class NetmikoSwitch(devices.GenericSwitchDevice):
             raise exc.GenericSwitchNetmikoConnectError()
 
         # Now yield the connection to the caller.
-        with net_connect:
+        if self._reuse_connection():
             yield net_connect
+        else:
+            with net_connect:
+                yield net_connect
+
+    def _invalidate_cached_connection(self):
+        if not self._cached_connection:
+            return
+
+        with self._cached_connection_lock:
+            try:
+                self._cached_connection.disconnect()
+            except Exception:
+                LOG.debug(
+                    "Failed to close cached SSH connection",
+                    exc_info=True,
+                )
+            finally:
+                self._cached_connection = None
 
     def send_commands_to_device(self, cmd_set):
         if not cmd_set:
@@ -320,7 +371,32 @@ class NetmikoSwitch(devices.GenericSwitchDevice):
         # If configured, batch up requests to the switch
         if self.batch_cmds is not None:
             return self.batch_cmds.do_batch(self, cmd_set)
+
+        # If configured, use cached ssh connection with 1 retry
+        if self._reuse_connection():
+            return self._cached_send_commands_to_device(cmd_set)
+
         return self._send_commands_to_device(cmd_set)
+
+    def _cached_send_commands_to_device(self, cmd_set):
+        # because the cached connection might be "dirty", add one retry.
+
+        with self._ssh_session_lock:
+            try:
+                return self._send_commands_to_device(cmd_set)
+            except Exception as error:
+                self._invalidate_cached_connection()
+                LOG.warning(
+                    _("Retrying switch command execution with "
+                    "a clean SSH connection for device: "
+                    "%(device)s, error: %(error)s"), {
+                        'device': device_utils.sanitise_config(self.config),
+                        'error': error})
+            try:
+                return self._send_commands_to_device(cmd_set)
+            except Exception:
+                self._invalidate_cached_connection()
+                raise
 
     def _send_commands_to_device(self, cmd_set):
         try:

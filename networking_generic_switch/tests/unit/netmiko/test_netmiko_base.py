@@ -761,6 +761,130 @@ class TestNetmikoSwitch(NetmikoSwitchTestBase):
         self.assertFalse(connect_mock.send_config_set.called)
         self.assertFalse(connect_mock.send_command.called)
 
+    @mock.patch.object(netmiko, 'ConnectHandler', autospec=True)
+    def test_send_commands_to_device_reuses_cached_connection(
+            self, m_conn_handler):
+        switch = self._make_switch_device({
+            'ngs_ssh_reuse_connection': True,
+        })
+        connection = mock.MagicMock(netmiko.base_connection.BaseConnection)
+        m_conn_handler.return_value = connection
+
+        switch.send_commands_to_device(['cmd1'])
+        switch.send_commands_to_device(['cmd2'])
+        self.assertEqual(1, m_conn_handler.call_count)
+
+    @mock.patch.object(netmiko, 'ConnectHandler', autospec=True)
+    def test_send_commands_to_device_reused_connection_not_closed_per_call(
+            self, m_conn_handler):
+        switch = self._make_switch_device({
+            'ngs_ssh_reuse_connection': True,
+        })
+        connection = mock.MagicMock(netmiko.base_connection.BaseConnection)
+        m_conn_handler.return_value = connection
+
+        switch.send_commands_to_device(['cmd1'])
+        switch.send_commands_to_device(['cmd2'])
+
+        connection.__exit__.assert_not_called()
+
+    @mock.patch.object(netmiko, 'ConnectHandler', autospec=True)
+    def test_send_commands_to_device_does_not_share_cached_connection(
+            self, m_conn_handler):
+        switch1 = self._make_switch_device({
+            'ngs_ssh_reuse_connection': True,
+        })
+        switch2 = self._make_switch_device({
+            'ngs_ssh_reuse_connection': True,
+        })
+        first_connection = mock.MagicMock(
+            netmiko.base_connection.BaseConnection)
+        second_connection = mock.MagicMock(
+            netmiko.base_connection.BaseConnection)
+        m_conn_handler.side_effect = [first_connection, second_connection]
+
+        switch1.send_commands_to_device(['cmd1'])
+        switch2.send_commands_to_device(['cmd1'])
+
+        self.assertEqual(2, m_conn_handler.call_count)
+
+    @mock.patch.object(netmiko, 'ConnectHandler', autospec=True)
+    def test_send_commands_to_device_replaces_dead_cached_connection(
+            self, m_conn_handler):
+        switch = self._make_switch_device({
+            'ngs_ssh_reuse_connection': True,
+        })
+        first_connection = mock.MagicMock(
+            netmiko.base_connection.BaseConnection)
+        second_connection = mock.MagicMock(
+            netmiko.base_connection.BaseConnection)
+        first_connection.is_alive.return_value = False
+        m_conn_handler.side_effect = [first_connection, second_connection]
+
+        switch.send_commands_to_device(['cmd1'])
+        switch.send_commands_to_device(['cmd2'])
+
+        self.assertEqual(2, m_conn_handler.call_count)
+        first_connection.disconnect.assert_called_once_with()
+        second_connection.disconnect.assert_not_called()
+
+    @mock.patch.object(netmiko, 'ConnectHandler', autospec=True)
+    @mock.patch.object(netmiko_devices.NetmikoSwitch, 'send_config_set',
+                       autospec=True)
+    @mock.patch.object(netmiko_devices.NetmikoSwitch, 'save_configuration',
+                       autospec=True)
+    def test_send_commands_to_device_retries_cached_connection_failure(
+            self, save_mock, send_mock, m_conn_handler):
+        switch = self._make_switch_device({
+            'ngs_ssh_reuse_connection': True,
+        })
+        first_connection = mock.MagicMock(
+            netmiko.base_connection.BaseConnection)
+        second_connection = mock.MagicMock(
+            netmiko.base_connection.BaseConnection)
+        m_conn_handler.side_effect = [first_connection, second_connection]
+        send_mock.side_effect = [Exception("stale shell"), "fake output"]
+
+        output = switch.send_commands_to_device(['cmd1'])
+
+        self.assertEqual("fake output", output)
+        self.assertEqual(2, m_conn_handler.call_count)
+        send_mock.assert_has_calls([
+            mock.call(switch, first_connection, ['cmd1']),
+            mock.call(switch, second_connection, ['cmd1'])
+        ])
+        first_connection.disconnect.assert_called_once_with()
+        second_connection.disconnect.assert_not_called()
+        save_mock.assert_called_once_with(switch, second_connection)
+
+    @mock.patch.object(netmiko, 'ConnectHandler', autospec=True)
+    @mock.patch.object(netmiko_devices.NetmikoSwitch, 'send_config_set',
+                       autospec=True)
+    @mock.patch.object(netmiko_devices.NetmikoSwitch, 'save_configuration',
+                       autospec=True)
+    def test_send_commands_to_device_second_failure_raises(
+            self, save_mock, send_mock, m_conn_handler):
+        switch = self._make_switch_device({
+            'ngs_ssh_reuse_connection': True,
+        })
+        first_connection = mock.MagicMock(
+            netmiko.base_connection.BaseConnection)
+        second_connection = mock.MagicMock(
+            netmiko.base_connection.BaseConnection)
+        m_conn_handler.side_effect = [first_connection, second_connection]
+        send_mock.side_effect = [Exception("stale shell"),
+                                 Exception("stale shell again")]
+
+        self.assertRaises(
+            exc.GenericSwitchNetmikoConnectError,
+            switch.send_commands_to_device,
+            ['cmd1'])
+        self.assertEqual(2, m_conn_handler.call_count)
+        self.assertEqual(2, send_mock.call_count)
+        first_connection.disconnect.assert_called_once_with()
+        second_connection.disconnect.assert_called_once_with()
+        save_mock.assert_not_called()
+
     @mock.patch.object(netmiko_devices.NetmikoSwitch, '_get_connection',
                        autospec=True)
     @mock.patch.object(netmiko_devices.NetmikoSwitch, 'send_config_set',
@@ -795,6 +919,32 @@ class TestNetmikoSwitch(NetmikoSwitchTestBase):
                                           connect_mock, ['spam ham aaaa'])
         self.assertEqual('fake output', result)
         save_mock.assert_not_called()
+
+    @mock.patch.object(netmiko_devices.NetmikoSwitch,
+                       '_invalidate_cached_connection', autospec=True)
+    @mock.patch.object(netmiko_devices.NetmikoSwitch,
+                       'check_output',
+                       side_effect=exc.GenericSwitchNetmikoConfigError(),
+                       autospec=True)
+    @mock.patch.object(netmiko_devices.NetmikoSwitch,
+                       'send_commands_to_device',
+                       return_value='fake output',
+                       autospec=True)
+    def test_check_output_failure_invalidates_cached_connection(
+            self, send_mock, check_mock, invalidate_mock):
+        switch = self._make_switch_device({
+            'ngs_ssh_reuse_connection': True,
+        })
+
+        self.assertRaises(
+            exc.GenericSwitchNetmikoConfigError,
+            switch.add_network,
+            22,
+            '0ae071f5-5be9-43e4-80ea-e41fefe85b21')
+        send_mock.assert_called_once()
+        check_mock.assert_called_once_with(
+            switch, 'fake output', 'add network')
+        invalidate_mock.assert_called_once_with(switch)
 
     def test_send_config_set(self):
         connect_mock = mock.MagicMock(netmiko.base_connection.BaseConnection)
