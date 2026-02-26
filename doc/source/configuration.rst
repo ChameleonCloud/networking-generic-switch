@@ -273,6 +273,16 @@ to each device to one, but the number may be configured per-device as follows::
     [genericswitch:device-hostname]
     ngs_max_connections = <max connections>
 
+To reduce SSH connection setup overhead, SSH connection reuse may also be
+enabled per-device::
+
+    [genericswitch:device-hostname]
+    ngs_ssh_reuse_connection = True
+
+Connection reuse is only supported when ``ngs_max_connections = 1``. If
+``ngs_max_connections`` is greater than one, connection reuse is disabled and
+networking-generic-switch logs a warning during device initialisation.
+
 When synchronization is used, each Neutron thread executing the
 networking-generic-switch plugin will attempt to acquire a lock, with a default
 timeout of 60 seconds before failing. This timeout can be configured as follows
