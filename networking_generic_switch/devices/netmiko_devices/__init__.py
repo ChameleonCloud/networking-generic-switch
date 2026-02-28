@@ -154,13 +154,15 @@ class NetmikoSwitch(devices.GenericSwitchDevice):
         self._should_reuse_connection = False
         if self._reuse_connection_enabled():
             if int(self.ngs_config['ngs_max_connections']) > 1:
-                LOG.warning("Max connections > 1, not enabling connection reuse.")
+                LOG.warning("Max connections > 1, not enabling connection "
+                            "reuse.")
             else:
                 self._should_reuse_connection = True
                 self._cached_connection = None
                 self._cached_connection_lock = threading.Lock()
                 self._ssh_session_lock = threading.Lock()
-                # we don't clean up per command now, make sure we clean up on exit
+                # we don't clean up per command now, make sure we clean up on
+                # exit
                 atexit.register(self._invalidate_cached_connection)
 
     def _format_commands(self, commands, **kwargs):
@@ -281,9 +283,9 @@ class NetmikoSwitch(devices.GenericSwitchDevice):
             except Exception as error:
                 self._invalidate_cached_connection()
                 LOG.warning(
-                    _("Retrying switch command execution with "
+                    "Retrying switch command execution with "
                     "a clean SSH connection for device: "
-                    "%(device)s, error: %(error)s"), {
+                    "%(device)s, error: %(error)s", {
                         'device': device_utils.sanitise_config(self.config),
                         'error': error})
             try:
