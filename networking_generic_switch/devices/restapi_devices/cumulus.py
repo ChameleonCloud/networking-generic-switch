@@ -21,6 +21,7 @@ from oslo_log import log as logging
 from requests.auth import HTTPBasicAuth
 import urllib3
 
+from networking_generic_switch import locking as ngs_lock
 from networking_generic_switch.devices import restapi_devices
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -107,18 +108,19 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
         return False
 
     def send_commands_to_device(self, path, payload):
-        # TODO: verify response, add loggging
-        revision = self._create_revision()
-        print("Created revision " + str(revision) + ".")
+        with ngs_lock.PoolLock(self.locker, **self.lock_kwargs):
+            # TODO: verify response, add loggging
+            revision = self._create_revision()
+            print("Created revision " + str(revision) + ".")
 
-        # TODO: verify response, add loggging
-        patched = self._submit_patch(revision, path, payload)
+            # TODO: verify response, add loggging
+            patched = self._submit_patch(revision, path, payload)
 
-        # TODO: verify response, add loggging
-        applied = self._apply_patch(revision)
+            # TODO: verify response, add loggging
+            applied = self._apply_patch(revision)
 
-        # TODO: verify response, add loggging
-        result = self._wait_for_applied(revision)
+            # TODO: verify response, add loggging
+            result = self._wait_for_applied(revision)
 
         if not result:
             print ("Failed to apply patch: rev = " + str(revision) + ", path = " + str(path) + ", payload = " + str(payload)) 
