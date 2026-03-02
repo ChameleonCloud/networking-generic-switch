@@ -15,12 +15,10 @@
 import abc
 
 from neutron_lib.utils.helpers import parse_mappings
-from oslo_concurrency import lockutils
 from oslo_log import log as logging
 from oslo_utils import strutils
 import stevedore
 
-from networking_generic_switch import config as gsw_conf
 from networking_generic_switch import exceptions as gsw_exc
 
 GENERIC_SWITCH_NAMESPACE = 'generic_switch.devices'
@@ -52,41 +50,17 @@ NGS_INTERNAL_OPTS = [
     {'name': 'ngs_save_configuration', 'default': True},
     # When true try to batch up in flight switch requests
     {'name': 'ngs_batch_requests', 'default': False},
-    # The following three are used in the Fake device driver.
-    {'name': 'ngs_fake_sleep_min_s'},
-    {'name': 'ngs_fake_sleep_max_s'},
-    {'name': 'ngs_fake_failure_prob'},
-    # Allow list for VLANs and ports for this switch
-    # default open, but setting empty string blocks all ports
-    {'name': 'ngs_allowed_vlans'},
-    {'name': 'ngs_allowed_ports'},
-    # Require security groups to be enabled on a per-device basis
-    {'name': 'ngs_security_groups_enabled', 'default': False}
 ]
 
-EM_SEMAPHORE = 'ngs_device_manager'
-DEVICES = {}
 
-
-@lockutils.synchronized(EM_SEMAPHORE)
-def get_devices():
-    global DEVICES
-    gsw_devices = gsw_conf.get_devices()
-    for device_name, device_cfg in gsw_devices.items():
-        if device_name in DEVICES:
-            continue
-        DEVICES[device_name] = device_manager(device_cfg, device_name)
-    return DEVICES
-
-
-def device_manager(device_cfg, device_name=""):
+def device_manager(device_cfg):
     device_type = device_cfg.get('device_type', '')
     try:
         mgr = stevedore.driver.DriverManager(
             namespace=GENERIC_SWITCH_NAMESPACE,
             name=device_type,
             invoke_on_load=True,
-            invoke_args=(device_cfg, device_name),
+            invoke_args=(device_cfg,),
             on_load_failure_callback=_load_failure_hook
         )
     except stevedore.exception.NoUniqueMatch as exc:
@@ -107,10 +81,9 @@ def _load_failure_hook(manager, entrypoint, exception):
 
 class GenericSwitchDevice(object, metaclass=abc.ABCMeta):
 
-    def __init__(self, device_cfg, device_name=""):
+    def __init__(self, device_cfg):
         self.ngs_config = {}
         self.config = {}
-        self.device_name = device_name
         # Do not expose NGS internal options to device config.
         for opt in NGS_INTERNAL_OPTS:
             opt_name = opt['name']
@@ -118,25 +91,9 @@ class GenericSwitchDevice(object, metaclass=abc.ABCMeta):
                 self.ngs_config[opt_name] = device_cfg.pop(opt_name)
             elif 'default' in opt:
                 self.ngs_config[opt_name] = opt['default']
-        # Ignore any other option starting with 'ngs_' (to avoid passing
-        # these options to Netmiko)
-        for opt_name in [o for o in device_cfg.keys() if o.startswith("ngs_")]:
-            LOG.warning("Ignoring unknown option '%(opt_name)s' for "
-                        "device %(device)s",
-                        {'opt_name': opt_name, 'device': self.device_name})
-            device_cfg.pop(opt_name)
-
         self.config = device_cfg
 
         self._validate_network_name_format()
-
-    @property
-    def support_trunk_on_ports(self):
-        return False
-
-    @property
-    def support_trunk_on_bond_ports(self):
-        return False
 
     def _validate_network_name_format(self):
         """Validate the network name format configuration option."""
@@ -209,37 +166,6 @@ class GenericSwitchDevice(object, metaclass=abc.ABCMeta):
         return strutils.bool_from_string(
             self.ngs_config['ngs_batch_requests'])
 
-    def _get_allowed_vlans(self):
-        allowed_vlans = self.ngs_config.get('ngs_allowed_vlans')
-        if allowed_vlans is None:
-            return None
-        return allowed_vlans.split(',')
-
-    def _get_allowed_ports(self):
-        allowed_ports = self.ngs_config.get('ngs_allowed_ports')
-        if allowed_ports is None:
-            return None
-        return allowed_ports.split(',')
-
-    def is_allowed(self, port_id, segmentation_id):
-        is_port_id_allowed = True
-        allowed_ports = self._get_allowed_ports()
-        if allowed_ports is not None:
-            is_port_id_allowed = port_id in allowed_ports
-            LOG.debug("Port %(port_id) allowed: %(is_port_id_allowed",
-                      {"port_id": port_id,
-                       "is_port_id_allowed": is_port_id_allowed})
-
-        is_vlan_allowed = True
-        allowed_vlans = self._get_allowed_vlans()
-        if allowed_vlans is not None:
-            is_vlan_allowed = str(segmentation_id) in allowed_vlans
-            LOG.debug("VLAN %(vlan) allowed: %(is_allowed",
-                      {"vlan": segmentation_id,
-                       "is_allowed": is_vlan_allowed})
-
-        return is_port_id_allowed and is_vlan_allowed
-
     @abc.abstractmethod
     def add_network(self, segmentation_id, network_id):
         pass
@@ -249,142 +175,17 @@ class GenericSwitchDevice(object, metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def plug_port_to_network(self, port_id, segmentation_id,
-                             trunk_details=None, default_vlan=None):
-        """Plug port into network.
-
-        :param port_id: The name of the switch interface
-        :param segmentation_id: VLAN identifier of the network used as access
-               or native VLAN for port.
-
-        :param trunk_details: trunk information if port is a part of trunk
-        :param default_vlan: Default VLAN identifier if port is not configured
-        """
+    def plug_port_to_network(self, port_id, segmentation_id):
         pass
 
     @abc.abstractmethod
-    def delete_port(self, port_id, segmentation_id, trunk_details=None,
-                    default_vlan=None):
-        """Delete port from specific network.
-
-        :param port_id: The name of the switch interface
-        :param segmentation_id: VLAN identifier of the network used as access
-               or native VLAN for port.
-
-        :param trunk_details: trunk information if port is a part of trunk
-        :param default_vlan: Default VLAN identifier if port is not configured
-        """
+    def delete_port(self, port_id, segmentation_id):
         pass
 
-    def plug_bond_to_network(self, bond_id, segmentation_id,
-                             trunk_details=None, default_vlan=None):
-        """Plug bond port into network.
-
-        :param port_id: The name of the switch interface
-        :param segmentation_id: VLAN identifier of the network used as access
-               or native VLAN for port.
-
-        :param trunk_details: trunk information if port is a part of trunk
-        :param default_vlan: Default VLAN identifier if port is not configured
-        """
-        kwargs = {}
-        if trunk_details:
-            kwargs["trunk_details"] = trunk_details
-        if default_vlan:
-            kwargs["default_vlan"] = default_vlan
+    def plug_bond_to_network(self, bond_id, segmentation_id):
         # Fall back to interface method.
-        return self.plug_port_to_network(bond_id, segmentation_id, **kwargs)
+        return self.plug_port_to_network(bond_id, segmentation_id)
 
-    def unplug_bond_from_network(self, bond_id, segmentation_id,
-                                 trunk_details=None, default_vlan=None):
-        """Unplug bond port from network.
-
-        :param port_id: The name of the switch interface
-        :param segmentation_id: VLAN identifier of the network used as access
-               or native VLAN for port.
-
-        :param trunk_details: trunk information if port is a part of trunk
-        :param default_vlan: Default VLAN identifier if port is not configured
-        """
-        kwargs = {}
-        if trunk_details:
-            kwargs["trunk_details"] = trunk_details
-        if default_vlan:
-            kwargs["default_vlan"] = default_vlan
+    def unplug_bond_from_network(self, bond_id, segmentation_id):
         # Fall back to interface method.
-        return self.delete_port(bond_id, segmentation_id, **kwargs)
-
-    @abc.abstractmethod
-    def add_subports_on_trunk(self, binding_profile, port_id, subports):
-        """Allow subports on trunk
-
-        :param binding_profile: Binding profile of parent port
-        :param port_id: The name of the switch port from
-               Local Link Information
-        :param subports: List with subports objects.
-        """
-        pass
-
-    @abc.abstractmethod
-    def del_subports_on_trunk(self, binding_profile, port_id, subports):
-        """Allow subports on trunk
-
-        :param binding_profile: Binding profile of parent port
-        :param port_id: The name of the switch port from
-               Local Link Information
-        :param subports: List with subports objects.
-        """
-        pass
-
-    @abc.abstractmethod
-    def add_security_group(self, sg):
-        """Add a security group to a switch
-
-        :param sg: Security group object including rules
-        """
-        pass
-
-    @abc.abstractmethod
-    def update_security_group(self, sg):
-        """Updates an existing a security group on a switch
-
-        Rules may have been added or deleted so the driver
-        needs to update the switch state to accurately reflect
-        the provided security group.
-
-        :param sg: Security group object including rules
-        """
-        pass
-
-    @abc.abstractmethod
-    def del_security_group(self, sg_id):
-        """Delete a security group
-
-        :param sg_id: Security group ID
-        """
-        pass
-
-    @abc.abstractmethod
-    def bind_security_group(self, sg, port_id, port_ids):
-        """Apply a security group to a port
-
-        The rules in the provided security group will also be
-        used to assert the state with the switch.
-
-        :param sg: Security group object including rules
-        :param port_id: Name of switch port to bind group to
-        :param port_ids: Names of all switch ports currently
-                         bound to this group
-        """
-        pass
-
-    @abc.abstractmethod
-    def unbind_security_group(self, sg_id, port_id, port_ids):
-        """Remove a bound security group from a port
-
-        :param sg_id: ID of security group to unbind
-        :param port_id: Name of switch port to unbind group from
-        :param port_ids: Names of all switch ports currently
-                         bound to this group
-        """
-        pass
+        return self.delete_port(bond_id, segmentation_id)
