@@ -46,12 +46,11 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
         super(CumulusNVUE, self).__init__(device_cfg, *args, **kwargs)
         # TODO get endpoint and auth from config instead of hardcoding...
 
-        self.nvue_end_point = "https://10.23.252.7:8765/nvue_v1"
+        self.nvue_end_point = "https://" + str(self.config.get('ip')) + ":8765/nvue_v1"
         self.auth = HTTPBasicAuth(
-            username="foo",
-            password="bar",
+            username=self.config.get('username'),
+            password=self.config.get('password'),
         )
-
     def _create_revision(self):
         r = requests.post(
             url=self.nvue_end_point + "/revision",
