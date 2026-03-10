@@ -991,3 +991,65 @@ Configuration Database locked by another application - try later
                           'switchport general allowed vlan remove 33',
                           'no switchport general pvid',
                           'exit'])
+
+
+class TestNetmikoDellFNIOA(test_netmiko_base.NetmikoSwitchTestBase):
+
+    def _make_switch_device(self, extra_cfg={}):
+        device_cfg = {'device_type': 'netmiko_dell_fnioa'}
+        device_cfg.update(extra_cfg)
+        return dell.DellFNIOA(device_cfg)
+
+    def test_constants(self):
+        self.assertIsNone(self.switch.SAVE_CONFIGURATION)
+
+    @mock.patch('networking_generic_switch.devices.netmiko_devices.'
+                'NetmikoSwitch.send_commands_to_device',
+                return_value="", autospec=True)
+    def test_add_network(self, m_exec):
+        self.switch.add_network(33, '0ae071f5-5be9-43e4-80ea-e41fefe85b21')
+        m_exec.assert_called_with(
+            self.switch,
+            ['interface vlan 33',
+             'description 0ae071f55be943e480eae41fefe85b21',
+             'exit'])
+
+    @mock.patch('networking_generic_switch.devices.netmiko_devices.'
+                'NetmikoSwitch.send_commands_to_device',
+                return_value="", autospec=True)
+    def test_del_network(self, mock_exec):
+        self.switch.del_network(33, '0ae071f5-5be9-43e4-80ea-e41fefe85b21')
+        mock_exec.assert_called_with(self.switch,
+                                     ['no interface vlan 33', 'exit'])
+
+    @mock.patch('networking_generic_switch.devices.netmiko_devices.'
+                'NetmikoSwitch.send_commands_to_device',
+                return_value="", autospec=True)
+    def test_plug_port_to_network(self, mock_exec):
+        self.switch.plug_port_to_network(3333, 33)
+        mock_exec.assert_called_with(
+            self.switch,
+            ['interface 3333', 'vlan untagged 33'])
+
+    @mock.patch('networking_generic_switch.devices.netmiko_devices.'
+                'NetmikoSwitch.send_commands_to_device',
+                return_value="", autospec=True)
+    def test_delete_port(self, mock_exec):
+        self.switch.delete_port(3333, 33)
+        mock_exec.assert_called_with(
+            self.switch,
+            ['interface 3333', 'no vlan untagged'])
+
+    def test__format_commands(self):
+        cmd_set = self.switch._format_commands(
+            dell.DellFNIOA.PLUG_PORT_TO_NETWORK,
+            port=3333,
+            segmentation_id=33)
+        self.assertEqual(cmd_set,
+                         ['interface 3333', 'vlan untagged 33'])
+        cmd_set = self.switch._format_commands(
+            dell.DellFNIOA.DELETE_PORT,
+            port=3333,
+            segmentation_id=33)
+        self.assertEqual(cmd_set,
+                         ['interface 3333', 'no vlan untagged'])

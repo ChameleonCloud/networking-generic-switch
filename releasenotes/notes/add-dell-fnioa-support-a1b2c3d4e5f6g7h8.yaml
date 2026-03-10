@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    Adds a new device driver, ``netmiko_dell_fnioa``, for managing Dell FN
+    I/O Aggregator switch devices in Dell PowerEdge FX2 chassis enclosures.

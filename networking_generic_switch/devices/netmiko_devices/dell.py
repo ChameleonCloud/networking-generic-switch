@@ -317,3 +317,19 @@ class DellPowerConnect(netmiko_devices.NetmikoSwitch):
                    r'try later'),
         re.compile(r'Port is not in Layer-2 mode'),
     )
+
+
+class DellFNIOA(DellNos):
+    """Device Name: Dell FN I/O Aggregator (netmiko_dell_fnioa)"""
+
+    NETMIKO_DEVICE_TYPE = 'dell_force10'
+
+    PLUG_PORT_TO_NETWORK = (
+        'interface {port}',
+        'vlan untagged {segmentation_id}',
+    )
+
+    DELETE_PORT = (
+        'interface {port}',
+        'no vlan untagged',
+    )

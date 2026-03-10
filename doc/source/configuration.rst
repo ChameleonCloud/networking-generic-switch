@@ -106,6 +106,16 @@ for the Arista EOS device::
     username = admin
     key_file = /opt/data/arista_key
 
+for the Dell FN I/O Aggregator device::
+
+    [genericswitch:dell-fnioa-hostname]
+    device_type = netmiko_dell_fnioa
+    ngs_mac_address = <switch mac address>
+    ip = <switch mgmt ip address>
+    username = admin
+    password = password
+    secret = secret
+
 for the Dell Force10 device::
 
     [genericswitch:dell-hostname]
