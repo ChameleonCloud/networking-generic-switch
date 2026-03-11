@@ -423,6 +423,45 @@ class SwitchBatchTest(fixtures.TestWithFixtures):
             {"cmds": ["cmd1", "cmd2"], "error": "Bang"})
         device.save_configuration.assert_called_once_with(connection)
 
+    def test_send_commands_stale_output_does_not_bleed(self):
+        """Stale error output from batch 1 must not appear in batch 2's
+        recorded result."""
+        stale_error = "% Error: Te 1/8/4 Port is untagged in another Vlan."
+        device = mock.MagicMock()
+        connection = device._get_connection.return_value.__enter__.return_value
+
+        # Simulate a connection whose read buffer retains stale output
+        # from the previous send_config_set when clear_buffer is not called.
+        buffer = []
+
+        def fake_send_config_set(conn, cmds):
+            prefix = "".join(buffer)
+            buffer.clear()
+            output = prefix + "ok: " + " ".join(cmds)
+            # First batch leaves error text in the buffer
+            if "cmd1" in cmds:
+                buffer.append(stale_error)
+            return output
+
+        device.send_config_set.side_effect = fake_send_config_set
+
+        def fake_clear_buffer():
+            buffer.clear()
+
+        connection.clear_buffer.side_effect = fake_clear_buffer
+
+        batches = [
+            {"cmds": ["cmd1", "cmd2"]},
+            {"cmds": ["cmd3", "cmd4"]},
+        ]
+        lock = mock.MagicMock()
+
+        self.batch._send_commands(device, batches, lock)
+
+        batch2_result = batches[1]["result"]
+        self.assertNotIn("Error:", batch2_result,
+                         "Stale error output from batch 1 bled into batch 2")
+
     def test_send_commands_lock_timeout(self):
         device = mock.MagicMock()
         device.send_config_set.side_effect = Exception("Bang")

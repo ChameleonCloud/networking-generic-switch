@@ -426,6 +426,7 @@ class SwitchBatch(object):
         with device._get_connection() as net_connect:
             for batch in batches:
                 try:
+                    net_connect.clear_buffer()
                     output = device.send_config_set(net_connect, batch['cmds'])
                     batch["result"] = output
                 except Exception as e:
