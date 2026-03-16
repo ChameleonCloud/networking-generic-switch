@@ -104,8 +104,9 @@ class DellNos(netmiko_devices.NetmikoSwitch):
     )
 
     DELETE_PORT = (
-        'interface vlan {segmentation_id}',
-        'no untagged {port}',
+        'interface {port}',
+        'no switchport',
+        'switchport',
         'exit',
     )
 
