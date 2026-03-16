@@ -92,7 +92,7 @@ class TestNetmikoDellNos(test_netmiko_base.NetmikoSwitchTestBase):
         self.switch.delete_port(3333, 33)
         mock_exec.assert_called_with(
             self.switch,
-            ['interface vlan 33', 'no untagged 3333', 'exit'])
+            ['interface 3333', 'no switchport', 'switchport', 'exit'])
 
     def test_check_output(self):
         self.switch.check_output('fake output', 'fake op')
@@ -136,7 +136,7 @@ tagged fake-port
             port=3333,
             segmentation_id=33)
         self.assertEqual(cmd_set,
-                         ['interface vlan 33', 'no untagged 3333', 'exit'])
+                         ['interface 3333', 'no switchport', 'switchport', 'exit'])
 
         cmd_set = self.switch._format_commands(
             dell.DellNos.ADD_NETWORK_TO_TRUNK,
