@@ -38,6 +38,8 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
             username=self.config.get('username'),
             password=self.config.get('password'),
         )
+        self.bridge_name = "thunderbr"
+        #self.bridge_name = self.config.get('bridge')
     def _create_revision(self):
         r = requests.post(
             url=self.nvue_end_point + "/revision",
@@ -115,9 +117,6 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
 
     def add_network(self, segmentation_id, network_id):
         print("Adding network: " + str(segmentation_id))
-
-        # TODO -- Add bridge and interface variables either passed in or collected from network_id lookup
-        bridge_name = "thunderbr"
         
         path = self.nvue_end_point
 
@@ -125,7 +124,7 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
             "set": {
                 "bridge": {
                     "domain": {
-                        bridge_name: {
+                        self.bridge_name: {
                             "vlan": {
                                 str(segmentation_id): {}
                             }
@@ -140,14 +139,12 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
     def del_network(self, segmentation_id, network_id):
         print("Deleting network: " + str(segmentation_id))
 
-        bridge_name = "thunderbr"
-        
         path = self.nvue_end_point
         payload = {
             "unset": {
                 "bridge": {
                     "domain": {
-                        bridge_name: {
+                        self.bridge_name: {
                             "vlan": {
                                 str(segmentation_id): {}
                             }
@@ -161,43 +158,37 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
     def plug_port_to_network(self, port_id, segmentation_id):
         print("plug_port_to_network test on " + str(port_id) + " with VLAN " + str(segmentation_id))
 
-        # TODO
-        bridge_name = "thunderbr"
-       
-
         path = self.nvue_end_point + "/interface"
         payload = {
-                            str(port_id): {
-                                    "link": {
-                                        "state": {
-                                            "up": {}
-                                        }
-                                    },
-                                    "bridge": {
-                                        "domain": {
-                                            bridge_name: {
-                                                "untagged": segmentation_id,
-                                                "vlan": {
-                                                    str(segmentation_id): {}
-                                                }
-                                            }
-                                        }
-                                    }
+                    str(port_id): {
+                        "link": {
+                            "state": {
+                                "up": {}
                             }
+                        },
+                        "bridge": {
+                            "domain": {
+                                self.bridge_name: {
+                                    "untagged": segmentation_id,
+                                    "vlan": {
+                                        str(segmentation_id): {}
+                                    }
+                                }
+                            }
+                        }
                     }
+                }
         self.send_commands_to_device(path=path, payload=payload)
 
     def delete_port(self, port_id, segmentation_id):
         print("Deleteing VLAN " + str(segmentation_id) + " from port " + str(port_id)) 
-        # TODO
-        bridge_name = "thunderbr"
         
         path = self.nvue_end_point + "/interface"
         payload = {
                     str(port_id): {
                         "bridge": {
                             "domain": {
-                                bridge_name: {
+                                self.bridge_name: {
                                     "untagged": 1,
                                     "vlan": {
                                         "1": {}
