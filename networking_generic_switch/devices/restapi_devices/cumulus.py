@@ -1,18 +1,5 @@
 import sys
 import ssl
-
-# Save the original property
-#_original_minimum_version = ssl.SSLContext.minimum_version
-
-# Create a fixed property that doesn't recurse
-#def _fixed_minimum_version_getter(self):
-    #return self._minimum_version if hasattr(self, '_minimum_version') else ssl.TLSVersion.TLSv1_2
-
-#def _fixed_minimum_version_setter(self, value):
-    #self._minimum_version = value
-
-#ssl.SSLContext.minimum_version = property(_fixed_minimum_version_getter, _fixed_minimum_version_setter)
-
 import json
 import time
 import requests
@@ -132,7 +119,6 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
         # TODO -- Add bridge and interface variables either passed in or collected from network_id lookup
         bridge_name = "thunderbr"
         
-        #"nv set bridge domain {bridge_name} vlan {segmentation_id}
         path = self.nvue_end_point
 
         payload = {
@@ -156,7 +142,6 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
 
         bridge_name = "thunderbr"
         
-        #"nv unset bridge domain {bridge_name} vlan {segmentation_id}
         path = self.nvue_end_point
         payload = {
             "unset": {
@@ -180,10 +165,6 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
         bridge_name = "thunderbr"
        
 
-        #print("nv set interface " + str(port_id) + " link state up")
-        #"nv set interface {port_id} link state up"
-        #"nv set interface {port_id} bridge domain {bridge_name} vlan {segmentation_id}"
-        #"nv set interface {port_id} bridge domain {bridge_name} untagged {segmentation_id}""
         path = self.nvue_end_point + "/interface"
         payload = {
                             str(port_id): {
@@ -206,93 +187,11 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
                     }
         self.send_commands_to_device(path=path, payload=payload)
 
-        """
-        print("nv unset interface " + str(port_id) + "bridge domain " + str(bridge_name) + " access")
-        #"nv unset interface {port_id} bridge domain {bridge_name} access"
-        payload = {
-                "unset": {
-                        "interface": {
-                                str(port_id): {
-                                        "bridge": {
-                                        "domain": {
-                                                bridge_name: {
-                                                        "access": None
-                                                }
-                                        }
-                                        }
-                                }
-                        }
-                }
-                }
-        self.send_commands_to_device(path=path, payload=payload)
-
-        print("nv unset interface " + str(port_id) + " bridge domain " + str(bridge_name) + " untagged") 
-        #"nv unset interface {port_id} bridge domain {bridge_name} untagged"
-        payload = {
-            "unset": {
-                "interface": {
-                    str(port_id): {
-                        "bridge": {
-                            "domain": {
-                                bridge_name: {
-                                    "untagged": None
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        self.send_commands_to_device(path=path, payload=payload)
-
-        print("nv set interface " + str(port_id) + " bridge domain " + str(bridge_name) + " vlan " + str(segmentation_id))
-        #"nv set interface {port_id} bridge domain {bridge_name} vlan {segmentation_id}"
-        payload = {
-            "set": {
-                "interface": {
-                    str(port_id): {
-                        "bridge": {
-                            "domain": {
-                                bridge_name: {
-                                    "vlan": {
-                                                                                str(segmentation_id): {}
-                                                                        }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        self.send_commands_to_device(path=path, payload=payload)
-
-        print("nv set interface " + str(port_id) + " bridge domain " + str(bridge_name) + " untagged " + str(segmentation_id))
-        #"nv set interface {port_id} bridge domain {bridge_name} untagged {segmentation_id}
-        payload = {
-                "set": {
-                        "interface": {
-                                str(port_id): {
-                                        "bridge": {
-                                        "domain": {
-                                                bridge_name: {
-                                                        "untagged": segmentation_id
-                                                }
-                                        }
-                                        }
-                                }
-                        }
-                }
-                }
-        self.send_commands_to_device(path=path, payload=payload)
-    """
     def delete_port(self, port_id, segmentation_id):
         print("Deleteing VLAN " + str(segmentation_id) + " from port " + str(port_id)) 
         # TODO
         bridge_name = "thunderbr"
         
-        #print("nv unset interface " + str(port_id) + " bridge domain " + str(bridge_name) + " access")
-        #"nv set interface {port_id} bridge domain {bridge_name} vlan 1"
-        #"nv set interface {port_id} bridge domain {bridge_name} untagged 1"
         path = self.nvue_end_point + "/interface"
         payload = {
                     str(port_id): {
@@ -309,82 +208,3 @@ class CumulusNVUE(restapi_devices.RestAPISwitch):
                     }
                 }
         self.send_commands_to_device(path=path, payload=payload)
-"""
-        print("nv unset interface " + str(port_id) + " bridge domain " + str(bridge_name) + " untagged")
-        #"nv unset interface {port_id} bridge domain {bridge_name} untagged"
-        payload = {
-            "unset": {
-                "interface": {
-                    str(port_id): {
-                        "bridge": {
-                            "domain": {
-                                bridge_name: {
-                                    "untagged": None
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        self.send_commands_to_device(path=path, payload=payload)
-
-        print("nv unset interface " + str(port_id) + " bridge domain " + str(bridge_name) + " vlan")
-        #"nv unset interface {port_id} bridge domain {bridge_name} vlan"
-        payload = {
-            "unset": {
-                "interface": {
-                    str(port_id): {
-                        "bridge": {
-                            "domain": {
-                                bridge_name: {
-                                    "vlan": None
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        self.send_commands_to_device(path=path, payload=payload)
-
-        print("nv set interface " + str(port_id) + " bridge domain " + str(bridge_name) + " vlan 1")
-        #"nv set interface {port_id} bridge domain {bridge_name} vlan 1"
-        payload = {
-            "set": {
-                "interface": {
-                    str(port_id): {
-                        "bridge": {
-                            "domain": {
-                                bridge_name: {
-                                    "vlan": {
-                                        "1": {}
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        self.send_commands_to_device(path=path, payload=payload)
-
-        print("nv set interface " + str(port_id) + " bridge domain " + str(bridge_name) + " untagged 1")
-        #"nv set interface {port_id} bridge domain {bridge_name} untagged 1"
-        payload = {
-            "set": {
-                "interface": {
-                    str(port_id): {
-                        "bridge": {
-                            "domain": {
-                                bridge_name: {
-                                    "untagged": 1
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        self.send_commands_to_device(path=path, payload=payload)
-    """
