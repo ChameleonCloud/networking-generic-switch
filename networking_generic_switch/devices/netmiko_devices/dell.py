@@ -14,8 +14,12 @@
 
 import re
 
+from oslo_log import log as logging
+
 from networking_generic_switch import exceptions as exc
 from networking_generic_switch.devices import netmiko_devices
+
+LOG = logging.getLogger(__name__)
 
 
 class DellOS10(netmiko_devices.NetmikoSwitch):
@@ -35,6 +39,14 @@ class DellOS10(netmiko_devices.NetmikoSwitch):
     PLUG_PORT_TO_NETWORK = (
         "interface {port}",
         "switchport mode access",
+        "switchport access vlan {segmentation_id}",
+        "exit",
+    )
+
+    # Hybrid port mode, untagged access vlan but preserve existing trunks
+    PLUG_PORT_TO_NETWORK_TRUNK_NATIVE = (
+        "interface {port}",
+        "switchport mode trunk",
         "switchport access vlan {segmentation_id}",
         "exit",
     )
@@ -78,6 +90,33 @@ class DellOS10(netmiko_devices.NetmikoSwitch):
     Sequence of re.RegexObject objects representing patterns to check for in
     device output that indicate a failure to apply configuration.
     """
+
+    @netmiko_devices.check_output('plug port')
+    def plug_port_to_network(self, port, segmentation_id):
+        if port not in self._get_trunk_native_ports():
+            return super(DellOS10, self).plug_port_to_network(
+                port, segmentation_id)
+        LOG.info("Port %s is configured as a trunk-native port; asserting "
+                 "trunk mode and setting native vlan %s.",
+                 port, segmentation_id)
+        cmds = self._format_commands(
+            self.PLUG_PORT_TO_NETWORK_TRUNK_NATIVE,
+            port=port,
+            segmentation_id=segmentation_id)
+        return self.send_commands_to_device(cmds)
+
+    @netmiko_devices.check_output('unplug port')
+    def delete_port(self, port, segmentation_id):
+        if port not in self._get_trunk_native_ports():
+            return super(DellOS10, self).delete_port(port, segmentation_id)
+        LOG.info("Port %s is configured as a trunk-native port; clearing "
+                 "native vlan only, leaving trunk mode and allowed vlans "
+                 "intact.", port)
+        cmds = self._format_commands(
+            self.DELETE_PORT,
+            port=port,
+            segmentation_id=segmentation_id)
+        return self.send_commands_to_device(cmds)
 
 
 class DellNos(netmiko_devices.NetmikoSwitch):
