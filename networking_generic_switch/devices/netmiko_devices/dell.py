@@ -95,30 +95,30 @@ class DellOS10(netmiko_devices.NetmikoSwitch):
     def plug_port_to_network(self, port, segmentation_id):
         if port not in self._get_trunk_native_ports():
             return super().plug_port_to_network(port, segmentation_id)
-        
+
         # trunk-native hack
         LOG.info("Trunk-native port %s: assert trunk mode, native vlan -> %s",
                  port, segmentation_id)
         cmds = self._format_commands(
             self.PLUG_PORT_TO_NETWORK_TRUNK_NATIVE,
-            port=port, 
+            port=port,
             segmentation_id=segmentation_id
-            )
+        )
         return self.send_commands_to_device(cmds)
 
     @netmiko_devices.check_output('unplug port')
     def delete_port(self, port, segmentation_id):
         if port not in self._get_trunk_native_ports():
             return super().delete_port(port, segmentation_id)
-        
+
         # trunk-native hack
         # warning! ignores `ngs_port_default_vlan` and `_disable_inactive_ports`
         LOG.info("Trunk-native port %s: clear native vlan, keep trunk", port)
         cmds = self._format_commands(
             self.DELETE_PORT,
-            port=port, 
+            port=port,
             segmentation_id=segmentation_id
-            )
+        )
         return self.send_commands_to_device(cmds)
 
 
