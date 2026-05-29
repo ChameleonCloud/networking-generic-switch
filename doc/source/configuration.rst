@@ -408,6 +408,64 @@ because the agent needs access to all active VLANs.
 
 Note that this option is only used if ``ngs_manage_vlans = True``.
 
+Trunk-native ports (Dell OS10 only)
+===================================
+
+Some baremetal deployments share a single physical port between in-band
+tenant traffic and out-of-band BMC management traffic, with the BMC reachable
+on a dedicated tagged VLAN. The desired end-state on each such port is:
+
+* the port is in trunk mode,
+* the tenant VLAN arrives untagged (set as the trunk's native VLAN),
+* the BMC OOB VLAN arrives tagged (present on the trunk allowed list).
+
+By default, Networking Generic Switch re-asserts ``switchport mode access``
+on every port bind, which would wipe the trunk configuration and drop the
+BMC. To opt specific ports out of that behaviour, list them under
+``ngs_trunk_native_ports``::
+
+    [genericswitch:dell-tor-1]
+    device_type = netmiko_dell_os10
+    ip = <switch mgmt ip address>
+    username = admin
+    password = password
+    ngs_trunk_native_ports = ethernet1/1/7, ethernet1/1/8
+
+For ports in this list, ``plug_port_to_network`` emits trunk mode plus the
+tenant VLAN as the native VLAN::
+
+    interface ethernet1/1/7
+      switchport mode trunk
+      switchport access vlan <tenant_segmentation_id>
+      exit
+
+``delete_port`` clears only the native VLAN, leaving trunk mode and the
+allowed-VLAN list intact so the BMC stays reachable across rebinds.
+
+The operator must pre-configure each listed port out of band with the trunk
+allowed list (and the OOB VLAN itself), since neither is tracked by
+Networking Generic Switch::
+
+    interface ethernet1/1/7
+      switchport trunk allowed vlan 100        ! the BMC OOB VLAN
+      no shutdown
+
+Caveats:
+
+* This option is consumed only by the Dell OS10 driver. Listing ports here
+  on any other driver is silently ignored — the default access-mode
+  template will still fire and wipe the trunk config. There is no startup
+  validation.
+* Port identifiers must match exactly what Ironic sends in
+  ``local_link_connection/port_id`` (case, whitespace, format). A mismatch
+  silently falls back to the default access-mode template and drops the
+  BMC.
+* The OOB VLAN itself is not tracked by Networking Generic Switch — it
+  must exist on the switch (``interface vlan <oob>``) before deployment.
+* A port should not appear in both ``ngs_trunk_ports`` and
+  ``ngs_trunk_native_ports``; the two features have incompatible
+  semantics.
+
 .. _physicalnetworks:
 
 Multiple physical networks
