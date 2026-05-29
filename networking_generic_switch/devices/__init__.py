@@ -29,6 +29,10 @@ NGS_INTERNAL_OPTS = [
     {'name': 'ngs_mac_address'},
     # Comma-separated list of names of interfaces to be added to each network.
     {'name': 'ngs_trunk_ports'},
+    # Comma-separated list of interfaces to be configured as 'hybrid'
+    # tenant networks will be untagged as usual, but preserves manually trunked
+    # tagged vlans, such as for BMC access.
+    {'name': 'ngs_trunk_native_ports'},
     {'name': 'ngs_port_default_vlan'},
     # Comma-separated list of physical networks to which this switch is mapped.
     {'name': 'ngs_physical_networks'},
@@ -138,6 +142,15 @@ class GenericSwitchDevice(object, metaclass=abc.ABCMeta):
         if not trunk_ports:
             return []
         return [port.strip() for port in trunk_ports.split(',')]
+
+    def _get_trunk_native_ports(self):
+        """Return a list of pre-configured trunk ports whose native VLAN
+        is set per-bind by plug_port_to_network. See ngs_trunk_native_ports.
+        """
+        ports = self.ngs_config.get('ngs_trunk_native_ports')
+        if not ports:
+            return []
+        return [port.strip() for port in ports.split(',')]
 
     def _get_port_default_vlan(self):
         """Return a default vlan of switch's interface if you specify."""

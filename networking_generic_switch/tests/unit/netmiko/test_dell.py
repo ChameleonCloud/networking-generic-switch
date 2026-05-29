@@ -255,6 +255,47 @@ class TestNetmikoDellOS10(test_netmiko_base.NetmikoSwitchTestBase):
             ['interface 3333', 'no switchport access vlan', 'exit']
         )
 
+    @mock.patch('networking_generic_switch.devices.netmiko_devices.'
+                'NetmikoSwitch.send_commands_to_device',
+                return_value="")
+    def test_plug_port_to_network_trunk_native(self, mock_exec):
+        switch = self._make_switch_device(
+            {'ngs_trunk_native_ports': 'ethernet1/1/7, ethernet1/1/8'})
+        switch.plug_port_to_network('ethernet1/1/7', 33)
+        mock_exec.assert_called_with(
+            ['interface ethernet1/1/7',
+             'switchport mode trunk',
+             'switchport access vlan 33',
+             'exit']
+        )
+
+    @mock.patch('networking_generic_switch.devices.netmiko_devices.'
+                'NetmikoSwitch.send_commands_to_device',
+                return_value="")
+    def test_plug_port_to_network_trunk_native_unaffected(self, mock_exec):
+        switch = self._make_switch_device(
+            {'ngs_trunk_native_ports': 'ethernet1/1/7'})
+        switch.plug_port_to_network('ethernet1/1/9', 33)
+        mock_exec.assert_called_with(
+            ['interface ethernet1/1/9',
+             'switchport mode access',
+             'switchport access vlan 33',
+             'exit']
+        )
+
+    @mock.patch('networking_generic_switch.devices.netmiko_devices.'
+                'NetmikoSwitch.send_commands_to_device',
+                return_value="")
+    def test_delete_port_trunk_native(self, mock_exec):
+        switch = self._make_switch_device(
+            {'ngs_trunk_native_ports': 'ethernet1/1/7'})
+        switch.delete_port('ethernet1/1/7', 33)
+        mock_exec.assert_called_with(
+            ['interface ethernet1/1/7',
+             'no switchport access vlan',
+             'exit']
+        )
+
     def test__format_commands(self):
         cmd_set = self.switch._format_commands(
             dell.DellOS10.ADD_NETWORK,
